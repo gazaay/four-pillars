@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 
 # Set the command to run the API server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", $PORT]
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", $PORT]
