@@ -15,4 +15,4 @@ COPY app/ ./app/
 
 # Set the command to run the API server
 # CMD /usr/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", $PORT]
+CMD ["/usr/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", $PORT]
