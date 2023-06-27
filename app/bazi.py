@@ -1,4 +1,6 @@
 from enum import Enum
+import datetime
+from lunarcalendar import Converter, Solar, Lunar, DateNotExist
 
 # Define the Heavenly Stems as an enumeration
 class HeavenlyStem(Enum):
@@ -111,9 +113,13 @@ def calculate_month_heavenly(year, month: int):
     earthly_branch_stem = EarthlyBranch((month + 2)%12).value %12
     print(f"Month Earthly Branch Stem {earthly_branch_stem}")
 
-    return month_heavenly_stem, earthly_branch_stem
+    return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
 def calculate_day_heavenly(year, month, day):
+
+    #Chinese calendar is solar calendar
+    year, month, day = convert_Luna_to_Solar(year, month, day)
+
     if month < 3:
         year -= 1
         month += 12
@@ -137,6 +143,21 @@ def calculate_day_heavenly(year, month, day):
     earthly_branch = z % 12
     
     return HeavenlyStem(heavenly_stem), EarthlyBranch(earthly_branch)
+
+def calculate_hour_heavenly(year, month, day, hour):
+    heavenly_stem, earthly_branch = calculate_day_heavenly(year, month, day)
+    heavenly_stem_index = ((((heavenly_stem.value*2 + (hour+1) // 2) -2) % 10) + 1)%10
+    earthly_branch_index = (((((hour + 1) // 2) ) % 12) + 1)%12
+    print("Earthly Branch Index is ", earthly_branch_index)
+    return HeavenlyStem(heavenly_stem_index), EarthlyBranch(earthly_branch_index)
+
+
+def convert_Luna_to_Solar(year, month, day):
+    lunar = Lunar(year, month, day)
+    print(f"This is Lunar year - {lunar}")
+    solar = Converter.Solar2Lunar(lunar)
+    print(f"This is Solar year - {solar}")
+    return lunar.to_date().year, lunar.to_date().month, lunar.to_date().day
 
 def resolveHeavenlyStem(number):
     return str(HeavenlyStemCN[HeavenlyStem(number).name].value)
