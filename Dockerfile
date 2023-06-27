@@ -20,4 +20,4 @@ EXPOSE 8000
 
 # Set the command to run the API server
 # CMD /usr/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT
-CMD ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", $PORT]
+CMD ["exec", "python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", $PORT]
