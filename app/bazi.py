@@ -82,12 +82,101 @@ class TenGod(Enum):
     SEAL = 9   # 正官
     CLASH = 10  # 比肩
 
-def get_heavenly_stem_earthly_branch(year, month: int):
+heavenly_earthly_dict = {
+    "甲子": 1,
+    "乙丑": 2,
+    "丙寅": 3,
+    "丁卯": 4,
+    "戊辰": 5,
+    "己巳": 6,
+    "庚午": 7,
+    "辛未": 8,
+    "壬申": 9,
+    "癸酉": 10,
+    "甲戌": 11,
+    "乙亥": 12,
+    "丙子": 13,
+    "丁丑": 14,
+    "戊寅": 15,
+    "己卯": 16,
+    "庚辰": 17,
+    "辛巳": 18,
+    "壬午": 19,
+    "癸未": 20,
+    "甲申": 21,
+    "乙酉": 22,
+    "丙戌": 23,
+    "丁亥": 24,
+    "戊子": 25,
+    "己丑": 26,
+    "庚寅": 27,
+    "辛卯": 28,
+    "壬辰": 29,
+    "癸巳": 30,
+    "甲午": 31,
+    "乙未": 32,
+    "丙申": 33,
+    "丁酉": 34,
+    "戊戌": 35,
+    "己亥": 36,
+    "庚子": 37,
+    "辛丑": 38,
+    "壬寅": 39,
+    "癸卯": 40,
+    "甲辰": 41,
+    "乙巳": 42,
+    "丙午": 43,
+    "丁未": 44,
+    "戊申": 45,
+    "己酉": 46,
+    "庚戌": 47,
+    "辛亥": 48,
+    "壬子": 49,
+    "癸丑": 50,
+    "甲寅": 51,
+    "乙卯": 52,
+    "丙辰": 53,
+    "丁巳": 54,
+    "戊午": 55,
+    "己未": 56,
+    "庚申": 57,
+    "辛酉": 58,
+    "壬戌": 59,
+    "癸亥": 60
+}
+
+def SixtyStem(index: int) :
+
+    index = index %60
+
+    if index is 0:
+        index = 60
+
+    # Reverse the dictionary
+    index_to_combination = {value: key for key, value in heavenly_earthly_dict.items()}
+
+    # Now you can use an index to retrieve the corresponding combination
+    combination = index_to_combination.get(index)
+
+    if combination is not None:
+        print("Combination:", combination)
+    else:
+        print("Index not found.")
+    
+    return combination
+
+def getSixtyStemIndex(stem):
+    return heavenly_earthly_dict[stem]
+
+def calculate_year_heavenly(year, month: int):
     if month == 0:
         offset = 1
     else: 
         offset = 0
-    print(f"Month is {month} Offset is {offset}")
+
+     #Chinese calendar is solar calendar
+    # print(f"Year Pillar: Year: {year} month: {month} Offset is {offset}")
+    year, month, day = convert_Solar_to_Luna(year, month, 1)
     heavenly_stem_index = (year - 3 - offset) % 10
     earthly_branch_index = (year - 3) % 12
     heavenly_stem = HeavenlyStem(heavenly_stem_index)
@@ -102,23 +191,77 @@ def calculate_month_heavenly(year, month: int):
     # else: 
     #     offset = 0
     # print(f"Month is {month} Offset is {offset}")
+
+    #Chinese calendar is solar calendar
+    year, month, day = convert_Solar_to_Luna(year, month, 1)
+
+
     heavenly_stem_index = (year - 3) % 10
-    print(f"Heavenly Index is {heavenly_stem_index}")
-    heavenly_stem = HeavenlyStem(heavenly_stem_index)
-    print(f"Heavenly Stem {heavenly_stem.name}")
-    key_month_heavenly_stem = (heavenly_stem.value + heavenly_stem.value + 1) % 10
-    print(f"Key Month Heavenly Stem {key_month_heavenly_stem}")
-    month_heavenly_stem = (key_month_heavenly_stem + month - 1 ) %10
-    print(f"Month Heavenly Stem {month_heavenly_stem}")
-    earthly_branch_stem = EarthlyBranch((month + 2)%12).value %12
+    print(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
+    year_heavenly_stem = HeavenlyStem(heavenly_stem_index)
+    print(f"Heavenly Stem {year_heavenly_stem.name}")
+    month_heavenly_stem = ((year % 10 + 2 )  * 2 + month) %10
+
+    # month_heavenly_stem = (year_heavenly_stem.value + year_heavenly_stem.value + 1) % 10
+    # month_heavenly_stem = (month_heavenly_stem + month - 1 ) % 10
+    print(f"Month Heavenly Stem {month_heavenly_stem} ")
+    earthly_branch_stem = EarthlyBranch((month + 2) %12).value 
     print(f"Month Earthly Branch Stem {earthly_branch_stem}")
 
     return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
+def calculate_heavenly_earthly(year, month, day):
+
+    #Chinese calendar is solar calendar
+    year, month, day = convert_Solar_to_Luna(year, month, day)
+
+    # Calculate the intermediate value
+    intermediate_value = (year % 100) * 5 + + (year // 100) + (year % 100) // 4 + 9 + day
+
+    print(f"Intermediate value {intermediate_value %60}")
+    # if (month == 1) or (month == 4) or (month == 5):
+    #     intermediate_value += 1
+    # elif (month == 2) or (month == 6) or (month == 7):
+    #     intermediate_value += 2
+
+    # Determine if the month is single (29 days) or double (30 days)
+    if month % 2 == 0:  # If month is even, it's a double month
+        intermediate_value += 30
+    else:  # If month is odd, it's a single month
+        intermediate_value += 0
+
+    # Determine the adjustment factor for each month
+    adjustment_factors = [0, 1, 2, 0, 1, 1, 2, 3, 4, 4, 5, 5]
+    adjustment_factor = adjustment_factors[month - 1]
+
+    # Adjust for leap year
+    if (year % 4 == 0) and ((year % 100 != 0) or (year % 400 == 0)):
+        if (month == 1) or (month == 2):
+            adjustment_factor -= 1
+
+    # Apply the adjustment factor
+    intermediate_value += adjustment_factor
+
+    print(f"Intermediate value {intermediate_value %60}")
+    # Calculate Heavenly Stems and Earthly Branches
+    heavenly_stem_index = (intermediate_value % 60) % 10
+    earthly_branch_index = (intermediate_value % 60) % 12
+    print(f"Intermediate value {intermediate_value %60}")
+
+    # Define Heavenly Stems and Earthly Branches
+    heavenly_stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
+    earthly_branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+
+    heavenly_stem = heavenly_stems[heavenly_stem_index]
+    earthly_branch = earthly_branches[earthly_branch_index]
+
+    return heavenly_stem + earthly_branch
+
+
 def calculate_day_heavenly(year, month, day):
 
     #Chinese calendar is solar calendar
-    year, month, day = convert_Luna_to_Solar(year, month, day)
+    year, month, day = convert_Solar_to_Luna(year, month, day)
 
     if month < 3:
         year -= 1
@@ -152,12 +295,13 @@ def calculate_hour_heavenly(year, month, day, hour):
     return HeavenlyStem(heavenly_stem_index), EarthlyBranch(earthly_branch_index)
 
 
-def convert_Luna_to_Solar(year, month, day):
-    lunar = Lunar(year, month, day)
-    print(f"This is Lunar year - {lunar}")
-    solar = Converter.Solar2Lunar(lunar)
-    print(f"This is Solar year - {solar}")
-    return lunar.to_date().year, lunar.to_date().month, lunar.to_date().day
+def convert_Solar_to_Luna(year, month, day):
+    solar = Solar(year, month, day)
+    # print(f":Luna_to_Solar: This is Solar year - {solar}")
+    lunar = Converter.Solar2Lunar(solar)
+    # print(f":Luna_to_Solar: This is Lunar year - {lunar.year}")
+    print(f"Sending results {lunar.year} and month {lunar.month} and day {lunar.day}")
+    return lunar.year, lunar.month, lunar.day
 
 def resolveHeavenlyStem(number):
     return str(HeavenlyStemCN[HeavenlyStem(number).name].value)
