@@ -2,6 +2,21 @@ from enum import Enum
 import datetime
 from lunarcalendar import Converter, Solar, Lunar, DateNotExist
 
+import logging
+
+__name__ = "bazi logger"
+
+# Configure logging settings
+logging.basicConfig(level=logging.DEBUG,  # Set the minimum level for displayed logs
+                    format='%(asctime)s - %(levelname)s - %(message)s',  # Format of log messages
+                    filename='app.log',  # File to write logs to
+                    filemode='w')  # File mode ('w' for write)
+
+# Create a logger
+logger = logging.getLogger(__name__)
+
+
+
 # Define the Heavenly Stems as an enumeration
 class HeavenlyStem(Enum):
     JIA = 1  # 甲
@@ -190,9 +205,9 @@ def SixtyStem(index: int) :
     combination = index_to_combination.get(index)
 
     if combination is not None:
-        print("Combination:", combination)
+        logger.debug("Combination:", combination)
     else:
-        print("Index not found.")
+        logger.debug("Index not found.")
     
     return combination
 
@@ -211,9 +226,9 @@ def calculate_year_heavenly(year, month: int):
     heavenly_stem_index = (year - 3 - offset) % 10
     earthly_branch_index = (year - 3) % 12
     heavenly_stem = HeavenlyStem(heavenly_stem_index)
-    print(f"Year Earthly Index {earthly_branch_index}")
+    logger.debug(f"Year Earthly Index {earthly_branch_index}")
     earthly_branch = EarthlyBranch(earthly_branch_index )
-    print(f"Year Earthly Branch {earthly_branch.value}")
+    logger.debug(f"Year Earthly Branch {earthly_branch.value}")
     return heavenly_stem.value, earthly_branch.value
 
 def calculate_month_heavenly(year, month: int):
@@ -228,16 +243,16 @@ def calculate_month_heavenly(year, month: int):
 
 
     heavenly_stem_index = (year - 3) % 10
-    print(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
+    logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
     year_heavenly_stem = HeavenlyStem(heavenly_stem_index)
-    print(f"Heavenly Stem {year_heavenly_stem.name}")
+    logger.debug(f"Heavenly Stem {year_heavenly_stem.name}")
     month_heavenly_stem = ((year % 10 + 2 )  * 2 + month) %10
 
     # month_heavenly_stem = (year_heavenly_stem.value + year_heavenly_stem.value + 1) % 10
     # month_heavenly_stem = (month_heavenly_stem + month - 1 ) % 10
-    print(f"Month Heavenly Stem {month_heavenly_stem} ")
+    logger.debug(f"Month Heavenly Stem {month_heavenly_stem} ")
     earthly_branch_stem = EarthlyBranch((month + 2) %12).value 
-    print(f"Month Earthly Branch Stem {earthly_branch_stem}")
+    logger.debug(f"Month Earthly Branch Stem {earthly_branch_stem}")
 
     return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
@@ -249,7 +264,7 @@ def calculate_heavenly_earthly(year, month, day):
     # Calculate the intermediate value
     intermediate_value = (year % 100) * 5 + + (year // 100) + (year % 100) // 4 + 9 + day
 
-    print(f"Intermediate value {intermediate_value %60}")
+    logger.debug(f"Intermediate value {intermediate_value %60}")
     # if (month == 1) or (month == 4) or (month == 5):
     #     intermediate_value += 1
     # elif (month == 2) or (month == 6) or (month == 7):
@@ -273,11 +288,11 @@ def calculate_heavenly_earthly(year, month, day):
     # Apply the adjustment factor
     intermediate_value += adjustment_factor
 
-    print(f"Intermediate value {intermediate_value %60}")
+    logger.debug(f"Intermediate value {intermediate_value %60}")
     # Calculate Heavenly Stems and Earthly Branches
     heavenly_stem_index = (intermediate_value % 60) % 10
     earthly_branch_index = (intermediate_value % 60) % 12
-    print(f"Intermediate value {intermediate_value %60}")
+    logger.debug(f"Intermediate value {intermediate_value %60}")
 
     # Define Heavenly Stems and Earthly Branches
     heavenly_stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
@@ -322,7 +337,7 @@ def calculate_hour_heavenly(year, month, day, hour):
     heavenly_stem, earthly_branch = calculate_day_heavenly(year, month, day)
     heavenly_stem_index = ((((heavenly_stem.value*2 + (hour+1) // 2) -2) % 10) + 1)%10
     earthly_branch_index = (((((hour + 1) // 2) ) % 12) + 1)%12
-    print("Earthly Branch Index is ", earthly_branch_index)
+    logger.debug("Earthly Branch Index is ", earthly_branch_index)
     return HeavenlyStem(heavenly_stem_index), EarthlyBranch(earthly_branch_index)
 
 
@@ -331,7 +346,7 @@ def convert_Solar_to_Luna(year, month, day):
     # print(f":Luna_to_Solar: This is Solar year - {solar}")
     lunar = Converter.Solar2Lunar(solar)
     # print(f":Luna_to_Solar: This is Lunar year - {lunar.year}")
-    print(f"Sending results {lunar.year} and month {lunar.month} and day {lunar.day}")
+    logger.debug(f"Sending results {lunar.year} and month {lunar.month} and day {lunar.day}")
     return lunar.year, lunar.month, lunar.day
 
 def resolveHeavenlyStem(number):

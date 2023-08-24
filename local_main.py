@@ -1,8 +1,19 @@
 import datetime
 from fastapi import FastAPI
-from app import bazi
+from app  import bazi
+import logging
 
 app = FastAPI()
+__name__ = "four_pillar local logger"
+
+# Configure logging settings
+logging.basicConfig(level=logging.DEBUG,  # Set the minimum level for displayed logs
+                    format='%(asctime)s - %(levelname)s - %(message)s',  # Format of log messages
+                    filename='app.log',  # File to write logs to
+                    filemode='w')  # File mode ('w' for write)
+
+# Create a logger
+logger = logging.getLogger(__name__)
 
 @app.get("/")
 def read_root():
@@ -70,7 +81,7 @@ def get_heavenly_branch_yy(from_year: int, to_year: int):
 
     while current_date <= end_date:
        # Do something with the current_date
-        print(current_date.strftime("YYYY-MM-DD"))
+        logger.debug(current_date.strftime("YYYY-MM-DD"))
         # Move to the next day
         current_date += datetime.timedelta(days=1)
 
@@ -105,10 +116,10 @@ def get_heavenly_branch_ymdh_splitpillars(year: int, month: int, day: int, hour:
 
 result = get_heavenly_branch_ymdh_pillars(2019,1,2,9)
 
-print (result)
+logger.info (result)
 
-print(f"Year Stem is {get_heavenly_branch_y(2018)}")
+logger.debug(f"Year Stem is {get_heavenly_branch_y(2018)}")
 
-print(f"{bazi.SixtyStem(121)}")
-print(f"{bazi.getSixtyStemIndex('甲子')}")
-print(f"{bazi.calculate_heavenly_earthly(2019,1,2)}")
+logger.debug(f"{bazi.SixtyStem(121)}")
+logger.debug(f"{bazi.getSixtyStemIndex('甲子')}")
+logger.debug(f"{bazi.calculate_heavenly_earthly(2019,1,2)}")
