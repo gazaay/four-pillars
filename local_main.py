@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from fastapi import FastAPI
 from app  import bazi
 import logging
@@ -123,3 +123,6 @@ logger.debug(f"Year Stem is {get_heavenly_branch_y(2018)}")
 logger.debug(f"{bazi.SixtyStem(121)}")
 logger.debug(f"{bazi.getSixtyStemIndex('甲子')}")
 logger.debug(f"{bazi.calculate_heavenly_earthly(2019,1,2)}")
+# Creating a datetime object for a specific date and time
+specific_datetime = datetime(2023, 7,7,15, 30, 0)  # Year, Month, Day, Hour, Minute, Second
+logger.info(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
