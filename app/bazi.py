@@ -5,7 +5,7 @@ from app import solarterm
 
 import logging
 
-__name__ = "bazi logger"
+__name__ = "bazi"
 
 # Configure logging settings
 logging.basicConfig(level=logging.DEBUG,  # Set the minimum level for displayed logs
@@ -239,8 +239,13 @@ def calculate_month_heavenly(year, month: int):
     #     offset = 0
     # print(f"Month is {month} Offset is {offset}")
 
-    #Chinese calendar is solar calendar
-    year, month, day = convert_Solar_to_Luna(year, month, 1)
+    # solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, hour, minute)) 
+
+    # quotient_solar = solar_month_index // 2
+    # reminder = solar_month_index % 2
+
+    # #Chinese calendar is solar calendar
+    # year, month, day = convert_Solar_to_Luna(year, month, 1)
 
 
     heavenly_stem_index = (year - 3) % 10
@@ -257,15 +262,19 @@ def calculate_month_heavenly(year, month: int):
 
     return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
-def calculate_heavenly_earthly(year, month, day):
+def calculate_day_heavenly2(year, month, day):
 
     #Chinese calendar is solar calendar
     year, month, day = convert_Solar_to_Luna(year, month, day)
 
-    # Calculate the intermediate value
-    intermediate_value = (year % 100) * 5 + + (year // 100) + (year % 100) // 4 + 9 + day
 
-    logger.debug(f"Intermediate value {intermediate_value %60}")
+    if year >= 2000:
+    # Calculate the intermediate value
+        intermediate_value = (year % 100 + 100) * 5 + (year % 100 + 100) // 4 + 9 + day
+    else:
+        intermediate_value = (year % 100) * 5 + (year % 100 ) // 4 + 9 + day
+
+    logger.info(f"Intermediate value {intermediate_value %60}")
     # if (month == 1) or (month == 4) or (month == 5):
     #     intermediate_value += 1
     # elif (month == 2) or (month == 6) or (month == 7):
@@ -278,8 +287,8 @@ def calculate_heavenly_earthly(year, month, day):
         intermediate_value += 0
 
     # Determine the adjustment factor for each month
-    adjustment_factors = [0, 1, 2, 0, 1, 1, 2, 3, 4, 4, 5, 5]
-    adjustment_factor = adjustment_factors[month - 1]
+    adjustment_factors = [1, 2, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5]
+    adjustment_factor = adjustment_factors[month]
 
     # Adjust for leap year
     if (year % 4 == 0) and ((year % 100 != 0) or (year % 400 == 0)):
@@ -289,11 +298,10 @@ def calculate_heavenly_earthly(year, month, day):
     # Apply the adjustment factor
     intermediate_value += adjustment_factor
 
-    logger.debug(f"Intermediate value {intermediate_value %60}")
+    logger.info(f"Intermediate value after Leap year Adjusted. {intermediate_value %60}")
     # Calculate Heavenly Stems and Earthly Branches
     heavenly_stem_index = (intermediate_value % 60) % 10
     earthly_branch_index = (intermediate_value % 60) % 12
-    logger.debug(f"Intermediate value {intermediate_value %60}")
 
     # Define Heavenly Stems and Earthly Branches
     heavenly_stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
@@ -383,7 +391,6 @@ def get_Luna_Month_With_Season(current_datetime):
 
     luna_solar_term = ""
     
-    print(f"HEre is {i}")
     for solar_term in solarterms_list:
         method = getattr(solarterm, solar_term)  # Assuming the methods are defined in the same module
         current_solarterm_datetime = method(specific_datetime.year)
@@ -397,7 +404,7 @@ def get_Luna_Month_With_Season(current_datetime):
 
         if (current_datetime > current_solarterm_datetime):
             i = i+1
-            print(f"{i} on specific date {specific_datetime} date {current_solarterm_datetime}")
+            logger.debug(f"{i} on specific date {specific_datetime} date {current_solarterm_datetime}")
         else: 
             luna_month = i
             break

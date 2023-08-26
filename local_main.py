@@ -4,7 +4,7 @@ from app  import bazi
 import logging
 
 app = FastAPI()
-__name__ = "four_pillar local logger"
+__name__ = "four_pillar"
 
 # Configure logging settings
 logging.basicConfig(level=logging.DEBUG,  # Set the minimum level for displayed logs
@@ -114,7 +114,22 @@ def get_heavenly_branch_ymdh_splitpillars(year: int, month: int, day: int, hour:
             "時地": bazi.resolveEarthlyBranch(earthly_hour_stem)
             }
 
-result = get_heavenly_branch_ymdh_pillars(2019,1,2,9)
+
+
+
+year=2023
+month =7 
+day = 9
+hour =9
+minute = 15
+
+# year=1996
+# month =1
+# day = 16
+# hour =13
+# minute = 15
+
+result = get_heavenly_branch_ymdh_pillars(year, month, day, hour)
 
 logger.info (result)
 
@@ -122,7 +137,8 @@ logger.debug(f"Year Stem is {get_heavenly_branch_y(2018)}")
 
 logger.debug(f"{bazi.SixtyStem(121)}")
 logger.debug(f"{bazi.getSixtyStemIndex('甲子')}")
-logger.debug(f"{bazi.calculate_heavenly_earthly(2019,1,2)}")
+logger.info(f"{bazi.calculate_day_heavenly(year, month, day)}")
+logger.info(f"{bazi.calculate_day_heavenly2(year, month, day)}")
 # Creating a datetime object for a specific date and time
 specific_datetime = datetime(2023, 7,7,15, 30, 0)  # Year, Month, Day, Hour, Minute, Second
 logger.info(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
