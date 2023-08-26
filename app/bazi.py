@@ -233,20 +233,22 @@ def calculate_year_heavenly(year, month: int):
     return heavenly_stem.value, earthly_branch.value
 
 def calculate_month_heavenly(year, month: int):
+    # #Chinese calendar is solar calendar
+    year, month, day = convert_Solar_to_Luna(year, month, 1)
     # if month == 0:
     #     offset = 1
     # else: 
     #     offset = 0
     # print(f"Month is {month} Offset is {offset}")
 
-    # solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, hour, minute)) 
+    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 9, 15)) 
 
-    # quotient_solar = solar_month_index // 2
-    # reminder = solar_month_index % 2
+    quotient_solar = solar_month_index // 2
+    reminder = solar_month_index % 2
 
-    # #Chinese calendar is solar calendar
-    # year, month, day = convert_Solar_to_Luna(year, month, 1)
+    logger.info(f"The month with Season is {quotient_solar}")
 
+    month = quotient_solar
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -262,10 +264,10 @@ def calculate_month_heavenly(year, month: int):
 
     return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
-def calculate_day_heavenly2(year, month, day):
+def calculate_day_heavenly(year, month, day):
 
     #Chinese calendar is solar calendar
-    year, month, day = convert_Solar_to_Luna(year, month, day)
+    # year, month, day = convert_Solar_to_Luna(year, month, day)
 
 
     if year >= 2000:
@@ -287,18 +289,19 @@ def calculate_day_heavenly2(year, month, day):
         intermediate_value += 0
 
     # Determine the adjustment factor for each month
-    adjustment_factors = [1, 2, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5]
+    adjustment_factors = [0, 1, 2, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5]
     adjustment_factor = adjustment_factors[month]
 
     # Adjust for leap year
     if (year % 4 == 0) and ((year % 100 != 0) or (year % 400 == 0)):
         if (month == 1) or (month == 2):
+            logger.info("It is Leap Year!")
             adjustment_factor -= 1
 
     # Apply the adjustment factor
     intermediate_value += adjustment_factor
 
-    logger.info(f"Intermediate value after Leap year Adjusted. {intermediate_value %60}")
+    logger.info(f"Intermediate value after Leap year Adjusted. {intermediate_value %60} with {SixtyStem(intermediate_value %60)}")
     # Calculate Heavenly Stems and Earthly Branches
     heavenly_stem_index = (intermediate_value % 60) % 10
     earthly_branch_index = (intermediate_value % 60) % 12
@@ -310,10 +313,10 @@ def calculate_day_heavenly2(year, month, day):
     heavenly_stem = heavenly_stems[heavenly_stem_index]
     earthly_branch = earthly_branches[earthly_branch_index]
 
-    return heavenly_stem + earthly_branch
+    return HeavenlyStem(heavenly_stem_index) , EarthlyBranch(earthly_branch_index)
 
 
-def calculate_day_heavenly(year, month, day):
+def zz_calculate_day_heavenly(year, month, day):
 
     #Chinese calendar is solar calendar
     year, month, day = convert_Solar_to_Luna(year, month, day)
@@ -355,7 +358,7 @@ def convert_Solar_to_Luna(year, month, day):
     # print(f":Luna_to_Solar: This is Solar year - {solar}")
     lunar = Converter.Solar2Lunar(solar)
     # print(f":Luna_to_Solar: This is Lunar year - {lunar.year}")
-    logger.debug(f"Sending results {lunar.year} and month {lunar.month} and day {lunar.day}")
+    logger.info(f"Solar Date {year}-{month}-{day} converted to {lunar.year} and month {lunar.month} and day {lunar.day}")
     return lunar.year, lunar.month, lunar.day
 
 def resolveHeavenlyStem(number):

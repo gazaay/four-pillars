@@ -116,29 +116,60 @@ def get_heavenly_branch_ymdh_splitpillars(year: int, month: int, day: int, hour:
 
 
 
-
+# 戊辰
 year=2023
 month =7 
 day = 9
 hour =9
 minute = 15
 
+# 壬子
 # year=1996
 # month =1
 # day = 16
 # hour =13
 # minute = 15
 
+#己丑
+# year=1997
+# month =2
+# day = 16
+# hour =13
+# minute = 15
+
+# 壬戌
+# year=1998
+# month =3
+# day = 16
+# hour =13
+# minute = 15
+
+# 戊戌
+# year=1999
+# month =4
+# day = 16
+# hour =13
+# minute = 15
+
+# 癸丑
+year=2023
+month =8
+day = 12
+hour =9
+minute = 15
+
+
 result = get_heavenly_branch_ymdh_pillars(year, month, day, hour)
 
 logger.info (result)
 
-logger.debug(f"Year Stem is {get_heavenly_branch_y(2018)}")
+# logger.debug(f"Year Stem is {get_heavenly_branch_y(2018)}")
 
-logger.debug(f"{bazi.SixtyStem(121)}")
-logger.debug(f"{bazi.getSixtyStemIndex('甲子')}")
-logger.info(f"{bazi.calculate_day_heavenly(year, month, day)}")
-logger.info(f"{bazi.calculate_day_heavenly2(year, month, day)}")
+# logger.debug(f"{bazi.SixtyStem(121)}")
+# logger.debug(f"{bazi.getSixtyStemIndex('甲子')}")
+# logger.info(f"{bazi.calculate_day_heavenly(year, month, day)}")
+# logger.info(f"{bazi.calculate_day_heavenly(year, month, day)}")
+# logger.info(f"{get_heavenly_branch_ymd(year, month, day)}")
 # Creating a datetime object for a specific date and time
-specific_datetime = datetime(2023, 7,7,15, 30, 0)  # Year, Month, Day, Hour, Minute, Second
+specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, Hour, Minute, Second
 logger.info(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
