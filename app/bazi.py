@@ -215,7 +215,7 @@ def SixtyStem(index: int) :
 def getSixtyStemIndex(stem):
     return heavenly_earthly_dict[stem]
 
-def calculate_year_heavenly(year, month: int):
+def calculate_year_heavenly(year, month: int, day):
     if month == 0:
         offset = 1
     else: 
@@ -223,7 +223,7 @@ def calculate_year_heavenly(year, month: int):
 
      #Chinese calendar is solar calendar
     # print(f"Year Pillar: Year: {year} month: {month} Offset is {offset}")
-    year, month, day = convert_Solar_to_Luna(year, month, 1)
+    year, month, day = convert_Solar_to_Luna(year, month, day)
     heavenly_stem_index = (year - 3 - offset) % 10
     earthly_branch_index = (year - 3) % 12
     heavenly_stem = HeavenlyStem(heavenly_stem_index)
@@ -232,9 +232,9 @@ def calculate_year_heavenly(year, month: int):
     logger.debug(f"Year Earthly Branch {earthly_branch.value}")
     return heavenly_stem.value, earthly_branch.value
 
-def calculate_month_heavenly(year, month: int):
+def calculate_month_heavenly(year, month: int, day):
     # #Chinese calendar is solar calendar
-    year, month, day = convert_Solar_to_Luna(year, month, 1)
+    # year, month, day = convert_Solar_to_Luna(year, month, day)
     # if month == 0:
     #     offset = 1
     # else: 
@@ -276,7 +276,7 @@ def calculate_day_heavenly(year, month, day):
     else:
         intermediate_value = (year % 100) * 5 + (year % 100 ) // 4 + 9 + day
 
-    logger.info(f"Intermediate value {intermediate_value %60}")
+    # logger.info(f"Intermediate value {intermediate_value %60}")
     # if (month == 1) or (month == 4) or (month == 5):
     #     intermediate_value += 1
     # elif (month == 2) or (month == 6) or (month == 7):
@@ -301,8 +301,8 @@ def calculate_day_heavenly(year, month, day):
     # Apply the adjustment factor
     intermediate_value += adjustment_factor
 
-    logger.info(f"Intermediate value after Leap year Adjusted. {intermediate_value %60} with {SixtyStem(intermediate_value %60)}")
-    # Calculate Heavenly Stems and Earthly Branches
+    # logger.info(f"Intermediate value after Leap year Adjusted. {intermediate_value %60} with {SixtyStem(intermediate_value %60)}")
+    # # Calculate Heavenly Stems and Earthly Branches
     heavenly_stem_index = (intermediate_value % 60) % 10
     earthly_branch_index = (intermediate_value % 60) % 12
 
@@ -315,6 +315,16 @@ def calculate_day_heavenly(year, month, day):
 
     return HeavenlyStem(heavenly_stem_index) , EarthlyBranch(earthly_branch_index)
 
+def calculate_dark_stem(heavenly_index, earthly_index):
+    stem = resolveHeavenlyStem(heavenly_index) + resolveEarthlyBranch(earthly_index)
+    print(f"Input stem {stem} with {heavenly_index}")
+    if earthly_index.value > 7:
+        offset = -5
+    else:
+        offset = 5
+    stemIndex = getSixtyStemIndex(stem)
+    print(f"output stem {SixtyStem(stemIndex + offset)}")
+    return SixtyStem(stemIndex + offset)
 
 def zz_calculate_day_heavenly(year, month, day):
 
@@ -411,6 +421,8 @@ def get_Luna_Month_With_Season(current_datetime):
         else: 
             luna_month = i
             break
+        
+    print(f" The Solar term is {luna_solar_term} and {luna_month}")
     return luna_solar_term, luna_month
 
 
