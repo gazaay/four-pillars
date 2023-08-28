@@ -391,6 +391,7 @@ def get_Luna_Month_With_Season(current_datetime):
     year, month, day = convert_Solar_to_Luna (current_datetime.year, current_datetime.month,
                                             current_datetime.day)
 
+    print (current_datetime)
     specific_datetime = datetime(year, month, day, current_datetime.hour,current_datetime.minute, current_datetime.second)                                        
     solarterms_list = [
         "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
