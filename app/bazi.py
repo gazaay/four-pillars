@@ -317,13 +317,13 @@ def calculate_day_heavenly(year, month, day):
 
 def calculate_dark_stem(heavenly_index, earthly_index):
     stem = resolveHeavenlyStem(heavenly_index) + resolveEarthlyBranch(earthly_index)
-    print(f"Input stem {stem} with {heavenly_index}")
+    # print(f"Input stem {stem} with {heavenly_index}")
     if earthly_index.value > 7:
         offset = -5
     else:
         offset = 5
     stemIndex = getSixtyStemIndex(stem)
-    print(f"output stem {SixtyStem(stemIndex + offset)}")
+    # print(f"output stem {SixtyStem(stemIndex + offset)}")
     return SixtyStem(stemIndex + offset)
 
 def zz_calculate_day_heavenly(year, month, day):
