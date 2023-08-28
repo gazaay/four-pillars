@@ -307,11 +307,11 @@ def calculate_day_heavenly(year, month, day):
     earthly_branch_index = (intermediate_value % 60) % 12
 
     # Define Heavenly Stems and Earthly Branches
-    heavenly_stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-    earthly_branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+    # heavenly_stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
+    # earthly_branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
 
-    heavenly_stem = heavenly_stems[heavenly_stem_index]
-    earthly_branch = earthly_branches[earthly_branch_index]
+    # heavenly_stem = heavenly_stems[heavenly_stem_index]
+    # earthly_branch = earthly_branches[earthly_branch_index]
 
     return HeavenlyStem(heavenly_stem_index) , EarthlyBranch(earthly_branch_index)
 
@@ -378,14 +378,6 @@ def resolveEarthlyBranch(number ):
     return str(EarthlyBranchCN[EarthlyBranch(number).name].value)
 
 
-# Example usage
-print(HeavenlyStem.JIA)  # Output: HeavenlyStem.JIA
-print(EarthlyBranch.ZI)  # Output: EarthlyBranch.ZI
-print(FiveElement.WOOD)  # Output: FiveElement.WOOD
-print(YinYang.YIN)       # Output: YinYang.YIN
-print(TenGod.FRIEND)     # Output: TenGod.FRIEND
-
-
 def get_Luna_Month_With_Season(current_datetime):
 
     year, month, day = convert_Solar_to_Luna (current_datetime.year, current_datetime.month,
@@ -422,7 +414,7 @@ def get_Luna_Month_With_Season(current_datetime):
             luna_month = i
             break
         
-    print(f" The Solar term is {luna_solar_term} and {luna_month}")
+    # print(f" The Solar term is {luna_solar_term} and {luna_month}")
     return luna_solar_term, luna_month
 
 
