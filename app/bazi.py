@@ -391,8 +391,7 @@ def get_Luna_Month_With_Season(current_datetime):
     year, month, day = convert_Solar_to_Luna (current_datetime.year, current_datetime.month,
                                             current_datetime.day)
 
-    print (current_datetime)
-    specific_datetime = datetime(year, month, day, current_datetime.hour,current_datetime.minute, current_datetime.second)                                        
+    # specific_datetime = datetime(year, month, day, current_datetime.hour,current_datetime.minute, current_datetime.second)                                        
     solarterms_list = [
         "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
         "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
@@ -407,7 +406,7 @@ def get_Luna_Month_With_Season(current_datetime):
     
     for solar_term in solarterms_list:
         method = getattr(solarterm, solar_term)  # Assuming the methods are defined in the same module
-        current_solarterm_datetime = method(specific_datetime.year)
+        current_solarterm_datetime = method(year)
         luna_solar_term = solar_term
         
         date_string = current_solarterm_datetime
@@ -418,7 +417,7 @@ def get_Luna_Month_With_Season(current_datetime):
 
         if (current_datetime > current_solarterm_datetime):
             i = i+1
-            logger.debug(f"{i} on specific date {specific_datetime} date {current_solarterm_datetime}")
+            
         else: 
             luna_month = i
             break
