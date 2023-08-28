@@ -216,9 +216,9 @@ hour =9
 minute = 15
 
 # 9/9/2023- 辛巳	庚午	丙午	辛酉	癸卯	乙卯
-year=2023  
-month =9
-day = 9
+year=2019 
+month =4
+day = 5
 hour =9
 minute = 15
 
@@ -240,3 +240,6 @@ logger.info (result)
 # Creating a datetime object for a specific date and time
 specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, Hour, Minute, Second
 # logger.info(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
+
+specific_datetime = datetime(2019,4,4,9, 30, 0)  # Year, Month, Day, Hour, Minute, Second
+print(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
