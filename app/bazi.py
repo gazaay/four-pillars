@@ -1,7 +1,7 @@
 from enum import Enum
 from datetime import datetime
 from lunarcalendar import Converter, Solar, Lunar, DateNotExist, zh_festivals, zh_solarterms
-from app import solarterm
+from . import solarterm
 
 import logging
 
