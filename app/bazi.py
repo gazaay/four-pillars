@@ -2,7 +2,7 @@ from enum import Enum
 from datetime import datetime
 from lunarcalendar import Converter, Solar, Lunar, DateNotExist, zh_festivals, zh_solarterms
 from . import solarterm
-
+from threading import Lock
 import logging
 
 __name__ = "bazi"
@@ -378,6 +378,9 @@ def resolveEarthlyBranch(number ):
     return str(EarthlyBranchCN[EarthlyBranch(number).name].value)
 
 
+# Define a lock for synchronizing access to the shared variable 'i'
+i_lock = Lock()
+
 def get_Luna_Month_With_Season(current_datetime):
 
     year, month, day = convert_Solar_to_Luna (current_datetime.year, current_datetime.month,
@@ -396,24 +399,27 @@ def get_Luna_Month_With_Season(current_datetime):
 
     luna_solar_term = ""
     
-    for solar_term in solarterms_list:
-        method = getattr(solarterm, solar_term)  # Assuming the methods are defined in the same module
-        current_solarterm_datetime = method(year)
-        luna_solar_term = solar_term
-        
-        date_string = current_solarterm_datetime
-        format_string = "%Y-%m-%d %H:%M:%S.%f%z"
-
-        # datetime_object = datetime.strptime(date_string, format_string)
-        current_datetime = current_datetime.replace(tzinfo=current_solarterm_datetime.tzinfo)
-
-        if (current_datetime > current_solarterm_datetime):
-            i = i+1
+    with i_lock:
+        for solar_term in solarterms_list:
+            method = getattr(solarterm, solar_term)  # Assuming the methods are defined in the same module
+            current_solarterm_datetime = method(year)
+            luna_solar_term = solar_term
             
-        else: 
-            luna_month = i
-            break
-        
+            date_string = current_solarterm_datetime
+            format_string = "%Y-%m-%d %H:%M:%S.%f%z"
+
+            # datetime_object = datetime.strptime(date_string, format_string)
+            current_datetime = current_datetime.replace(tzinfo=current_solarterm_datetime.tzinfo)
+
+            if (current_datetime > current_solarterm_datetime):
+                with i_lock:
+                    i = i+1
+                
+            else: 
+                with i_lock:
+                    luna_month = i
+                break
+            
     # print(f" The Solar term is {luna_solar_term} and {luna_month}")
     return luna_solar_term, luna_month
 
