@@ -232,6 +232,10 @@ def calculate_year_heavenly(year, month: int, day):
     logger.debug(f"Year Earthly Branch {earthly_branch.value}")
     return heavenly_stem.value, earthly_branch.value
 
+
+# Define a lock for synchronizing access to the shared variable 'i'
+i_lock = Lock()
+
 def calculate_month_heavenly(year, month: int, day):
     # #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
@@ -240,8 +244,8 @@ def calculate_month_heavenly(year, month: int, day):
     # else: 
     #     offset = 0
     # print(f"Month is {month} Offset is {offset}")
-
-    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 9, 15)) 
+    with i_lock:
+        solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 9, 15)) 
 
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
@@ -378,8 +382,7 @@ def resolveEarthlyBranch(number ):
     return str(EarthlyBranchCN[EarthlyBranch(number).name].value)
 
 
-# Define a lock for synchronizing access to the shared variable 'i'
-i_lock = Lock()
+
 
 def get_Luna_Month_With_Season(current_datetime):
 
