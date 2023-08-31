@@ -244,8 +244,7 @@ def calculate_month_heavenly(year, month: int, day):
     # else: 
     #     offset = 0
     # print(f"Month is {month} Offset is {offset}")
-    with i_lock:
-        solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 9, 15)) 
+    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 9, 15)) 
 
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
