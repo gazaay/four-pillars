@@ -1,9 +1,10 @@
 from enum import Enum
-from datetime import datetime
 from lunarcalendar import Converter, Solar, Lunar, DateNotExist, zh_festivals, zh_solarterms
 from . import solarterm
 from threading import Lock
 import logging
+import bisect
+from datetime import datetime, timezone
 
 __name__ = "bazi"
 
@@ -249,7 +250,7 @@ def calculate_month_heavenly(year, month: int, day):
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
 
-    logger.info(f"The month with Season is {quotient_solar}")
+    logger.debug(f"The month with Season is {quotient_solar}")
 
     month = quotient_solar
 
@@ -371,7 +372,7 @@ def convert_Solar_to_Luna(year, month, day):
     # print(f":Luna_to_Solar: This is Solar year - {solar}")
     lunar = Converter.Solar2Lunar(solar)
     # print(f":Luna_to_Solar: This is Lunar year - {lunar.year}")
-    logger.info(f"Solar Date {year}-{month}-{day} converted to {lunar.year} and month {lunar.month} and day {lunar.day}")
+    logger.debug(f"Solar Date {year}-{month}-{day} converted to {lunar.year} and month {lunar.month} and day {lunar.day}")
     return lunar.year, lunar.month, lunar.day
 
 def resolveHeavenlyStem(number):
@@ -383,11 +384,12 @@ def resolveEarthlyBranch(number ):
 
 
 
-def get_Luna_Month_With_Season(current_datetime):
+def get_Luna_Month_With_Season_zz(current_datetime):
 
     year, month, day = convert_Solar_to_Luna (current_datetime.year, current_datetime.month,
                                             current_datetime.day)
 
+    
     # specific_datetime = datetime(year, month, day, current_datetime.hour,current_datetime.minute, current_datetime.second)                                        
     solarterms_list = [
         "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
@@ -403,26 +405,97 @@ def get_Luna_Month_With_Season(current_datetime):
     
     
     for solar_term in solarterms_list:
-        method = getattr(solarterm, solar_term)  # Assuming the methods are defined in the same module
-        current_solarterm_datetime = method(year)
+        with i_lock:
+            method = getattr(solarterm, solar_term)  # Assuming the methods are defined in the same module
+            current_solarterm_datetime = method(year)
         luna_solar_term = solar_term
         
-        date_string = current_solarterm_datetime
-        format_string = "%Y-%m-%d %H:%M:%S.%f%z"
+        # date_string = current_solarterm_datetime
+        # format_string = "%Y-%m-%d %H:%M:%S.%f%z"
 
         # datetime_object = datetime.strptime(date_string, format_string)
         current_datetime = current_datetime.replace(tzinfo=current_solarterm_datetime.tzinfo)
 
+        
         if (current_datetime > current_solarterm_datetime):
-            with i_lock:
-                i = i+1
-            
+            i = i+1
         else: 
-            with i_lock:
-                luna_month = i
+            luna_month = i
             break
             
     # print(f" The Solar term is {luna_solar_term} and {luna_month}")
     return luna_solar_term, luna_month
+
+
+# def get_Luna_Month_With_Season(target_date):
+    
+#     year, month, day = convert_Solar_to_Luna (target_date.year, target_date.month,
+#                                             target_date.day)
+#     with i_lock:
+#         solarterms_list = [
+#             solarterm.LiChun(year), solarterm.YuShui(year), solarterm.JingZhe(year), solarterm.ChunFen(year),
+#             solarterm.QingMing(year), solarterm.GuYu(year), solarterm.LiXia(year), solarterm.XiaoMan(year),
+#             solarterm.MangZhong(year), solarterm.XiaZhi(year), solarterm.XiaoShu(year), solarterm.DaShu(year),
+#             solarterm.LiQiu(year), solarterm.ChuShu(year), solarterm.BaiLu(year), solarterm.QiuFen(year),
+#             solarterm.HanLu(year), solarterm.ShuangJiang(year), solarterm.LiDong(year), solarterm.XiaoXue(year),
+#             solarterm.DaXue(year), solarterm.DongZhi(year), solarterm.XiaoHan(year), solarterm.DaHan(year)
+#         ]
+
+#     # Set the timezone of solarterms_list to be the same as target_date
+#     solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
+
+#     # Use bisect to find the insertion point in the sorted list
+#     luna_month = bisect.bisect_left(solarterms_list, target_date)
+    
+#     return 'XiaoXue', luna_month
+
+
+# Initialize a dictionary to cache solar terms for each year
+solar_term_cache = {}
+
+def get_solar_terms(year):
+    if year in solar_term_cache:
+        return solar_term_cache[year]
+
+    solar_terms = [
+        solarterm.LiChun(year), solarterm.YuShui(year), solarterm.JingZhe(year), solarterm.ChunFen(year),
+        solarterm.QingMing(year), solarterm.GuYu(year), solarterm.LiXia(year), solarterm.XiaoMan(year),
+        solarterm.MangZhong(year), solarterm.XiaZhi(year), solarterm.XiaoShu(year), solarterm.DaShu(year),
+        solarterm.LiQiu(year), solarterm.ChuShu(year), solarterm.BaiLu(year), solarterm.QiuFen(year),
+        solarterm.HanLu(year), solarterm.ShuangJiang(year), solarterm.LiDong(year), solarterm.XiaoXue(year),
+        solarterm.DaXue(year), solarterm.DongZhi(year), solarterm.XiaoHan(year), solarterm.DaHan(year)
+    ]
+
+    # Set the timezone for the solar terms
+    solar_terms = [dt.replace(tzinfo=timezone.utc) for dt in solar_terms]
+
+    # Cache the solar terms for the year
+    solar_term_cache[year] = solar_terms
+
+    return solar_terms
+
+def get_Luna_Month_With_Season(target_date):
+    year, month, day = convert_Solar_to_Luna(target_date.year, target_date.month, target_date.day)
+
+    solarterms_list = get_solar_terms(year)
+
+    # Set the timezone of solarterms_list to be the same as target_date
+    solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
+
+    # Use bisect to find the insertion point in the sorted list
+    luna_month = bisect.bisect_left(solarterms_list, target_date)
+    
+    solarterms_list = [
+        "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
+        "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
+        "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
+        "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan"
+    ]  
+    # print(f"{luna_month}")
+    # solarterms_list[luna_month]
+    if luna_month == 24:    
+        return "DaHan", 0
+    else:
+        return solarterms_list[luna_month], luna_month+1
 
 

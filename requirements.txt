@@ -2,3 +2,7 @@ lunarcalendar
 uvicorn 
 fastapi 
 ephem
+pandas
+tqdm
+numpy
+

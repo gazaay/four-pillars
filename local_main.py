@@ -1,7 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import FastAPI
 from app  import bazi
 import logging
+
+import concurrent.futures
+from tqdm import tqdm
+import random
+
+
 
 app = FastAPI()
 __name__ = "four_pillar"
@@ -243,3 +249,63 @@ specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, H
 
 specific_datetime = datetime(2019,4,4,9, 30, 0)  # Year, Month, Day, Hour, Minute, Second
 print(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
+
+def process_8w_row(row):
+    # counting()
+
+
+    try:
+        
+        year = 2023
+        month = 8
+        day = 23
+        hour = 9
+        
+        result_current = get_heavenly_branch_ymdh_pillars(year,month,day,hour)
+    except Exception as e:
+        print("Error: {0}".format(e))
+             
+
+# Set the maximum number of threads you want to use
+max_threads = 20 # Change this as needed
+
+#loop 1000 times and create an array that can iterrows later. 
+rows = []
+rows = [rows.append(1) for i in range(100000)]
+
+total_rows = len(rows)
+
+ # Create a ThreadPoolExecutor with the desired number of threads
+with concurrent.futures.ThreadPoolExecutor(max_threads) as executor:
+    # Wrap the executor with tqdm for progress tracking
+    with tqdm(total=total_rows, desc="Processing", unit="row", dynamic_ncols=True) as pbar:
+        # Submit each row for processing in parallel
+        futures = [executor.submit(process_8w_row, row) for row in range(100000)]
+
+        # Process completed tasks
+        for future in concurrent.futures.as_completed(futures):
+            # Update the progress bar for each completed task
+            pbar.update()
+
+        # Wait for all tasks to complete
+        # concurrent.futures.wait(futures)
+
+
+
+
+# Define the range of years for random dates
+start_year = 1900
+end_year = 2100
+
+# Generate 10000 random dates
+random_dates = [datetime(random.randint(start_year, end_year), random.randint(1, 12), random.randint(1, 28)) for _ in range(10000)]
+
+for target_date in random_dates:
+    solar_old , result_old = bazi.get_Luna_Month_With_Season_zz(target_date)
+    solar_new, result_new = bazi.get_Luna_Month_With_Season(target_date)
+
+    if result_old != result_new:
+        print(f"Mismatch for date {target_date}: Old method = {result_old}, New method = {result_new}")
+        
+    if solar_old != solar_new:
+        print(f"Mismatch for date {target_date} - {result_new}: Old method = {solar_old}, New method = {solar_new}")   
