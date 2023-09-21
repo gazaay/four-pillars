@@ -245,12 +245,12 @@ def calculate_month_heavenly(year, month: int, day):
     # else: 
     #     offset = 0
     # print(f"Month is {month} Offset is {offset}")
-    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 9, 15)) 
+    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 23, 15)) 
 
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
 
-    logger.debug(f"The month with Season is {quotient_solar}")
+    logger.info(f"The month with Season is {quotient_solar} and reminder is {reminder}")
 
     month = quotient_solar
 
@@ -266,9 +266,12 @@ def calculate_month_heavenly(year, month: int, day):
     earthly_branch_stem = EarthlyBranch((month + 2) %12).value 
     logger.debug(f"Month Earthly Branch Stem {earthly_branch_stem}")
 
-    return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
+    if reminder > 0:
+        return HeavenlyStem(get_next_half_heavenly(month_heavenly_stem)), EarthlyBranch(get_next_half_earthly(earthly_branch_stem))
+    else:
+        return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
-def calculate_day_heavenly(year, month, day):
+def calculate_day_heavenly(year, month, day, hour, mins):
 
     #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
@@ -317,7 +320,11 @@ def calculate_day_heavenly(year, month, day):
     # heavenly_stem = heavenly_stems[heavenly_stem_index]
     # earthly_branch = earthly_branches[earthly_branch_index]
 
-    return HeavenlyStem(heavenly_stem_index) , EarthlyBranch(earthly_branch_index)
+    if hour > 12:
+        logger.info(f"Next Half Day - hour {hour}")
+        return HeavenlyStem(get_next_half_heavenly(heavenly_stem_index)) , EarthlyBranch(get_next_half_earthly(earthly_branch_index))    
+    else:
+        return HeavenlyStem(heavenly_stem_index) , EarthlyBranch(earthly_branch_index)
 
 def calculate_dark_stem(heavenly_index, earthly_index):
     stem = resolveHeavenlyStem(heavenly_index) + resolveEarthlyBranch(earthly_index)
@@ -360,7 +367,7 @@ def zz_calculate_day_heavenly(year, month, day):
     return HeavenlyStem(heavenly_stem), EarthlyBranch(earthly_branch)
 
 def calculate_hour_heavenly(year, month, day, hour):
-    heavenly_stem, earthly_branch = calculate_day_heavenly(year, month, day)
+    heavenly_stem, earthly_branch = calculate_day_heavenly(year, month, day, hour, 15)
     heavenly_stem_index = ((((heavenly_stem.value*2 + (hour+1) // 2) -2) % 10) + 1)%10
     earthly_branch_index = (((((hour + 1) // 2) ) % 12) + 1)%12
     logger.debug("Earthly Branch Index is ", earthly_branch_index)
@@ -498,4 +505,9 @@ def get_Luna_Month_With_Season(target_date):
     else:
         return solarterms_list[luna_month], luna_month+1
 
+def get_next_half_heavenly(heavenly_index):
+    return (heavenly_index + 5) % 10
+
+def get_next_half_earthly(earthly_index):
+    return (earthly_index + 3) % 12
 

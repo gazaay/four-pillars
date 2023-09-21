@@ -52,7 +52,7 @@ def get_heavenly_branch_ym(year: int, month: int):
 def get_heavenly_branch_ymd(year: int, month: int, day: int):
     heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly(year, month)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month,1)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day, 9, 15)
     return {"Heavenly Stem": bazi.resolveHeavenlyStem(heavenly_stem), 
             "Earthly Branch": bazi.resolveEarthlyBranch(earthly_branch), 
             "Heavenly Month Stem": bazi.resolveHeavenlyStem(heavenly_month_stem),
@@ -66,7 +66,7 @@ def get_heavenly_branch_ymd(year: int, month: int, day: int):
 def get_heavenly_branch_ymdh(year: int, month: int, day: int, hour: int):
     heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly(year, month)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day, 9, 15)
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     return {"Heavenly Stem": bazi.resolveHeavenlyStem(heavenly_stem), 
             "Earthly Branch": bazi.resolveEarthlyBranch(earthly_branch), 
@@ -95,7 +95,7 @@ def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int)
     heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly(year, month,day)
     dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day, hour, 15)
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     dark_hour_stem = bazi.calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem )
     
@@ -112,7 +112,7 @@ def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int)
 def get_heavenly_branch_ymdh_splitpillars(year: int, month: int, day: int, hour: int):
     heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly(year, month)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month,1)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day, hour, 15)
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     return {"年天": bazi.resolveHeavenlyStem(heavenly_stem), 
             "年地": bazi.resolveEarthlyBranch(earthly_branch), 
@@ -228,6 +228,13 @@ day = 5
 hour =9
 minute = 15
 
+# 公元2023年09月23日 農歷08月(大)09日 星期六 天秤座
+# 歲次：癸卯年、生肖屬兔、辛酉月、甲申日
+year = 2023
+month = 9
+day = 22
+hour = 13
+
 print(f"Dark Stem of 辛巳 {bazi.calculate_dark_stem(bazi.HeavenlyStem(8), bazi.EarthlyBranch(6) )} ")
 print(f"Dark Stem of 壬午 {bazi.calculate_dark_stem(bazi.HeavenlyStem(9), bazi.EarthlyBranch(7) )} ")
 print(f"Dark Stem of 癸未 {bazi.calculate_dark_stem(bazi.HeavenlyStem(0), bazi.EarthlyBranch(8) )} ")
@@ -235,6 +242,10 @@ print(f"Dark Stem of 癸未 {bazi.calculate_dark_stem(bazi.HeavenlyStem(0), bazi
 result = get_heavenly_branch_ymdh_pillars(year, month, day, hour)
 
 logger.info (result)
+
+heavenly_month_stem, earthly_month_stem  = bazi.calculate_month_heavenly(year,month,day)
+
+logger.info(bazi.resolveHeavenlyStem(heavenly_month_stem) + bazi.resolveEarthlyBranch(earthly_month_stem))
 
 # logger.debug(f"Year Stem is {get_heavenly_branch_y(2018)}")
 
@@ -247,65 +258,88 @@ logger.info (result)
 specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, Hour, Minute, Second
 # logger.info(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
 
-specific_datetime = datetime(2019,4,4,9, 30, 0)  # Year, Month, Day, Hour, Minute, Second
-print(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
 
-def process_8w_row(row):
-    # counting()
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(0)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(1)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(2)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(3)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(4)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(5)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(6)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(7)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(8)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(9)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(10)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(11)))
+# logger.info(bazi.resolveHeavenlyStem(bazi.get_next_half_heavenly(12)))
 
 
-    try:
+# Process one row of 8w
+
+# specific_datetime = datetime(2019,4,4,9, 30, 0)  # Year, Month, Day, Hour, Minute, Second
+# print(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
+
+# def process_8w_row(row):
+#     # counting()
+
+
+#     try:
         
-        year = 2023
-        month = 8
-        day = 23
-        hour = 9
+#         year = 2023
+#         month = 8
+#         day = 23
+#         hour = 9
         
-        result_current = get_heavenly_branch_ymdh_pillars(year,month,day,hour)
-    except Exception as e:
-        print("Error: {0}".format(e))
+#         result_current = get_heavenly_branch_ymdh_pillars(year,month,day,hour)
+#     except Exception as e:
+#         print("Error: {0}".format(e))
              
 
-# Set the maximum number of threads you want to use
-max_threads = 20 # Change this as needed
-
-#loop 1000 times and create an array that can iterrows later. 
-rows = []
-rows = [rows.append(1) for i in range(100000)]
-
-total_rows = len(rows)
-
- # Create a ThreadPoolExecutor with the desired number of threads
-with concurrent.futures.ThreadPoolExecutor(max_threads) as executor:
-    # Wrap the executor with tqdm for progress tracking
-    with tqdm(total=total_rows, desc="Processing", unit="row", dynamic_ncols=True) as pbar:
-        # Submit each row for processing in parallel
-        futures = [executor.submit(process_8w_row, row) for row in range(100000)]
-
-        # Process completed tasks
-        for future in concurrent.futures.as_completed(futures):
-            # Update the progress bar for each completed task
-            pbar.update()
-
-        # Wait for all tasks to complete
-        # concurrent.futures.wait(futures)
 
 
 
 
-# Define the range of years for random dates
-start_year = 1900
-end_year = 2100
 
-# Generate 10000 random dates
-random_dates = [datetime(random.randint(start_year, end_year), random.randint(1, 12), random.randint(1, 28)) for _ in range(10000)]
+# # Set the maximum number of threads you want to use
+# max_threads = 20 # Change this as needed
 
-for target_date in random_dates:
-    solar_old , result_old = bazi.get_Luna_Month_With_Season_zz(target_date)
-    solar_new, result_new = bazi.get_Luna_Month_With_Season(target_date)
+# #loop 1000 times and create an array that can iterrows later. 
+# rows = []
+# rows = [rows.append(1) for i in range(100000)]
 
-    if result_old != result_new:
-        print(f"Mismatch for date {target_date}: Old method = {result_old}, New method = {result_new}")
+# total_rows = len(rows)
+
+#  # Create a ThreadPoolExecutor with the desired number of threads
+# with concurrent.futures.ThreadPoolExecutor(max_threads) as executor:
+#     # Wrap the executor with tqdm for progress tracking
+#     with tqdm(total=total_rows, desc="Processing", unit="row", dynamic_ncols=True) as pbar:
+#         # Submit each row for processing in parallel
+#         futures = [executor.submit(process_8w_row, row) for row in range(100000)]
+
+#         # Process completed tasks
+#         for future in concurrent.futures.as_completed(futures):
+#             # Update the progress bar for each completed task
+#             pbar.update()
+
+#         # Wait for all tasks to complete
+#         # concurrent.futures.wait(futures)
+
+
+
+
+# # Define the range of years for random dates
+# start_year = 1900
+# end_year = 2100
+
+# # Generate 10000 random dates
+# random_dates = [datetime(random.randint(start_year, end_year), random.randint(1, 12), random.randint(1, 28)) for _ in range(10000)]
+
+# for target_date in random_dates:
+#     solar_old , result_old = bazi.get_Luna_Month_With_Season_zz(target_date)
+#     solar_new, result_new = bazi.get_Luna_Month_With_Season(target_date)
+
+#     if result_old != result_new:
+#         print(f"Mismatch for date {target_date}: Old method = {result_old}, New method = {result_new}")
         
-    if solar_old != solar_new:
-        print(f"Mismatch for date {target_date} - {result_new}: Old method = {solar_old}, New method = {solar_new}")   
+#     if solar_old != solar_new:
+#         print(f"Mismatch for date {target_date} - {result_new}: Old method = {solar_old}, New method = {solar_new}")   
