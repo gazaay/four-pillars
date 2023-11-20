@@ -233,11 +233,10 @@ def calculate_year_heavenly(year, month: int, day):
     logger.debug(f"Year Earthly Branch {earthly_branch.value}")
     return heavenly_stem.value, earthly_branch.value
 
-
 # Define a lock for synchronizing access to the shared variable 'i'
 i_lock = Lock()
 
-def calculate_month_heavenly(year, month: int, day):
+def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day):
     # #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
     # if month == 0:
@@ -271,7 +270,41 @@ def calculate_month_heavenly(year, month: int, day):
     else:
         return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
-def calculate_day_heavenly(year, month, day, hour, mins):
+def calculate_month_heavenly_withSeason_for_baselife_time(year, month: int, day):
+    # #Chinese calendar is solar calendar
+    # year, month, day = convert_Solar_to_Luna(year, month, day)
+    # if month == 0:
+    #     offset = 1
+    # else: 
+    #     offset = 0
+    # print(f"Month is {month} Offset is {offset}")
+    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 23, 15)) 
+
+    quotient_solar = solar_month_index // 2
+    reminder = solar_month_index % 2
+
+    logger.info(f"The month with Season is {quotient_solar} and reminder is {reminder}")
+
+    month = quotient_solar
+
+    heavenly_stem_index = (year - 3) % 10
+    logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
+    year_heavenly_stem = HeavenlyStem(heavenly_stem_index)
+    logger.debug(f"Heavenly Stem {year_heavenly_stem.name}")
+    month_heavenly_stem = ((year % 10 + 2 )  * 2 + month) %10
+
+    # month_heavenly_stem = (year_heavenly_stem.value + year_heavenly_stem.value + 1) % 10
+    # month_heavenly_stem = (month_heavenly_stem + month - 1 ) % 10
+    logger.debug(f"Month Heavenly Stem {month_heavenly_stem} ")
+    earthly_branch_stem = EarthlyBranch((month + 2) %12).value 
+    logger.debug(f"Month Earthly Branch Stem {earthly_branch_stem}")
+
+    # if reminder > 0:
+    #     return HeavenlyStem(get_next_half_heavenly(month_heavenly_stem)), EarthlyBranch(get_next_half_earthly(earthly_branch_stem))
+    # else:
+    return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
+
+def calculate_day_heavenly_current(year, month, day, hour, mins):
 
     #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
@@ -326,6 +359,58 @@ def calculate_day_heavenly(year, month, day, hour, mins):
     else:
         return HeavenlyStem(heavenly_stem_index) , EarthlyBranch(earthly_branch_index)
 
+def calculate_day_heavenly_base(year, month, day, hour, mins):
+
+    #Chinese calendar is solar calendar
+    # year, month, day = convert_Solar_to_Luna(year, month, day)
+
+
+    if year >= 2000:
+    # Calculate the intermediate value
+        intermediate_value = (year % 100 + 100) * 5 + (year % 100 + 100) // 4 + 9 + day
+    else:
+        intermediate_value = (year % 100) * 5 + (year % 100 ) // 4 + 9 + day
+
+    # logger.info(f"Intermediate value {intermediate_value %60}")
+    # if (month == 1) or (month == 4) or (month == 5):
+    #     intermediate_value += 1
+    # elif (month == 2) or (month == 6) or (month == 7):
+    #     intermediate_value += 2
+
+    # Determine if the month is single (29 days) or double (30 days)
+    if month % 2 == 0:  # If month is even, it's a double month
+        intermediate_value += 30
+    else:  # If month is odd, it's a single month
+        intermediate_value += 0
+
+    # Determine the adjustment factor for each month
+    adjustment_factors = [0, 1, 2, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5]
+    adjustment_factor = adjustment_factors[month]
+
+    # Adjust for leap year
+    if (year % 4 == 0) and ((year % 100 != 0) or (year % 400 == 0)):
+        if (month == 1) or (month == 2):
+            logger.info("It is Leap Year!")
+            adjustment_factor -= 1
+
+    # Apply the adjustment factor
+    intermediate_value += adjustment_factor
+
+    # logger.info(f"Intermediate value after Leap year Adjusted. {intermediate_value %60} with {SixtyStem(intermediate_value %60)}")
+    # # Calculate Heavenly Stems and Earthly Branches
+    heavenly_stem_index = (intermediate_value % 60) % 10
+    earthly_branch_index = (intermediate_value % 60) % 12
+
+    # Define Heavenly Stems and Earthly Branches
+    # heavenly_stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
+    # earthly_branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+
+    # heavenly_stem = heavenly_stems[heavenly_stem_index]
+    # earthly_branch = earthly_branches[earthly_branch_index]
+
+    return HeavenlyStem(heavenly_stem_index) , EarthlyBranch(earthly_branch_index)
+
+
 def calculate_dark_stem(heavenly_index, earthly_index):
     stem = resolveHeavenlyStem(heavenly_index) + resolveEarthlyBranch(earthly_index)
     # print(f"Input stem {stem} with {heavenly_index}")
@@ -367,12 +452,11 @@ def zz_calculate_day_heavenly(year, month, day):
     return HeavenlyStem(heavenly_stem), EarthlyBranch(earthly_branch)
 
 def calculate_hour_heavenly(year, month, day, hour):
-    heavenly_stem, earthly_branch = calculate_day_heavenly(year, month, day, hour, 15)
+    heavenly_stem, earthly_branch = calculate_day_heavenly_base(year, month, day, hour, 15)
     heavenly_stem_index = ((((heavenly_stem.value*2 + (hour+1) // 2) -2) % 10) + 1)%10
     earthly_branch_index = (((((hour + 1) // 2) ) % 12) + 1)%12
     logger.debug("Earthly Branch Index is ", earthly_branch_index)
     return HeavenlyStem(heavenly_stem_index), EarthlyBranch(earthly_branch_index)
-
 
 def convert_Solar_to_Luna(year, month, day):
     solar = Solar(year, month, day)
@@ -387,9 +471,6 @@ def resolveHeavenlyStem(number):
 
 def resolveEarthlyBranch(number ):
     return str(EarthlyBranchCN[EarthlyBranch(number).name].value)
-
-
-
 
 def get_Luna_Month_With_Season_zz(current_datetime):
 
@@ -432,30 +513,6 @@ def get_Luna_Month_With_Season_zz(current_datetime):
             
     # print(f" The Solar term is {luna_solar_term} and {luna_month}")
     return luna_solar_term, luna_month
-
-
-# def get_Luna_Month_With_Season(target_date):
-    
-#     year, month, day = convert_Solar_to_Luna (target_date.year, target_date.month,
-#                                             target_date.day)
-#     with i_lock:
-#         solarterms_list = [
-#             solarterm.LiChun(year), solarterm.YuShui(year), solarterm.JingZhe(year), solarterm.ChunFen(year),
-#             solarterm.QingMing(year), solarterm.GuYu(year), solarterm.LiXia(year), solarterm.XiaoMan(year),
-#             solarterm.MangZhong(year), solarterm.XiaZhi(year), solarterm.XiaoShu(year), solarterm.DaShu(year),
-#             solarterm.LiQiu(year), solarterm.ChuShu(year), solarterm.BaiLu(year), solarterm.QiuFen(year),
-#             solarterm.HanLu(year), solarterm.ShuangJiang(year), solarterm.LiDong(year), solarterm.XiaoXue(year),
-#             solarterm.DaXue(year), solarterm.DongZhi(year), solarterm.XiaoHan(year), solarterm.DaHan(year)
-#         ]
-
-#     # Set the timezone of solarterms_list to be the same as target_date
-#     solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
-
-#     # Use bisect to find the insertion point in the sorted list
-#     luna_month = bisect.bisect_left(solarterms_list, target_date)
-    
-#     return 'XiaoXue', luna_month
-
 
 # Initialize a dictionary to cache solar terms for each year
 solar_term_cache = {}
@@ -511,3 +568,24 @@ def get_next_half_heavenly(heavenly_index):
 def get_next_half_earthly(earthly_index):
     return (earthly_index + 3) % 12
 
+# def get_Luna_Month_With_Season(target_date):
+    
+#     year, month, day = convert_Solar_to_Luna (target_date.year, target_date.month,
+#                                             target_date.day)
+#     with i_lock:
+#         solarterms_list = [
+#             solarterm.LiChun(year), solarterm.YuShui(year), solarterm.JingZhe(year), solarterm.ChunFen(year),
+#             solarterm.QingMing(year), solarterm.GuYu(year), solarterm.LiXia(year), solarterm.XiaoMan(year),
+#             solarterm.MangZhong(year), solarterm.XiaZhi(year), solarterm.XiaoShu(year), solarterm.DaShu(year),
+#             solarterm.LiQiu(year), solarterm.ChuShu(year), solarterm.BaiLu(year), solarterm.QiuFen(year),
+#             solarterm.HanLu(year), solarterm.ShuangJiang(year), solarterm.LiDong(year), solarterm.XiaoXue(year),
+#             solarterm.DaXue(year), solarterm.DongZhi(year), solarterm.XiaoHan(year), solarterm.DaHan(year)
+#         ]
+
+#     # Set the timezone of solarterms_list to be the same as target_date
+#     solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
+
+#     # Use bisect to find the insertion point in the sorted list
+#     luna_month = bisect.bisect_left(solarterms_list, target_date)
+    
+#     return 'XiaoXue', luna_month

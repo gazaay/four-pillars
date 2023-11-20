@@ -91,11 +91,14 @@ def get_heavenly_branch_yy(from_year: int, to_year: int):
         # Move to the next day
         current_date += datetime.timedelta(days=1)
 
-def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly(year, month,day)
+
+
+# Calculate for normal 8w
+def get_heavenly_branch_ymdh_pillars_base(year: int, month: int, day: int, hour: int):
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_baselife_time(year, month,day)
     dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day, hour, 15)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_base(year, month, day, hour, 15)
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     dark_hour_stem = bazi.calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem )
     
@@ -109,10 +112,31 @@ def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int)
             "-月": dark_month_stem,
            }
 
+# Calculate for normal 8w
+def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, hour: int):
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month,day)
+    dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
+    heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_current(year, month, day, hour, 15)
+    heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
+    dark_hour_stem = bazi.calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem )
+    
+    
+    return {
+            "時": bazi.resolveHeavenlyStem(heavenly_hour_stem) + bazi.resolveEarthlyBranch(earthly_hour_stem),
+            "日": bazi.resolveHeavenlyStem(heavenly_day_stem) + bazi.resolveEarthlyBranch(earthly_day_stem),
+            "-時": dark_hour_stem,
+            "月": bazi.resolveHeavenlyStem(heavenly_month_stem) + bazi.resolveEarthlyBranch(earthly_month_stem),
+            "年": bazi.resolveHeavenlyStem(heavenly_stem) + bazi.resolveEarthlyBranch(earthly_branch), 
+            "-月": dark_month_stem,
+           }
+
+
+# Calculate with normal 8w and split
 def get_heavenly_branch_ymdh_splitpillars(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly(year, month)
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month,1)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly(year, month, day, hour, 15)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_current(year, month, day, hour, 15)
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     return {"年天": bazi.resolveHeavenlyStem(heavenly_stem), 
             "年地": bazi.resolveEarthlyBranch(earthly_branch), 
@@ -232,20 +256,30 @@ minute = 15
 # 歲次：癸卯年、生肖屬兔、辛酉月、甲申日
 year = 2023
 month = 9
-day = 22
+day = 23
 hour = 13
 
-print(f"Dark Stem of 辛巳 {bazi.calculate_dark_stem(bazi.HeavenlyStem(8), bazi.EarthlyBranch(6) )} ")
-print(f"Dark Stem of 壬午 {bazi.calculate_dark_stem(bazi.HeavenlyStem(9), bazi.EarthlyBranch(7) )} ")
-print(f"Dark Stem of 癸未 {bazi.calculate_dark_stem(bazi.HeavenlyStem(0), bazi.EarthlyBranch(8) )} ")
+# My
+# 歲次：
+year = 1979
+month = 4
+day = 27
+hour = 13
 
-result = get_heavenly_branch_ymdh_pillars(year, month, day, hour)
+# print(f"Dark Stem of 辛巳 {bazi.calculate_dark_stem(bazi.HeavenlyStem(8), bazi.EarthlyBranch(6) )} ")
+# print(f"Dark Stem of 壬午 {bazi.calculate_dark_stem(bazi.HeavenlyStem(9), bazi.EarthlyBranch(7) )} ")
+# print(f"Dark Stem of 癸未 {bazi.calculate_dark_stem(bazi.HeavenlyStem(0), bazi.EarthlyBranch(8) )} ")
+
+result = get_heavenly_branch_ymdh_pillars_base(year, month, day, hour)
 
 logger.info (result)
 
-heavenly_month_stem, earthly_month_stem  = bazi.calculate_month_heavenly(year,month,day)
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
 
-logger.info(bazi.resolveHeavenlyStem(heavenly_month_stem) + bazi.resolveEarthlyBranch(earthly_month_stem))
+# heavenly_month_stem, earthly_month_stem  = bazi.calculate_month_heavenly(year,month,day)
+
+# logger.info(bazi.resolveHeavenlyStem(heavenly_month_stem) + bazi.resolveEarthlyBranch(earthly_month_stem))
 
 # logger.debug(f"Year Stem is {get_heavenly_branch_y(2018)}")
 
