@@ -290,6 +290,14 @@ month = 4
 day = 27
 hour = 13
 
+
+# My
+# 歲次：
+year = 2023
+month = 12
+day = 22
+hour = 16
+
 # print(f"Dark Stem of 辛巳 {bazi.calculate_dark_stem(bazi.HeavenlyStem(8), bazi.EarthlyBranch(6) )} ")
 # print(f"Dark Stem of 壬午 {bazi.calculate_dark_stem(bazi.HeavenlyStem(9), bazi.EarthlyBranch(7) )} ")
 # print(f"Dark Stem of 癸未 {bazi.calculate_dark_stem(bazi.HeavenlyStem(0), bazi.EarthlyBranch(8) )} ")

@@ -236,6 +236,7 @@ def calculate_year_heavenly(year, month: int, day):
 # Define a lock for synchronizing access to the shared variable 'i'
 i_lock = Lock()
 
+#流時use to calculate the time of day 8w. The month will change based on Season.
 def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day):
     # #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
@@ -249,9 +250,10 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day):
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
 
-    logger.info(f"The month with Season is {quotient_solar} and reminder is {reminder}")
-
+    if quotient_solar == 0:
+            quotient_solar = 12
     month = quotient_solar
+    logger.info(f"The month with Season is {quotient_solar} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -270,6 +272,7 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day):
     else:
         return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
+# 本時 use for calculate birthday. 
 def calculate_month_heavenly_withSeason_for_baselife_time(year, month: int, day):
     # #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
@@ -283,10 +286,12 @@ def calculate_month_heavenly_withSeason_for_baselife_time(year, month: int, day)
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
 
-    logger.info(f"The month with Season is {quotient_solar} and reminder is {reminder}")
-
+    if quotient_solar == 0:
+            quotient_solar = 12
     month = quotient_solar
 
+    logger.info(f"The month with Season is {quotient_solar} and reminder is {reminder}")
+    
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
     year_heavenly_stem = HeavenlyStem(heavenly_stem_index)
