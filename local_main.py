@@ -121,6 +121,7 @@ def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, ho
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     dark_hour_stem = bazi.calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem )
     
+
     
     return {
             "時": bazi.resolveHeavenlyStem(heavenly_hour_stem) + bazi.resolveEarthlyBranch(earthly_hour_stem),
@@ -283,31 +284,106 @@ month = 9
 day = 23
 hour = 13
 
+# # My
+# # 歲次：
+# year = 1979
+# month = 4
+# day = 27
+# hour = 13
+
+
+# # My
+# # 歲次：
+# year = 2023
+# month = 12
+# day =2
+# hour = 13
+
+
+# # result = get_heavenly_branch_ymdh_pillars_base(year, month, day, hour)
+
+# # logger.info (result)
+
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+
+bazi.get_Luna_Month_With_Season(datetime(2023, 12, 21, 9, 0, 0))
+bazi.get_Luna_Month_With_Season(datetime(2023, 12, 24, 9, 0, 0))
+bazi.get_Luna_Month_With_Season(datetime(2024, 1, 4, 9, 0, 0))
+bazi.get_Luna_Month_With_Season(datetime(2024, 1, 6, 9, 0, 0))
+bazi.get_Luna_Month_With_Season(datetime(2024, 1, 8, 9, 0, 0))
+bazi.get_Luna_Month_With_Season(datetime(2024, 1, 16, 9, 0, 0))
+bazi.get_Luna_Month_With_Season(datetime(2024, 1, 22, 9, 0, 0))
+bazi.get_Luna_Month_With_Season(datetime(2024, 2, 1, 9, 0, 0))
+
 # My
 # 歲次：
 year = 1979
 month = 4
-day = 27
-hour = 13
-
-
-# My
-# 歲次：
-year = 2023
-month = 12
-day = 22
-hour = 16
-
-# print(f"Dark Stem of 辛巳 {bazi.calculate_dark_stem(bazi.HeavenlyStem(8), bazi.EarthlyBranch(6) )} ")
-# print(f"Dark Stem of 壬午 {bazi.calculate_dark_stem(bazi.HeavenlyStem(9), bazi.EarthlyBranch(7) )} ")
-# print(f"Dark Stem of 癸未 {bazi.calculate_dark_stem(bazi.HeavenlyStem(0), bazi.EarthlyBranch(8) )} ")
-
-result = get_heavenly_branch_ymdh_pillars_base(year, month, day, hour)
-
-logger.info (result)
+day =27
+hour = 11
 
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
 logger.info (result)
+print("##################################/n")
+year = 2023
+month = 12
+day =19
+hour = 11
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+year = 2023
+month = 12
+day =22
+hour = 11
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+year = 2023
+month = 12
+day =23
+hour = 11
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+year = 2023
+month = 12
+day =31
+hour = 11
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+
+year = 2024
+month = 1
+day =1
+hour = 11
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+
+year = 2024
+month = 1
+day =16
+hour = 11
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+year = 2024
+month = 1
+day =25
+hour = 11
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
 
 # heavenly_month_stem, earthly_month_stem  = bazi.calculate_month_heavenly(year,month,day)
 

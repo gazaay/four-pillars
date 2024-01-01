@@ -238,8 +238,7 @@ i_lock = Lock()
 
 #流時use to calculate the time of day 8w. The month will change based on Season.
 def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day):
-    # #Chinese calendar is solar calendar
-    # year, month, day = convert_Solar_to_Luna(year, month, day)
+    
     # if month == 0:
     #     offset = 1
     # else: 
@@ -247,13 +246,17 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day):
     # print(f"Month is {month} Offset is {offset}")
     solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 23, 15)) 
 
+    # #Chinese calendar is solar calendar
+    # use the year only
+    year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
+
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
 
-    if quotient_solar == 0:
-            quotient_solar = 12
+    # if quotient_solar == 0:
+    #         quotient_solar = 12
     month = quotient_solar
-    logger.info(f"The month with Season is {quotient_solar} and reminder is {reminder}")
+    logger.info(f"The month {month} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -545,12 +548,21 @@ def get_solar_terms(year):
 
 def get_Luna_Month_With_Season(target_date):
     year, month, day = convert_Solar_to_Luna(target_date.year, target_date.month, target_date.day)
-
     solarterms_list = get_solar_terms(year)
+    # year = target_date.year
+    # month = target_date.month
+    # day = target_date.day
+    solarterms_list = solarterms_list[:-2]
+
+    last_two_objects = get_solar_terms(year + 1)
+    last_two_objects = last_two_objects[-2:]
+
+    solarterms_list = solarterms_list + last_two_objects
 
     # Set the timezone of solarterms_list to be the same as target_date
     solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
 
+    # print(f"{solarterms_list}")
     # Use bisect to find the insertion point in the sorted list
     luna_month = bisect.bisect_left(solarterms_list, target_date)
     
@@ -560,10 +572,11 @@ def get_Luna_Month_With_Season(target_date):
         "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
         "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan"
     ]  
-    # print(f"{luna_month}")
+    logger.info(f"Luna Month of {target_date} is - {luna_month}")
     # solarterms_list[luna_month]
-    if luna_month == 24:    
-        return "DaHan", 0
+    if luna_month == 24:  
+        logger.info("############WARNING @############ Hard code to zero:")  
+        return "DaHan", 25
     else:
         return solarterms_list[luna_month], luna_month+1
 
