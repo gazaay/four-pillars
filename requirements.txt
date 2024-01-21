@@ -5,4 +5,6 @@ ephem
 pandas
 tqdm
 numpy
-
+yfinance
+yahooquery
+scikit-learn
