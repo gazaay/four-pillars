@@ -95,7 +95,7 @@ def get_heavenly_branch_yy(from_year: int, to_year: int):
 
 # Calculate for normal 8w
 def get_heavenly_branch_ymdh_pillars_base(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_baselife_time(year, month,day)
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_baselife_time(year, month,day, hour)
     dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
     heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_base(year, month, day, hour, 15)
@@ -350,9 +350,9 @@ hour = 11
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
 logger.info (result)
 print("##################################/n")
-year = 2023
-month = 12
-day =31
+year = 2024
+month = 1
+day =19
 hour = 11
 
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
@@ -371,7 +371,7 @@ print("##################################/n")
 year = 2024
 month = 2
 day =4
-hour = 17
+hour = 13
 
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
 logger.info (result)
@@ -384,6 +384,83 @@ hour = 11
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
 logger.info (result)
 print("##################################/n")
+
+year = 2023
+month = 11
+day =7
+hour = 0
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+
+year = 2023
+month = 11
+day =8
+hour = 23
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+
+year = 2023
+month = 11
+day =9
+hour = 0
+
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
+print("##################################/n")
+
+year = 1979
+month = 4
+day =27
+hour = 13
+
+result = get_heavenly_branch_ymdh_pillars_base(year, month, day, hour)
+logger.info (result)
+print("################ {'時': '辛未', '日': '甲子', '-時': '丙寅', '月': '戊辰', '年': '己未', '-月': '癸酉'} /n")
+
+year = 2024
+month = 1
+day =24
+hour = 0
+
+result = get_heavenly_branch_ymdh_pillars_base(year, month, day, hour)
+logger.info (result)
+print("################ {'時': '庚子', '日': '丁亥', '-時': '乙巳', '月': '乙丑', '年': '癸卯', '-月': '庚午'} /n")
+
+
+year = 2023
+month = 12
+day =24
+hour = 0
+
+result = get_heavenly_branch_ymdh_pillars_base(year, month, day, hour)
+logger.info (result)
+print("################ {'時': '戊子', '日': '丙辰', '-時': '癸巳', '月': '甲子', '年': '癸卯', '-月': '己巳'} /n")
+
+
+
+year = 2023
+month = 11
+day =8
+hour = 0
+
+result = get_heavenly_branch_ymdh_pillars_base(year, month, day, hour)
+logger.info (result)
+print("################ {'時': '丙子', '日': '庚午', '-時': '辛巳', '月': '壬戌', '年': '癸卯', '-月': '丁巳'} /n")
+
+
+year = 2023
+month = 11
+day =2
+hour = 0
+
+result = get_heavenly_branch_ymdh_pillars_base(year, month, day, hour)
+logger.info (result)
+print("################ {'時': '丙子', '日': '庚午', '-時': '辛巳', '月': '壬戌', '年': '癸卯', '-月': '丁巳'} /n")
+
 
 # heavenly_month_stem, earthly_month_stem  = bazi.calculate_month_heavenly(year,month,day)
 

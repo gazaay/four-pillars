@@ -4,7 +4,9 @@ from . import solarterm
 from threading import Lock
 import logging
 import bisect
-from datetime import datetime, timezone
+from datetime import datetime
+import pandas as pd
+from pytz import timezone
 
 __name__ = "bazi"
 
@@ -250,13 +252,18 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
     # use the year only
     year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
 
+    if solar_month_index == 1 :
+        solar_month_index = 25
+    
+    solar_month_index = solar_month_index + 1
+
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
 
     # if quotient_solar == 0:
     #         quotient_solar = 12
     month = quotient_solar
-    logger.info(f"The month {month} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
+    logger.info(f"The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -276,7 +283,9 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
         return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
 # 本時 use for calculate birthday. 
-def calculate_month_heavenly_withSeason_for_baselife_time(year, month: int, day):
+def calculate_month_heavenly_withSeason_for_baselife_time(year, _month: int, day, hour):
+    month = _month
+    
     # #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
     # if month == 0:
@@ -284,32 +293,36 @@ def calculate_month_heavenly_withSeason_for_baselife_time(year, month: int, day)
     # else: 
     #     offset = 0
     # logger.debug(f"Month is {month} Offset is {offset}")
-    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 23, 15)) 
+    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, hour, 15)) 
+
+    
+    # #Chinese calendar is solar calendar
+    # use the year only
+    year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
+
+    if solar_month_index == 1 :
+        solar_month_index = 25
+    
+    solar_month_index = solar_month_index + 1
 
     quotient_solar = solar_month_index // 2
     reminder = solar_month_index % 2
 
-    if quotient_solar == 0:
-            quotient_solar = 12
+    # if quotient_solar == 0:
+    #         quotient_solar = 12
     month = quotient_solar
+    logger.info(f"The date {year, _month, day} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
-    logger.debug(f"The month with Season is {quotient_solar} and reminder is {reminder}")
-    
     heavenly_stem_index = (year - 3) % 10
-    logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
+    logger.info(f"Year Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
     year_heavenly_stem = HeavenlyStem(heavenly_stem_index)
     logger.debug(f"Heavenly Stem {year_heavenly_stem.name}")
     month_heavenly_stem = ((year % 10 + 2 )  * 2 + month) %10
 
-    # month_heavenly_stem = (year_heavenly_stem.value + year_heavenly_stem.value + 1) % 10
-    # month_heavenly_stem = (month_heavenly_stem + month - 1 ) % 10
-    logger.debug(f"Month Heavenly Stem {month_heavenly_stem} ")
+    logger.info(f"Month Heavenly Stem {month_heavenly_stem} ")
     earthly_branch_stem = EarthlyBranch((month + 2) %12).value 
     logger.debug(f"Month Earthly Branch Stem {earthly_branch_stem}")
 
-    # if reminder > 0:
-    #     return HeavenlyStem(get_next_half_heavenly(month_heavenly_stem)), EarthlyBranch(get_next_half_earthly(earthly_branch_stem))
-    # else:
     return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
 
 def calculate_day_heavenly_current(year, month, day, hour, mins):
@@ -538,51 +551,98 @@ def get_solar_terms(year):
         solarterm.DaXue(year), solarterm.DongZhi(year), solarterm.XiaoHan(year), solarterm.DaHan(year)
     ]
 
+    utc_timezone = timezone('UTC')
     # Set the timezone for the solar terms
-    solar_terms = [dt.replace(tzinfo=timezone.utc) for dt in solar_terms]
+    # solar_terms = [ utc_timezone.localize(dt) for dt in solar_terms]
 
     # Cache the solar terms for the year
     solar_term_cache[year] = solar_terms
 
     return solar_terms
 
-def get_Luna_Month_With_Season(target_date):
-    year, month, day = convert_Solar_to_Luna(target_date.year, target_date.month, target_date.day)
 
-    solarterms_list = get_solar_terms(target_date.year)
-    # if year > 11:
-    #     solarterms_list = solarterms_list.append(get_solar_terms(year + 1)[0])
 
-    # year = target_date.year
-    # month = target_date.month
-    # day = target_date.day
-    # solarterms_list = solarterms_list[:-2]
+def find_solar_term_and_index(df, query_date):
 
-    # last_two_objects = get_solar_terms(year + 1)
-    # last_two_objects = last_two_objects[-2:]
+   # Set the timezone for query_date to UTC using pytz
+    utc_timezone = timezone('Asia/Hong_Kong')
+    query_date_utc_aware = utc_timezone.localize(query_date)
+    logger.debug(query_date_utc_aware)
+    # Find the row where the query_date falls within the start_date and end_date range
+    row = df[(df['start_date'] <= query_date_utc_aware) & (query_date_utc_aware < df['end_date'])]
 
-    # solarterms_list = solarterms_list + last_two_objects
+    if not row.empty:
+        # Extract the solar term and index
+        solar_term = row['solarterms'].values[0]
+        index = df.loc[df['solarterms'] == solar_term].index[0] + 1
+        print(index)
+        return solar_term, index
+    else:
+        logger.debug(df)
+        logger.debug (df.iloc[21]["start_date"])
+        logger.debug (df.iloc[21]["start_date"] <= query_date_utc_aware )
+        logger.debug (df.iloc[21]["end_date"] > query_date_utc_aware)
+        return None, None
 
-    # Set the timezone of solarterms_list to be the same as target_date
-    solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
-    logger.info(f"Solarterms List {solarterms_list}")
-    # logger.debug(f"{solarterms_list}")
-    # Use bisect to find the insertion point in the sorted list
-    luna_month = bisect.bisect_left(solarterms_list, target_date)
     
-    solarterms_list = [
+def get_Luna_Month_With_Season(target_date):
+    # year, month, day = convert_Solar_to_Luna(target_date.year, target_date.month, target_date.day)
+
+    date_list = get_solar_terms(target_date.year)
+
+    # Original lists
+    solarterms = [
         "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
         "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
         "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
-        "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan", "LiChun"
-    ]  
-    logger.info(f"Luna Month of {target_date} is - {luna_month} - Luna Calc is {year} {month} {day}")
-    # solarterms_list[luna_month]
-    if luna_month == 24:  
-        logger.debug("############WARNING @############ Hard code to zero:")  
-        return "DaHan", 25
-    else:
-        return solarterms_list[luna_month], luna_month+1
+        "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan",
+    ]
+
+    # Merge the three lists into a DataFrame
+    df = pd.DataFrame(list(zip(solarterms, date_list, date_list[1:] + [date_list[0]])), columns=['solarterms', 'start_date', 'end_date'])
+    
+    # Update the end_date value for the row with index 21
+    df.loc[21, "end_date"] = solarterm.XiaoHan(target_date.year+1)
+
+    logger.debug (df.loc[21]["end_date"])
+    logger.debug (df)
+    return find_solar_term_and_index(df,target_date)
+
+    # return solarterms_list[luna_month], luna_month+1
+
+    # # if year > 11:
+    # #     solarterms_list = solarterms_list.append(get_solar_terms(year + 1)[0])
+
+    # # year = target_date.year
+    # # month = target_date.month
+    # # day = target_date.day
+    # # solarterms_list = solarterms_list[:-2]
+
+    # # last_two_objects = get_solar_terms(year + 1)
+    # # last_two_objects = last_two_objects[-2:]
+
+    # # solarterms_list = solarterms_list + last_two_objects
+
+    # # Set the timezone of solarterms_list to be the same as target_date
+    # solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
+    # logger.debug(f"Solarterms List {solarterms_list}")
+    # # logger.debug(f"{solarterms_list}")
+    # # Use bisect to find the insertion point in the sorted list
+    # luna_month = bisect.bisect_left(solarterms_list, target_date)
+    
+    # solarterms_list = [
+    #     "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
+    #     "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
+    #     "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
+    #     "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan", "LiChun"
+    # ]  
+    # logger.debug(f"Luna Month of {target_date} is - {luna_month} - Luna Calc is {year} {month} {day}")
+    # # solarterms_list[luna_month]
+    # if luna_month == 24:  
+    #     logger.debug("############WARNING @############ Hard code to zero:")  
+    #     return "DaHan", 25
+    # else:
+    #     return solarterms_list[luna_month], luna_month+1
 
 def get_next_half_heavenly(heavenly_index):
     return (heavenly_index + 5) % 10
