@@ -48,34 +48,34 @@ historical_data = finance.get_historical_data_UTC(symbol_code, start_date=start_
 # Step 7: Merge history data with the dataset
 dataset = pd.merge(dataset, historical_data, left_on='time', right_index=True, how='left')
 
-# # Step 7 (cont.): Get stock chengseng and merge with the dataset
-# chengseng_data = create_chengseng_for_dataset(dataset, symbol)
-# dataset = pd.merge(dataset, chengseng_data, on='time', how='left')
+# Step 7 (cont.): Get stock chengseng and merge with the dataset
+chengseng_data = create_chengseng_for_dataset(dataset, symbol)
+dataset = pd.merge(dataset, chengseng_data, on='time', how='left')
 
-# # Step 8: Feature engineering (assuming you have additional features to engineer)
+# Step 8: Feature engineering (assuming you have additional features to engineer)
 
-# # Step 9: Split datasets for random forest training
-# features = dataset.drop(['time', 'label'], axis=1)  # Adjust based on your actual features
-# labels = dataset['label']  # Adjust based on your actual labels
+# Step 9: Split datasets for random forest training
+features = dataset.drop(['time', 'label'], axis=1)  # Adjust based on your actual features
+labels = dataset['label']  # Adjust based on your actual labels
 
-# X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
 
-# # Step 10: Train random forest
-# rf_model = RandomForestClassifier()
-# rf_model.fit(X_train, y_train)
+# Step 10: Train random forest
+rf_model = RandomForestClassifier()
+rf_model.fit(X_train, y_train)
 
-# # Step 11: Predict with the future 12 months
-# future_features = pd.DataFrame({'time': pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D')})
-# future_features = bazi.adding_8w_pillars(future_features, base_8w)  # Assuming this function works for future features
+# Step 11: Predict with the future 12 months
+future_features = pd.DataFrame({'time': pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D')})
+future_features = bazi.adding_8w_pillars(future_features, base_8w)  # Assuming this function works for future features
 
-# # Add any additional feature engineering steps if needed
+# Add any additional feature engineering steps if needed
 
-# # Make predictions
-# future_predictions = rf_model.predict(future_features.drop('time', axis=1))
+# Make predictions
+future_predictions = rf_model.predict(future_features.drop('time', axis=1))
 
-# # Combine predictions with the future_features dataframe
-# future_features['prediction'] = future_predictions
+# Combine predictions with the future_features dataframe
+future_features['prediction'] = future_predictions
 
-# # Display the predictions for the future 12 months
-# print("Predictions for the Future 12 Months:")
-# print(future_features[['time', 'prediction']])
+# Display the predictions for the future 12 months
+print("Predictions for the Future 12 Months:")
+print(future_features[['time', 'prediction']])

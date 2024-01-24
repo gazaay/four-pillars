@@ -114,7 +114,7 @@ def get_heavenly_branch_ymdh_pillars_base(year: int, month: int, day: int, hour:
 
 # Calculate for normal 8w
 def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month,day)
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month,day, hour)
     dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
     heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_current(year, month, day, hour, 15)
@@ -136,7 +136,7 @@ def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, ho
 
 # Calculate for normal 8w
 def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month,day)
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)(year, month,day)
     dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
     heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_current(year, month, day, hour, 15)
@@ -360,8 +360,8 @@ logger.info (result)
 print("##################################/n")
 
 year = 2024
-month = 1
-day =1
+month = 2
+day =3
 hour = 11
 
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
@@ -369,16 +369,16 @@ logger.info (result)
 print("##################################/n")
 
 year = 2024
-month = 1
-day =16
-hour = 11
+month = 2
+day =4
+hour = 17
 
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
 logger.info (result)
 print("##################################/n")
 year = 2024
-month = 1
-day =25
+month = 2
+day =5
 hour = 11
 
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)

@@ -103,33 +103,35 @@ def get_listing_date_timestamp(symbol):
 
     # Send a GET request to the URL
     response = requests.get(url)
+    try:
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            # Parse the HTML content using BeautifulSoup
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # Parse the HTML content using BeautifulSoup
-        soup = BeautifulSoup(response.text, 'html.parser')
+            # Find all <tr> elements
+            tr_elements = soup.find_all('tr')
 
-        # Find all <tr> elements
-        tr_elements = soup.find_all('tr')
+            # Iterate through <tr> elements to find the one containing "Listing Date"
+            for tr in tr_elements:
+                td_elements = tr.find_all('td', class_='mcFont')
+                if len(td_elements) == 2 and td_elements[0].text.strip() == 'Listing Date':
+                    # Extract the value of Listing Date
+                    listing_date_str = td_elements[1].text.strip()
 
-        # Iterate through <tr> elements to find the one containing "Listing Date"
-        for tr in tr_elements:
-            td_elements = tr.find_all('td', class_='mcFont')
-            if len(td_elements) == 2 and td_elements[0].text.strip() == 'Listing Date':
-                # Extract the value of Listing Date
-                listing_date_str = td_elements[1].text.strip()
+                    # Convert the date string to a timestamp in 'Asia/Hong_Kong' timezone
+                    hong_kong_timezone = pytz.timezone('Asia/Hong_Kong')
+                    listing_date_timestamp = datetime.strptime(listing_date_str, '%Y/%m/%d').replace(tzinfo=hong_kong_timezone).timestamp()
+                    # Set the time to 9:30 AM
+                    listing_datetime = datetime.fromtimestamp(listing_date_timestamp).replace(hour=9, minute=30, second=0, tzinfo=hong_kong_timezone)
 
-                # Convert the date string to a timestamp in 'Asia/Hong_Kong' timezone
-                hong_kong_timezone = pytz.timezone('Asia/Hong_Kong')
-                listing_date_timestamp = datetime.strptime(listing_date_str, '%Y/%m/%d').replace(tzinfo=hong_kong_timezone).timestamp()
-                # Set the time to 9:30 AM
-                listing_datetime = datetime.fromtimestamp(listing_date_timestamp).replace(hour=9, minute=30, second=0, tzinfo=hong_kong_timezone)
-
-                return listing_datetime
-                break  # Break out of the loop once Listing Date is found
+                    return listing_datetime
+                    break  # Break out of the loop once Listing Date is found
+            else:
+                print("Listing Date not found on the webpage.")
         else:
-            print("Listing Date not found on the webpage.")
-    else:
-        # Print an error message if the request was not successful
-        print(f"Error: Unable to retrieve webpage. Status code: {response.status_code}")
+            # Print an error message if the request was not successful
+            print(f"Error: Unable to retrieve webpage. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"error getting info from {url} with error {e}")
 

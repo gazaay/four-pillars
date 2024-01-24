@@ -16,8 +16,8 @@ logging.basicConfig(level=logging.INFO,  # Set the minimum level for displayed l
 
 # Create a logger
 logger = logging.getLogger(__name__)
-
-
+# Test log messages
+logger.debug("This is a debug message")
 
 # Define the Heavenly Stems as an enumeration
 class HeavenlyStem(Enum):
@@ -237,14 +237,14 @@ def calculate_year_heavenly(year, month: int, day):
 i_lock = Lock()
 
 #流時use to calculate the time of day 8w. The month will change based on Season.
-def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day):
+def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, hour):
     
     # if month == 0:
     #     offset = 1
     # else: 
     #     offset = 0
     # logger.debug(f"Month is {month} Offset is {offset}")
-    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 23, 15)) 
+    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, hour, 15)) 
 
     # #Chinese calendar is solar calendar
     # use the year only
@@ -256,7 +256,7 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day):
     # if quotient_solar == 0:
     #         quotient_solar = 12
     month = quotient_solar
-    logger.debug(f"The month {month} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
+    logger.info(f"The month {month} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -548,20 +548,24 @@ def get_solar_terms(year):
 
 def get_Luna_Month_With_Season(target_date):
     year, month, day = convert_Solar_to_Luna(target_date.year, target_date.month, target_date.day)
-    solarterms_list = get_solar_terms(year)
+
+    solarterms_list = get_solar_terms(target_date.year)
+    # if year > 11:
+    #     solarterms_list = solarterms_list.append(get_solar_terms(year + 1)[0])
+
     # year = target_date.year
     # month = target_date.month
     # day = target_date.day
-    solarterms_list = solarterms_list[:-2]
+    # solarterms_list = solarterms_list[:-2]
 
-    last_two_objects = get_solar_terms(year + 1)
-    last_two_objects = last_two_objects[-2:]
+    # last_two_objects = get_solar_terms(year + 1)
+    # last_two_objects = last_two_objects[-2:]
 
-    solarterms_list = solarterms_list + last_two_objects
+    # solarterms_list = solarterms_list + last_two_objects
 
     # Set the timezone of solarterms_list to be the same as target_date
     solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
-
+    logger.info(f"Solarterms List {solarterms_list}")
     # logger.debug(f"{solarterms_list}")
     # Use bisect to find the insertion point in the sorted list
     luna_month = bisect.bisect_left(solarterms_list, target_date)
@@ -570,9 +574,9 @@ def get_Luna_Month_With_Season(target_date):
         "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
         "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
         "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
-        "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan"
+        "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan", "LiChun"
     ]  
-    logger.debug(f"Luna Month of {target_date} is - {luna_month}")
+    logger.info(f"Luna Month of {target_date} is - {luna_month} - Luna Calc is {year} {month} {day}")
     # solarterms_list[luna_month]
     if luna_month == 24:  
         logger.debug("############WARNING @############ Hard code to zero:")  
@@ -618,7 +622,7 @@ def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int)
       # logger.debug(f"{year} {month} {day}")
       # datetime(year, month, day)
       # with lock:
-      heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month,day)
+      heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
       # with lock:
       dark_month_stem = calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
 
@@ -666,7 +670,7 @@ def get_heavenly_branch_ymdh_pillars_base(year: int, month: int, day: int, hour:
 
 # Calculate for normal 8w
 def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month,day)
+    heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
     dark_month_stem = calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = calculate_year_heavenly(year, month, day)
     heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_current(year, month, day, hour, 15)
