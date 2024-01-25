@@ -591,7 +591,7 @@ def find_solar_term_and_index(df, query_date):
     query_month_day = (query_date_utc_aware.month, query_date_utc_aware.day)
 
     # Compare with January 5th
-    january_5th = (1, 5)
+    january_5th = (1, 6)
 
     if query_month_day <= january_5th:
         # If the date is before January 5th, add one year
