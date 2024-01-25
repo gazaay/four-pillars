@@ -377,9 +377,9 @@ result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
 logger.info (result)
 print("##################################/n")
 year = 2024
-month = 2
+month = 1
 day =5
-hour = 11
+hour = 19
 
 result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
 logger.info (result)

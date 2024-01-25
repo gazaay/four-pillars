@@ -4,9 +4,9 @@ from . import solarterm
 from threading import Lock
 import logging
 import bisect
-from datetime import datetime
 import pandas as pd
 from pytz import timezone
+from datetime import datetime, timedelta
 
 __name__ = "bazi"
 
@@ -586,6 +586,17 @@ def find_solar_term_and_index(df, query_date):
     utc_timezone = timezone('Asia/Hong_Kong')
     query_date_utc_aware = utc_timezone.localize(query_date)
     logger.debug(query_date_utc_aware)
+
+    # Extract month and day from query_date_utc_aware
+    query_month_day = (query_date_utc_aware.month, query_date_utc_aware.day)
+
+    # Compare with January 5th
+    january_5th = (1, 5)
+
+    if query_month_day <= january_5th:
+        # If the date is before January 5th, add one year
+        query_date_utc_aware += timedelta(days=365)
+
     # Find the row where the query_date falls within the start_date and end_date range
     row = df[(df['start_date'] <= query_date_utc_aware) & (query_date_utc_aware < df['end_date'])]
 
@@ -593,13 +604,13 @@ def find_solar_term_and_index(df, query_date):
         # Extract the solar term and index
         solar_term = row['solarterms'].values[0]
         index = df.loc[df['solarterms'] == solar_term].index[0] + 1
-        logger.debug(index)
+        logger.info(index)
         return solar_term, index
     else:
-        logger.debug(df)
-        logger.debug (df.iloc[21]["start_date"])
-        logger.debug (df.iloc[21]["start_date"] <= query_date_utc_aware )
-        logger.debug (df.iloc[21]["end_date"] > query_date_utc_aware)
+        logger.info(df)
+        logger.info (df.iloc[21]["start_date"])
+        logger.info (df.iloc[21]["start_date"] <= query_date_utc_aware + timedelta(days=365) )
+        logger.info (df.iloc[21]["end_date"]  > query_date_utc_aware +  timedelta(days=365))
         return None, None
 
     
