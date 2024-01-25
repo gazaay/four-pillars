@@ -30,6 +30,7 @@ lock = threading.Lock()
 result_base = {}
 
 def process_8w_row(index, row):
+        # print(row)
         # counting()
         max_attempts = 5
         current_attempt = 0
@@ -101,6 +102,7 @@ def adding_8w_pillars( sorted_df):
                     for future in concurrent.futures.as_completed(futures):
                             # Update the progress bar for each completed task
                             future_row = future.result()
+                            print(future_row)
                             # future_row['本時'] = result_base["時"]
                             # future_row['本日'] = result_base["日"]
                             # future_row['-本時'] = result_base["-時"]

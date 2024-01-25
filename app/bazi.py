@@ -49,6 +49,21 @@ class EarthlyBranch(Enum):
     XU = 11 # 戌
     HAI = 0 # 亥
 
+# # Coefficients for the earthly branches
+earthly_branch_enum = {
+    "丑": 2,
+    "寅": 3,
+    "卯": 4,
+    "辰": 5,
+    "巳": 6,
+    "午": 7,
+    "未": 8,
+    "申": 9,
+    "酉": 10,
+    "戌": 11,
+    "亥": 0,
+    "子": 1
+}
 class HeavenlyStemCN(Enum):
     JIA = '甲'
     YI = '乙'
@@ -60,6 +75,10 @@ class HeavenlyStemCN(Enum):
     XIN = '辛'
     REN = '壬'
     GUI = '癸'
+
+
+
+
 
 class EarthlyBranchCN(Enum):
     ZI = '子'
@@ -194,7 +213,6 @@ def get_cheung_sheng(stem_branch):
 
     return cheung_sheng_dict.get(stem_branch, "Unknown")
 
-
 def SixtyStem(index: int) :
 
     index = index %60
@@ -263,7 +281,7 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
     # if quotient_solar == 0:
     #         quotient_solar = 12
     month = quotient_solar
-    logger.info(f"The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
+    logger.debug(f"The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -311,15 +329,15 @@ def calculate_month_heavenly_withSeason_for_baselife_time(year, _month: int, day
     # if quotient_solar == 0:
     #         quotient_solar = 12
     month = quotient_solar
-    logger.info(f"The date {year, _month, day} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
+    logger.debug(f"The date {year, _month, day} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
-    logger.info(f"Year Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
+    logger.debug(f"Year Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
     year_heavenly_stem = HeavenlyStem(heavenly_stem_index)
     logger.debug(f"Heavenly Stem {year_heavenly_stem.name}")
     month_heavenly_stem = ((year % 10 + 2 )  * 2 + month) %10
 
-    logger.info(f"Month Heavenly Stem {month_heavenly_stem} ")
+    logger.debug(f"Month Heavenly Stem {month_heavenly_stem} ")
     earthly_branch_stem = EarthlyBranch((month + 2) %12).value 
     logger.debug(f"Month Earthly Branch Stem {earthly_branch_stem}")
 
@@ -575,7 +593,7 @@ def find_solar_term_and_index(df, query_date):
         # Extract the solar term and index
         solar_term = row['solarterms'].values[0]
         index = df.loc[df['solarterms'] == solar_term].index[0] + 1
-        print(index)
+        logger.debug(index)
         return solar_term, index
     else:
         logger.debug(df)
@@ -711,7 +729,7 @@ def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int)
 
 # Calculate for normal 8w
 def get_heavenly_branch_ymdh_pillars_base(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_baselife_time(year, month,day)
+    heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_baselife_time(year, month,day,hour)
     dark_month_stem = calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = calculate_year_heavenly(year, month, day)
     heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_base(year, month, day, hour, 15)

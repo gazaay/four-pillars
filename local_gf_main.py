@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 from app  import bazi
 import json
 import pandas as pd
-from app.chengseng import adding_8w_pillars, create_chengseng_for_dataset
+from app.chengseng import adding_8w_pillars, create_chengseng_for_dataset, process_8w_row
 import pytz
+import numpy as np
 
 
 
@@ -20,7 +21,7 @@ print(start_time)
 
 sorted_df_with_new_features = pd.DataFrame()
 
-end_time = start_time + timedelta(hours=8)
+end_time = start_time + timedelta(hours=20)
 
 time_format = "%Y-%m-%dT%H:%M:%S"
 time_elements = []
@@ -45,11 +46,23 @@ hour = parsed_time.hour
 
 print(f" {year} - {month} - {day} - {hour} - {datetime.now()} - {sorted_df_with_new_features} Started processing")
 
+# Step 3: Define time range
+today = datetime.now()
+# Set the time to 9:30 AM
+today = today.replace(hour=9, minute=30, second=0, microsecond=0)
+start_date = today - timedelta(days=5)
+end_date = today + timedelta(days=5)
+
+# Step 4: Create a blank data frame with time column
+time_range = pd.date_range(start=start_date, end=end_date, freq='2H').union(pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
+dataset = pd.DataFrame({'time': time_range})
+
+# Step 5: Adding 8w pillars to the dataset
+data_for_analytics = adding_8w_pillars(dataset)
 
 
-sorted_df_with_new_features["time"] = time_elements
 
-data_for_analytics = adding_8w_pillars(sorted_df_with_new_features)
+
 
 end_time =  datetime.now(pytz.timezone('Asia/Shanghai'))
 elapsed_time = end_time - start_time

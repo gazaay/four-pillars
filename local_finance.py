@@ -53,7 +53,7 @@ print(hk_stock_symbols)
 
 # List of Hong Kong stock symbols
 hong_kong_stocks = [
-    '00001', '00004', '00005', '00700'
+    '00001'
 ]
 
 # Create Tickers instance
