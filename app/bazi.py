@@ -120,6 +120,13 @@ class TenGod(Enum):
     SEAL = 9   # 正官
     CLASH = 10  # 比肩
 
+solarterms = {
+        "LiChun":1, "YuShui":2, "JingZhe":3, "ChunFen":4, "QingMing":5, "GuYu":6,
+        "LiXia":7, "XiaoMan":8, "MangZhong":9, "XiaZhi":10, "XiaoShu":11, "DaShu":12,
+        "LiQiu":13, "ChuShu":14, "BaiLu":15, "QiuFen":16, "HanLu":17, "ShuangJiang":18,
+        "LiDong":19, "XiaoXue":20, "DaXue":21, "DongZhi":22, "XiaoHan":23, "DaHan":24
+    }
+
 heavenly_earthly_dict = {
     "甲子": 1,
     "乙丑": 2,
@@ -265,7 +272,7 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
     #     offset = 0
     # logger.debug(f"Month is {month} Offset is {offset}")
     solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, hour, 15)) 
-
+    solar_month_index = solarterms[solar_term]
     # #Chinese calendar is solar calendar
     # use the year only
     year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
@@ -281,7 +288,7 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
     # if quotient_solar == 0:
     #         quotient_solar = 12
     month = quotient_solar
-    logger.debug(f"The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
+    logger.info(f"The solar term is {solar_term} The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -313,7 +320,7 @@ def calculate_month_heavenly_withSeason_for_baselife_time(year, _month: int, day
     # logger.debug(f"Month is {month} Offset is {offset}")
     solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, hour, 15)) 
 
-    
+    solar_month_index = solarterms[solar_term]
     # #Chinese calendar is solar calendar
     # use the year only
     year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
@@ -329,7 +336,7 @@ def calculate_month_heavenly_withSeason_for_baselife_time(year, _month: int, day
     # if quotient_solar == 0:
     #         quotient_solar = 12
     month = quotient_solar
-    logger.debug(f"The date {year, _month, day} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
+    logger.info(f"The solar term is {solar_term} The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Year Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -586,7 +593,7 @@ def find_solar_term_and_index(df, query_date):
    # Set the timezone for query_date to UTC using pytz
     utc_timezone = timezone('Asia/Hong_Kong')
     query_date_utc_aware = utc_timezone.localize(query_date)
-    logger.info(query_date_utc_aware)
+    logger.debug(query_date_utc_aware)
 
     # if query_date_utc_aware <= df.iloc[21]["end_date"] :
     #     # If the date is before January 5th, add one year
@@ -594,21 +601,21 @@ def find_solar_term_and_index(df, query_date):
 
     # Find the row where the query_date falls within the start_date and end_date range
     row = df[(df['start_date'] <= query_date_utc_aware) & (query_date_utc_aware < df['end_date'])]
-    # logger.info(df)
+    # logger.debug(df)
     if not row.empty:
         # Extract the solar term and index
         solar_term = row['solarterms'].values[0]
         index = df.loc[df['solarterms'] == solar_term].index[0] + 1
-        logger.info(index)
+        logger.debug(index)
         return solar_term, index
     else:
-        logger.info(df)
+        logger.debug(df)
         i_num = 21
         s_date = df.iloc[i_num]["start_date"]
         e_date = df.iloc[i_num]["end_date"] 
-        logger.info (f"{query_date_utc_aware} and {s_date}and {e_date}")
-        logger.info (df.iloc[i_num]["start_date"] <= query_date_utc_aware )
-        logger.info ( e_date > query_date_utc_aware)
+        logger.debug (f"{query_date_utc_aware} and {s_date}and {e_date}")
+        logger.debug (df.iloc[i_num]["start_date"] <= query_date_utc_aware )
+        logger.debug ( e_date > query_date_utc_aware)
         return None, None
 
     
