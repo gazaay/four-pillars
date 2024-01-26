@@ -275,10 +275,10 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
     solar_month_index = solarterms[solar_term]
     # #Chinese calendar is solar calendar
     # use the year only
-    year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
+    # xx_year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
 
-    if solar_month_index == 1 :
-        solar_month_index = 25
+    # if solar_month_index == 1 :
+    #     solar_month_index = 25
     
     solar_month_index = solar_month_index + 1
 
@@ -288,7 +288,7 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
     # if quotient_solar == 0:
     #         quotient_solar = 12
     month = quotient_solar
-    logger.info(f"The solar term is {solar_term} The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
+    logger.info(f"current_time The solar term is {solar_term} The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -323,10 +323,10 @@ def calculate_month_heavenly_withSeason_for_baselife_time(year, _month: int, day
     solar_month_index = solarterms[solar_term]
     # #Chinese calendar is solar calendar
     # use the year only
-    year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
+    # year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
 
-    if solar_month_index == 1 :
-        solar_month_index = 25
+    # if solar_month_index == 1 :
+    #     solar_month_index = 25
     
     solar_month_index = solar_month_index + 1
 
