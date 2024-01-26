@@ -560,13 +560,14 @@ def get_solar_terms(year):
     if year in solar_term_cache:
         return solar_term_cache[year]
 
-    solar_terms = [
+    solar_terms = [solarterm.DongZhi(year - 1), solarterm.XiaoHan(year), solarterm.DaHan(year),
         solarterm.LiChun(year), solarterm.YuShui(year), solarterm.JingZhe(year), solarterm.ChunFen(year),
         solarterm.QingMing(year), solarterm.GuYu(year), solarterm.LiXia(year), solarterm.XiaoMan(year),
         solarterm.MangZhong(year), solarterm.XiaZhi(year), solarterm.XiaoShu(year), solarterm.DaShu(year),
         solarterm.LiQiu(year), solarterm.ChuShu(year), solarterm.BaiLu(year), solarterm.QiuFen(year),
         solarterm.HanLu(year), solarterm.ShuangJiang(year), solarterm.LiDong(year), solarterm.XiaoXue(year),
-        solarterm.DaXue(year), solarterm.DongZhi(year), solarterm.XiaoHan(year), solarterm.DaHan(year)
+        solarterm.DaXue(year), solarterm.DongZhi(year), solarterm.XiaoHan(year + 1), solarterm.DaHan(year + 1), 
+        solarterm.LiChun(year + 2)
     ]
 
     utc_timezone = timezone('UTC')
@@ -585,21 +586,15 @@ def find_solar_term_and_index(df, query_date):
    # Set the timezone for query_date to UTC using pytz
     utc_timezone = timezone('Asia/Hong_Kong')
     query_date_utc_aware = utc_timezone.localize(query_date)
-    logger.debug(query_date_utc_aware)
+    logger.info(query_date_utc_aware)
 
-    # Extract month and day from query_date_utc_aware
-    query_month_day = (query_date_utc_aware.month, query_date_utc_aware.day)
-
-    # Compare with January 5th
-    january_5th = (1, 6)
-
-    if query_month_day <= january_5th:
-        # If the date is before January 5th, add one year
-        query_date_utc_aware += timedelta(days=365)
+    # if query_date_utc_aware <= df.iloc[21]["end_date"] :
+    #     # If the date is before January 5th, add one year
+    #     query_date_utc_aware += timedelta(days=365)
 
     # Find the row where the query_date falls within the start_date and end_date range
     row = df[(df['start_date'] <= query_date_utc_aware) & (query_date_utc_aware < df['end_date'])]
-
+    # logger.info(df)
     if not row.empty:
         # Extract the solar term and index
         solar_term = row['solarterms'].values[0]
@@ -608,9 +603,12 @@ def find_solar_term_and_index(df, query_date):
         return solar_term, index
     else:
         logger.info(df)
-        logger.info (df.iloc[21]["start_date"])
-        logger.info (df.iloc[21]["start_date"] <= query_date_utc_aware + timedelta(days=365) )
-        logger.info (df.iloc[21]["end_date"]  > query_date_utc_aware +  timedelta(days=365))
+        i_num = 21
+        s_date = df.iloc[i_num]["start_date"]
+        e_date = df.iloc[i_num]["end_date"] 
+        logger.info (f"{query_date_utc_aware} and {s_date}and {e_date}")
+        logger.info (df.iloc[i_num]["start_date"] <= query_date_utc_aware )
+        logger.info ( e_date > query_date_utc_aware)
         return None, None
 
     
@@ -620,18 +618,19 @@ def get_Luna_Month_With_Season(target_date):
     date_list = get_solar_terms(target_date.year)
 
     # Original lists
-    solarterms = [
+    solarterms = [ "DongZhi", "XiaoHan", "DaHan",
         "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
         "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
         "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
-        "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan",
+        "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan","LiChun",
     ]
-
+    # date_list = date_list[:-1]
     # Merge the three lists into a DataFrame
     df = pd.DataFrame(list(zip(solarterms, date_list, date_list[1:] + [date_list[0]])), columns=['solarterms', 'start_date', 'end_date'])
     
+    df = df.iloc[:-1]
     # Update the end_date value for the row with index 21
-    df.loc[21, "end_date"] = solarterm.XiaoHan(target_date.year+1)
+    # df.loc[21, "end_date"] = solarterm.XiaoHan(target_date.year+1)
 
     logger.debug (df.loc[21]["end_date"])
     logger.debug (df)
