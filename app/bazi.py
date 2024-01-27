@@ -329,10 +329,14 @@ def calculate_month_heavenly_withSeason_for_baselife_time(year, _month: int, day
     solar_month_index = solarterms[solar_term]
     # #Chinese calendar is solar calendar
     # use the year only
-    # year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
 
+    if solar_term == "LiChun":
+        year = solarterm.LiChun(year).year
+    else:
+        year, xx_month, zz_day = convert_Solar_to_Luna(year, month, day)
     # if solar_month_index == 1 :
     #     solar_month_index = 25
+    
     
     solar_month_index = solar_month_index + 1
 

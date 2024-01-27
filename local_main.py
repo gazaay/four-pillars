@@ -404,7 +404,24 @@ print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,15,9)}")
 print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,16,9)}")
 print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,17,9)}")
 print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,19,9)}")
+
+year = 2019
+month = 1
+day = 1
+
+# Create a date object
+current_date = datetime(year, month, day, 7)
+
+# Add timedelta of 1 day
+next_day = current_date + timedelta(days=1)
+
+for i in range(1, 10000):
+    # Add timedelta of 1 day
+    next_day = current_date + timedelta(days=i)
+    print(f"################# {next_day.year,next_day.month,next_day.day,next_day.hour} #################")
+    print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next_day.year,next_day.month,next_day.day , next_day.hour )}")
+    
+
 # year = 2023
 # month = 11
 # day =7
