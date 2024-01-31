@@ -1,5 +1,7 @@
 import logging
 from app import bazi
+import numpy as np
+import itertools
 
 __name__ = "haap"
 
@@ -35,11 +37,58 @@ logger = logging.getLogger(__name__)
 # 申子辰合成水局	巳酉丑合成金局	寅午戌合成火局	亥卯未合成木局。			
 
 def add_haap_features_to_df(df):
-    columns_to_initialize = [
-           '本時', '本日', '-本時', '本月', '本年', '-本月', '流時', '流日', '-流時', '流月', '流年', '-流月']
+    columns_to_initialize = ['本時', '本日', '-本時', '本月', '本年', '-本月', '流時', '流日', '-流時', '流月', '流年', '-流月']
     happ_df = df.copy()
+    columns_巳酉丑_to_combine = ['巳', '酉', '丑']
+    columns_申子辰_to_combine = ['申', '子', '辰']
+    columns_寅午戌_to_combine = ['寅', '午', '戌']
+    columns_亥卯未_to_combine = ['亥', '卯', '未']
+    combine_columns = [columns_巳酉丑_to_combine, columns_申子辰_to_combine, columns_寅午戌_to_combine, columns_亥卯未_to_combine]
+    # Iterate through each row
+    for index, row in happ_df.iterrows():
+        for combine_col in combine_columns: 
+            results_combined = []
+            is_haap = False
+            for col in columns_to_initialize:
+                # Check if the column exists in the DataFrame
+                if col in row.index:
+                    # Split the first and last characters
+                    first_char = str(row[col])[0]
+                    last_char = str(row[col])[-1]
+                    
+                    # Create new columns with the separated characters
+                    # happ_df.at[index, col + '_first'] = first_char
+                    happ_df.at[index, col + '_地支'] = last_char
+                if last_char in combine_col:
+                    results_combined.append(last_char)
+                    is_haap = True
+                    print(f'{last_char} is in {combine_col} and added to results_combined')
+                else:
+                    # results_combined.append('')
+                    print(f'{last_char} is not in {combine_col} and added to results_combined and is_haap is {is_haap}')
+            print(f'results_combined: {results_combined}')
+            if len(results_combined) > 1:
+               happ_df.at[index, '合_' + ''.join(results_combined)] = 1 # Set the default value to np.nan
+               happ_df.at[index, '合_' + ''.join(set(''.join(results_combined)))] = 1 # Set the default value to np.nan
+            else:
+                print(f'合_' + ''.join(results_combined) + ' is {happ_df["合_" + ''.join(results_combined)]}')
+                
 
-    for index, row in happ_df:
-        # 子丑合化土
-        if row['本時']： 
-            print(row['本時'])
+    # List of columns for 合 testing
+    
+
+    # # Function to calculate 合 and return the result
+    # def calculate_he(column_values):
+    #     return ''.join(column_values)
+
+    # # Generate all possible combinations of columns_to_combine
+    # combinations = list(itertools.product(*[happ_df[col] for col in columns_to_combine]))
+
+    # # Create a new column with the 合 result for each combination
+    # for i, combination in enumerate(combinations):
+    #     combination_name = '_'.join(['合'] + list(combination) + [str(i + 1)])
+    #     happ_df[combination_name] = happ_df.apply(lambda row: calculate_he([row[col] for col in combination]), axis=1)
+
+    # Display the modified DataFrame
+    return happ_df
+

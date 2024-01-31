@@ -8,3 +8,4 @@ numpy
 yfinance
 yahooquery
 scikit-learn
+Flask==2.0.1

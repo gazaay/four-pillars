@@ -6,6 +6,8 @@ from app.chengseng import adding_8w_pillars, create_chengseng_for_dataset, proce
 import pytz
 import numpy as np
 
+from app.haap import add_haap_features_to_df
+
 
 
 
@@ -140,8 +142,16 @@ column_mapping = {
     '長_-本月_流年': 'chengseng_negative_base_month_current_year',
     '長_-本月_-流月': 'chengseng_negative_base_month_negative_current_month',
 }
+add_happ_features_to_df = add_haap_features_to_df(dataset_with_cs)
 
-dataset_with_cs.rename(columns=column_mapping, inplace=True)
+# Set the option to display the full content of each column
+pd.set_option('display.max_colwidth', None)
 
-# Now, your DataFrame df has columns with the specified meanings incorporated into their names
-print(dataset_with_cs)
+print(add_happ_features_to_df.iloc[:8])
+add_happ_features_to_df.to_csv('haap.csv', index=False)
+
+# dataset_with_cs.rename(columns=column_mapping, inplace=True)
+
+# # Now, your DataFrame df has columns with the specified meanings incorporated into their names
+# print(dataset_with_cs)
+
