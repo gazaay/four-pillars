@@ -62,16 +62,16 @@ def add_haap_features_to_df(df):
                 if last_char in combine_col:
                     results_combined.append(last_char)
                     is_haap = True
-                    print(f'{last_char} is in {combine_col} and added to results_combined')
+                    logger.debug(f'{last_char} is in {combine_col} and added to results_combined')
                 else:
                     # results_combined.append('')
-                    print(f'{last_char} is not in {combine_col} and added to results_combined and is_haap is {is_haap}')
-            print(f'results_combined: {results_combined}')
+                    logger.debug(f'{last_char} is not in {combine_col} and added to results_combined and is_haap is {is_haap}')
+            logger.debug(f'results_combined: {results_combined}')
             if len(results_combined) > 1:
                happ_df.at[index, '合_' + ''.join(results_combined)] = 1 # Set the default value to np.nan
                happ_df.at[index, '合_' + ''.join(set(''.join(results_combined)))] = 1 # Set the default value to np.nan
             else:
-                print(f'合_' + ''.join(results_combined) + ' is {happ_df["合_" + ''.join(results_combined)]}')
+                logger.debug(f'合_' + ''.join(results_combined) + ' is {happ_df["合_" + ''.join(results_combined)]}')
                 
 
     # List of columns for 合 testing
