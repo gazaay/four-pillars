@@ -1,14 +1,23 @@
-<!-- ... (previous content) ... -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Plot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
 <body>
-  <div id="message">
-      <h2>Welcome</h2>
-      <h1>Your Custom Firebase Hosting Setup</h1>
-      <p>You're seeing this because you've successfully set up Firebase Hosting. Now, let's build something extraordinary!</p>
-      <!-- Update the link to point to the root URL of your Flask app -->
-      <a href="/">Go to Original Page</a>
-  </div>
-  <p id="load">Firebase SDK Loading&hellip;</p>
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/static/download.png" target="_blank">Download Image</a></li>
+        </ul>
+    </nav>
+    <div id="chart-container">
+        <!-- Plot will be dynamically loaded here -->
+    </div>
 
-  <!-- The rest of your script content -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-<!-- ... (remaining content) ... -->
+</html>
