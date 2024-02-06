@@ -13,3 +13,5 @@ venv/: (Optional) You can create a virtual environment to isolate your project d
 main.py: Your main Python script for generating the Matplotlib plot and saving it as an image.
 
 python3 -m http.server
+firebase emulators:start
+firebase emulators:stop

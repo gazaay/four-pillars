@@ -147,7 +147,7 @@ add_happ_features_to_df = add_haap_features_to_df(dataset_with_cs)
 # Set the option to display the full content of each column
 pd.set_option('display.max_colwidth', None)
 
-print(add_happ_features_to_df.iloc[:8])
+print(add_happ_features_to_df.iloc[:80])
 add_happ_features_to_df.to_csv('haap.csv', index=False)
 
 # dataset_with_cs.rename(columns=column_mapping, inplace=True)

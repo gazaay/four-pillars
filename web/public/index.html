@@ -3,21 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Plot</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Your TradingView Chart</title>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body>
-    <nav>
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/static/download.png" target="_blank">Download Image</a></li>
-        </ul>
-    </nav>
-    <div id="chart-container">
-        <!-- Plot will be dynamically loaded here -->
-    </div>
+    <!-- Container for the TradingView chart -->
+    <div id="tv_chart_container"></div>
 
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Variable to store fetched CSV data
+        var csvData;
+
+        // Function to fetch and parse CSV data
+        async function fetchCSVData() {
+            const response = await fetch('/static/data.csv');
+            const text = await response.text();
+            const rows = text.split('\n');
+
+            // Extract headers
+            const headers = rows[0].split(',');
+
+            // Extract and process data
+            const data = rows.slice(1).map(row => {
+                const values = row.split(',');
+                // Remove extra characters and convert to numbers
+                return values.map((value, index) => index === 0 ? value.trim() : parseFloat(value));
+            });
+
+            // Store data in the global variable
+            csvData = {
+                bars: data,
+                meta: {
+                    noData: false
+                }
+            };
+
+            // Process data as needed
+            console.log(headers);
+            console.log(data);
+
+            // Call the TradingView chart initialization after fetching data
+            initializeTradingViewChart();
+        }
+
+        // Call the function when the page loads
+        fetchCSVData();
+
+        // Initialize TradingView chart with your API key
+        function initializeTradingViewChart() {
+            new TradingView.widget({
+                "width": "100%",
+                "height": 600,
+                "symbol": "HSI:HSI",
+                "interval": "2H",
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "container_id": "tv_chart_container",
+                "hide_side_toolbar": false,
+                "watchlist": []
+            });
+
+            // Initialize the TradingView chart with your configuration
+            var chart = new TradingView.widget({
+                "datafeed": {
+                    "onReady": function (callback) {
+                        // Call the onReady callback once your data feed is ready
+                        callback({
+                            "supports_search": true,
+                            "supports_time": true,
+                            "supports_timescale_marks": true,
+                            "supports_marks": true,
+                            "supports_preliminary": false,
+                        });
+                    },
+                    "history": function (params, callback) {
+                        // Use the data fetched from CSV in the history function
+                        callback({
+                            bars: csvData.bars.map(row => ({
+                                time: row[0], // Assuming the first column is the timestamp
+                                open: row[1],
+                                high: row[2],
+                                low: row[3],
+                                close: row[4],
+                                volume: row[5]
+                            })),
+                            meta: {
+                                noData: false
+                            }
+                        });
+                    },
+                    "addData": function (symbolInfo, newData) {
+                        // Your logic to add new real-time data to the chart
+                        // This is called when new data is received during real-time updates
+                    },
+                },
+                "overrides": {
+                    "paneProperties.background": "#f1f3f6",
+                    "mainSeriesProperties.candleStyle.upColor": 'blue',
+                    "mainSeriesProperties.candleStyle.downColor": 'blue',
+                },
+            });
+            
+            // Use the addData method to add static OHLC data to the chart
+            chart.onChartReady(function () {
+                chart.chart().addData(csvData);
+            });
+        }
+    </script>
 </body>
 </html>
