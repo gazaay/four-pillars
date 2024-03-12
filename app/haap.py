@@ -2,6 +2,7 @@ import logging
 from app import bazi
 import numpy as np
 import itertools
+import pandas as pd
 
 __name__ = "haap"
 
@@ -68,6 +69,46 @@ def base_add_haap_features_to_df(df, columns_to_initialize, columns_to_combine, 
                 logger.debug(haap_style + ''.join(results_combined))
                 
     return happ_df
+
+
+
+def zz_base_add_haap_features_to_df(df, columns_to_initialize, columns_to_combine, haap_style="合"):
+    happ_df = df.copy()
+    new_columns = []
+    
+    # Iterate through each row
+    for index, row in happ_df.iterrows():
+        for combine_col in columns_to_combine: 
+            results_combined = []
+            is_haap = False
+            for col in columns_to_initialize:
+                # Check if the column exists in the DataFrame
+                if col in row.index:
+                    # Split the first and last characters
+                    first_char = str(row[col])[0]
+                    last_char = str(row[col])[-1]
+                    
+                    # Create new columns with the separated characters
+                    happ_df.at[index, col + '_地支'] = last_char
+                if last_char in combine_col:
+                    results_combined.append(last_char)
+                    is_haap = True
+                    logger.debug(f'{last_char} is in {combine_col} and added to results_combined')
+                else:
+                    logger.debug(f'{last_char} is not in {combine_col} and added to results_combined and is_haap is {is_haap}')
+            logger.debug(f'results_combined: {results_combined}')
+            if len(results_combined) > 1:
+                new_column_name = haap_style + '_' + ''.join(results_combined)
+                happ_df[new_column_name] = 1
+                new_columns.append(new_column_name)
+                new_column_name_unique = haap_style + '_' + ''.join(set(''.join(results_combined)))
+                happ_df[new_column_name_unique] = 1
+                new_columns.append(new_column_name_unique)
+            else:
+                logger.debug(haap_style + '_' + ''.join(results_combined) + ' is {happ_df["合_" + ''.join(results_combined)]}')
+                
+    return pd.concat([happ_df, pd.DataFrame(columns=new_columns)], axis=1)
+
 
 def add_haap_features_to_df(df):
 

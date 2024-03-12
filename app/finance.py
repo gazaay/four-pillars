@@ -135,3 +135,53 @@ def get_listing_date_timestamp(symbol):
     except Exception as e:
         print(f"error getting info from {url} with error {e}")
 
+def extract_company_info(stock_code):
+    try:
+        # Construct the URL with the stock code
+        url = f"https://stock.us/stock/hk/{stock_code}"
+        
+        # Send a GET request to the URL
+        response = requests.get(url)
+        # Parse the HTML content
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        print(soup)
+        # # Find the div containing the company information
+        # company_div = soup.find('div', class_='gx-card-body')
+        # if company_div is None:
+        #     raise ValueError("Company information div not found")
+        
+        # Find the table containing the company information within the div
+        # table = soup.find('div', class_='ant-table')
+        # if table is None:
+        #     raise ValueError("Company information table not found")
+        
+        # Initialize dictionary to store company information
+        company_info = {}
+        
+        # Find all table rows
+        rows = soup.find_all('tr')
+        
+        # Iterate over each row
+        for row in rows:
+            try:
+                # Find all table data elements in the row
+                cells = row.find_all('td')
+                # Extract the attribute name and value
+                for i in range(0, len(cells), 2):
+                    attribute = cells[i].text.strip()
+                    value = cells[i+1].text.strip()
+                    company_info[attribute] = value
+            except AttributeError:
+                # If AttributeError occurs, skip this row
+                continue
+        
+        if not company_info:
+            raise ValueError("No company information found")
+        
+        return company_info
+    except ValueError as e:
+        return {"error": str(e)}
+    except Exception as e:
+        return {"error": f"An unexpected error occurred: {str(e)}"}
+

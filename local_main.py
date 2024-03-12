@@ -401,9 +401,9 @@ print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,12,9)}")
 print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,13,9)}")
 print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,14,9)}")
 print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,15,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,16,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,17,9)}")
 print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,9)}")
+print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,11)}")
+print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,12)}")
 
 year = 2019
 month = 1
@@ -415,7 +415,7 @@ current_date = datetime(year, month, day, 7)
 # Add timedelta of 1 day
 next_day = current_date + timedelta(days=1)
 
-for i in range(1, 10000):
+for i in range(1, 2):
     # Add timedelta of 1 day
     next_day = current_date + timedelta(days=i)
     print(f"################# {next_day.year,next_day.month,next_day.day,next_day.hour} #################")

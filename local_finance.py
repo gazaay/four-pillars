@@ -27,14 +27,14 @@ parsed_time = converted_timestamp.strftime("%Y-%m-%dT%H:%M:%S")
 print(parsed_time)
 
 # Download historical data for AAPL every 2 hours
-historical_data = yf.download('AAPL', start='2022-02-20', end='2024-01-20', interval='1h', auto_adjust=True)
+historical_data = yf.download('AAPL', start='2023-02-20', end='2024-01-20', interval='1h', auto_adjust=True)
 
 historical_data.index = historical_data.index.tz_convert('UTC')
 
 # Display the downloaded data
 print(historical_data.head(1).index)
 
-historical_data = finance.get_historical_data_UTC('AAPL', start_date='2022-02-20', end_date='2024-01-20', interval='1h')
+historical_data = finance.get_historical_data_UTC('AAPL', start_date='2023-02-20', end_date='2024-01-20', interval='1h')
 
 historical_data.index = historical_data.index.tz_convert('UTC')
 
@@ -110,10 +110,28 @@ result_df = pd.DataFrame(result_objects)
 # Display the DataFrame
 print(result_df)
 
+try:
+    # Code that may raise an exception
+    historical_data = finance.get_historical_data_UTC(hong_kong_stocks[0], start_date='2023-02-20', end_date='2024-01-20', interval='1h')
+    
+    # Convert index to UTC timezone
+    historical_data.index = historical_data.index.tz_convert('UTC')
+    
+    # Display the index of the first data point
+    print("Index of the first data point:", historical_data.index[0])
 
-historical_data = finance.get_historical_data_UTC(hong_kong_stocks[0], start_date='2022-02-20', end_date='2024-01-20', interval='1h')
+except Exception as e:
+    # Handle the exception
+    print("An error occurred:", e)
 
-historical_data.index = historical_data.index.tz_convert('UTC')
 
-# Display the downloaded data
-print(historical_data.head(1).index)
+
+# URL of the webpage
+stock_code = "00002"
+# Extract company information
+company_info = finance.extract_company_info(stock_code)
+
+print(company_info)
+# Print the extracted information
+for attribute, value in company_info.items():
+    print(f"{attribute}: {value}")
