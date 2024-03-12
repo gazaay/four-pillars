@@ -409,7 +409,7 @@ def calculate_day_heavenly_current(year, month, day, hour, mins):
     # heavenly_stem = heavenly_stems[heavenly_stem_index]
     # earthly_branch = earthly_branches[earthly_branch_index]
 
-    if hour >= 12:
+    if hour >= 11:
         logger.debug(f"Next Half Day - hour {hour}")
         return HeavenlyStem(get_next_half_heavenly(heavenly_stem_index)) , EarthlyBranch(get_next_half_earthly(earthly_branch_index))    
     else:
