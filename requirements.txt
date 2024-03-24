@@ -11,3 +11,4 @@ scikit-learn
 Flask==2.0.1
 request
 jsonify
+google-cloud-bigquery

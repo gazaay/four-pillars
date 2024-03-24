@@ -6,7 +6,7 @@ import pandas as pd
 from datetime import timezone
 
 ticker = "TSLA"
-
+print (f"time Stamp of HK STock {finance.get_listing_date_timestamp('00007')}")
 
 result = finance.convert_to_hk_time(ticker, 'firstTradeDate', 'timezone', 'chartPreviousClose')
 # Extract year, month, day, and hour from Converted Timestamp
