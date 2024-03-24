@@ -1,6 +1,7 @@
 from google.cloud import bigquery
 import pandas as pd
 import logging
+from datetime import datetime, timedelta
 
 __name__ = "gcp_data"
 
@@ -13,6 +14,38 @@ logging.basicConfig(level=logging.debug,  # Set the minimum level for displayed 
 # Create a logger
 logger = logging.getLogger(__name__)
 
+def get_date_range(start_date, end_date, project_id='stock8word', dataset_name='GG88', table_name='thousand_year_data'):
+    """
+    Queries a BigQuery table for rows within a specific date range and returns the result as a pandas DataFrame.
+
+    Parameters:
+    - start_date (datetime): The start of the date range.
+    - end_date (datetime): The end of the date range.
+    - project_id (str): The Google Cloud project ID.
+    - dataset_name (str): The name of the BigQuery dataset.
+    - table_name (str): The name of the BigQuery table.
+
+    Returns:
+    - pandas.DataFrame: A DataFrame containing the queried rows.
+    """
+    # Initialize BigQuery client
+    client = bigquery.Client(project=project_id)
+
+    # Convert start_date and end_date to string in format 'YYYY-MM-DD HH:MM:SS'
+    start_date_str = start_date.strftime('%Y-%m-%d %H:%M:%S')
+    end_date_str = end_date.strftime('%Y-%m-%d %H:%M:%S')
+
+    # SQL query to select rows within the date range
+    query = f"""
+        SELECT *
+        FROM `{project_id}.{dataset_name}.{table_name}`
+        WHERE time BETWEEN TIMESTAMP('{start_date_str}') AND TIMESTAMP('{end_date_str}')
+    """
+
+    # Execute the query and return results as a DataFrame
+    result_df = client.query(query).to_dataframe()
+
+    return result_df
 
 
 def query_stock_info(symbol, project_id='stock8word', dataset_name='GG88', table_name='stock_info'):
