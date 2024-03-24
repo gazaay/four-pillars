@@ -121,9 +121,9 @@ def get_listing_date_timestamp(symbol):
 
                     # Convert the date string to a timestamp in 'Asia/Hong_Kong' timezone
                     hong_kong_timezone = pytz.timezone('Asia/Hong_Kong')
-                    listing_date_timestamp = datetime.strptime(listing_date_str, '%Y/%m/%d').replace(tzinfo=hong_kong_timezone).timestamp()
+                    listing_date_timestamp = datetime.strptime(listing_date_str, '%Y/%m/%d').timestamp()
                     # Set the time to 9:30 AM
-                    listing_datetime = datetime.fromtimestamp(listing_date_timestamp).replace(hour=9, minute=30, second=0, tzinfo=hong_kong_timezone)
+                    listing_datetime = datetime.fromtimestamp(listing_date_timestamp).replace(hour=9, minute=30, second=0)
 
                     return listing_datetime
                     break  # Break out of the loop once Listing Date is found
