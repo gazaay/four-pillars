@@ -109,8 +109,26 @@ def adding_8w_pillars( sorted_df):
                             # future_row['本月'] = result_base["月"]
                             # future_row['本年'] = result_base["年"]
                             # future_row['-本月'] = result_base["-月"]
-                            _local_df[_local_df['time'] == future_row['time']] = future_row
-
+                            
+                            try:
+                                if isinstance(future_row, dict):
+                                    future_row = pd.Series(future_row)
+                                    
+                                # _local_df[_local_df['time'] == future_row['time']] = future_row
+                                # Ensuring future_row is a Series if it's not already, for compatibility with .loc[row_indexer, col_indexer] = value
+                                
+                                # Finding the index(es) where 'time' matches future_row['time'] and updating those rows
+                                matching_indexes = _local_df[_local_df['time'] == future_row['time']].index
+                                if not matching_indexes.empty:
+                                    for column in _local_df.columns:
+                                        # Update each column that exists in future_row for the matching indexes
+                                        if column in future_row:
+                                            _local_df.loc[matching_indexes, column] = future_row[column]
+                                else:
+                                    print("No matching 'time' found to update.")
+                                    
+                            except Exception as e:
+                                print(f"An error occurred: {e}")
 
                             pbar.update()
 

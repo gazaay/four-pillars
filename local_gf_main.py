@@ -82,6 +82,7 @@ print (data_for_analytics)
 
 dataset_with_cs = create_chengseng_for_dataset(data_for_analytics)
 print(dataset_with_cs.columns.tolist())
+print(dataset_with_cs)
 # # Example usage
 # stem_branch = "甲亥"
 # cheung_sheng = get_cheung_sheng(stem_branch)

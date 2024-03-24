@@ -307,121 +307,145 @@ hour = 13
 # result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
 # logger.info (result)
 
-bazi.get_Luna_Month_With_Season(datetime(2023, 12, 21, 9, 0, 0))
-bazi.get_Luna_Month_With_Season(datetime(2023, 12, 24, 9, 0, 0))
-bazi.get_Luna_Month_With_Season(datetime(2024, 1, 4, 9, 0, 0))
-bazi.get_Luna_Month_With_Season(datetime(2024, 1, 6, 9, 0, 0))
-bazi.get_Luna_Month_With_Season(datetime(2024, 1, 8, 9, 0, 0))
-bazi.get_Luna_Month_With_Season(datetime(2024, 1, 16, 9, 0, 0))
-bazi.get_Luna_Month_With_Season(datetime(2024, 1, 22, 9, 0, 0))
-bazi.get_Luna_Month_With_Season(datetime(2024, 2, 1, 9, 0, 0))
+# bazi.get_Luna_Month_With_Season(datetime(2023, 12, 21, 9, 0, 0))
+# bazi.get_Luna_Month_With_Season(datetime(2023, 12, 24, 9, 0, 0))
+# bazi.get_Luna_Month_With_Season(datetime(2024, 1, 4, 9, 0, 0))
+# bazi.get_Luna_Month_With_Season(datetime(2024, 1, 6, 9, 0, 0))
+# bazi.get_Luna_Month_With_Season(datetime(2024, 1, 8, 9, 0, 0))
+# bazi.get_Luna_Month_With_Season(datetime(2024, 1, 16, 9, 0, 0))
+# bazi.get_Luna_Month_With_Season(datetime(2024, 1, 22, 9, 0, 0))
+# bazi.get_Luna_Month_With_Season(datetime(2024, 2, 1, 9, 0, 0))
 
-# My
-# 歲次：
-year = 1979
-month = 4
-day =27
-hour = 11
+# # My
+# # 歲次：
+# year = 1979
+# month = 4
+# day =27
+# hour = 11
 
-result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-logger.info (result)
-print("##################################/n")
-year = 2023
-month = 12
-day =19
-hour = 11
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+# print("##################################/n")
+# year = 2023
+# month = 12
+# day =19
+# hour = 11
 
-result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-logger.info (result)
-print("##################################/n")
-year = 2023
-month = 12
-day =22
-hour = 11
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+# print("##################################/n")
+# year = 2023
+# month = 12
+# day =22
+# hour = 11
 
-result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-logger.info (result)
-print("##################################/n")
-year = 2023
-month = 12
-day =23
-hour = 11
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+# print("##################################/n")
+# year = 2023
+# month = 12
+# day =23
+# hour = 11
 
-result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-logger.info (result)
-print("##################################/n")
-year = 2024
-month = 1
-day =19
-hour = 11
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+# print("##################################/n")
+# year = 2024
+# month = 1
+# day =19
+# hour = 11
 
-result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-logger.info (result)
-print("##################################/n")
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+# print("##################################/n")
 
-year = 2024
-month = 2
-day =3
-hour = 11
+# year = 2024
+# month = 2
+# day =3
+# hour = 11
 
-result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-logger.info (result)
-print("##################################/n")
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+# print("##################################/n")
 
-year = 2024
-month = 2
-day =9
-hour = 13
+# year = 2024
+# month = 2
+# day =9
+# hour = 13
 
-result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-logger.info (result)
-print("##################################/n")
-year = 2024
-month = 2
-day =10
-hour = 9
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+# print("##################################/n")
+# year = 2024
+# month = 2
+# day =10
+# hour = 9
 
-result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-logger.info (result)
-print("##################################/n")
+# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+# logger.info (result)
+# print("##################################/n")
 
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,4,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,5,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,6,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,7,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,8,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,9,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,10,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,11,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,12,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,13,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,4,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,5,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,6,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,7,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,8,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,9,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,10,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,11,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,12,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,13,9)}")
 
 
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,12,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,13,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,14,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,15,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,9)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,11)}")
-print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,12,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,13,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,14,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,15,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,9)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,11)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,1,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,2,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,3,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,4,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,5,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,6,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,7,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,8,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,9,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,10,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,11,18,12)}")
+# print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(2024,12,18,12)}")
 
-year = 2019
-month = 1
-day = 1
+# year = 2023
+# month = 11
+# day = 1
 
-# Create a date object
-current_date = datetime(year, month, day, 7)
+# # Create a date object
+# current_date = datetime(year, month, day, 7)
 
-# Add timedelta of 1 day
-next_day = current_date + timedelta(days=1)
+# # Add timedelta of 1 day
+# next_day = current_date + timedelta(days=1)
 
-for i in range(1, 2):
-    # Add timedelta of 1 day
-    next_day = current_date + timedelta(days=i)
-    print(f"################# {next_day.year,next_day.month,next_day.day,next_day.hour} #################")
-    print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next_day.year,next_day.month,next_day.day , next_day.hour )}")
+# for i in range(1, 15):
+#     # Add timedelta of 1 day
+#     next = current_date + timedelta(months=i)
+#     print(f"################# {next.year,next.month,next.day,next.hour} #################")
+#     print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next.year,next.month,next.day , next.hour )}")
     
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
+# Assuming current_date is initialized, e.g.,
+current_date = datetime(2023, 10, 16, 6)  # Example: January 1st, 2024 at 12:00
+next_date = current_date 
+
+for i in range(1, 18):
+    # Add i months to current_date
+    print(f"################# {next_date.year,next_date.month,next_date.day,next_date.hour} #################")
+    # Assuming bazi.get_heavenly_branch_ymdh_pillars_current is a method call that you have defined or imported
+    print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next_date.year,next_date.month,next_date.day, next_date.hour)}")
+    next_date = current_date + relativedelta(months=i)
+    
 # year = 2023
 # month = 11
 # day =7

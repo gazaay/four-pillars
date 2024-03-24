@@ -249,6 +249,8 @@ def calculate_year_heavenly(year, month: int, day):
     else: 
         offset = 0
 
+    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 9, 15)) 
+    solar_month_index = solarterms[solar_term]
      #Chinese calendar is solar calendar
     # logger.debug(f"Year Pillar: Year: {year} month: {month} Offset is {offset}")
     year, month, day = convert_Solar_to_Luna(year, month, day)
@@ -258,7 +260,36 @@ def calculate_year_heavenly(year, month: int, day):
     logger.debug(f"Year Earthly Index {earthly_branch_index}")
     earthly_branch = EarthlyBranch(earthly_branch_index )
     logger.debug(f"Year Earthly Branch {earthly_branch.value}")
+    
     return heavenly_stem.value, earthly_branch.value
+
+def calculate_year_heavenly_for_current_time(year, month: int, day):
+    if month == 0:
+        offset = 1
+    else: 
+        offset = 0
+
+    solar_term, solar_month_index = get_Luna_Month_With_Season(datetime(year, month, day, 9, 15)) 
+    solar_month_index = solarterms[solar_term]
+     #Chinese calendar is solar calendar
+    # logger.debug(f"Year Pillar: Year: {year} month: {month} Offset is {offset}")
+    year, month, day = convert_Solar_to_Luna(year, month, day)
+
+    if solar_month_index > 20:
+        year = year + 1
+    heavenly_stem_index = (year - 3 - offset) % 10
+    earthly_branch_index = (year - 3) % 12
+    heavenly_stem = HeavenlyStem(heavenly_stem_index)
+    logger.debug(f"Year Earthly Index {earthly_branch_index}")
+    earthly_branch = EarthlyBranch(earthly_branch_index )
+    logger.debug(f"Year Earthly Branch {earthly_branch.value}")
+    
+    # solar_month_index > 12
+    if solar_month_index > 8 and solar_month_index < 20:
+        return HeavenlyStem(get_next_half_heavenly(heavenly_stem_index)), EarthlyBranch(get_next_half_earthly(earthly_branch_index))
+    else:   
+        return heavenly_stem.value, earthly_branch.value
+
 
 # Define a lock for synchronizing access to the shared variable 'i'
 i_lock = Lock()
@@ -275,10 +306,6 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
     solar_month_index = solarterms[solar_term]
     # #Chinese calendar is solar calendar
     # use the year only
-
-    
-    
-
     if solar_term == "LiChun":
         year = solarterm.LiChun(year).year
     else:
@@ -293,8 +320,8 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
 
     # if quotient_solar == 0:
     #         quotient_solar = 12
+    logger.debug(f"current_month The solar term is {solar_term} The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
     month = quotient_solar
-    logger.info(f"current_time The solar term is {solar_term} The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -309,6 +336,7 @@ def calculate_month_heavenly_withSeason_for_current_time(year, month: int, day, 
     logger.debug(f"Month Earthly Branch Stem {earthly_branch_stem}")
 
     if reminder > 0:
+        logger.debug(f"Next Half Month - month {month}")
         return HeavenlyStem(get_next_half_heavenly(month_heavenly_stem)), EarthlyBranch(get_next_half_earthly(earthly_branch_stem))
     else:
         return HeavenlyStem(month_heavenly_stem), EarthlyBranch(earthly_branch_stem)
@@ -777,7 +805,7 @@ def get_heavenly_branch_ymdh_pillars_base(year: int, month: int, day: int, hour:
 def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, hour: int):
     heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
     dark_month_stem = calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
-    heavenly_stem, earthly_branch = calculate_year_heavenly(year, month, day)
+    heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time(year, month, day)
     heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_current(year, month, day, hour, 15)
     heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
     dark_hour_stem = calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem )
