@@ -1,0 +1,98 @@
+[
+    {
+      "stockCode": "AAPL",
+      "companyName": "Apple Inc.",
+      "currentPrice": 156.65,
+      "lastTradingDayClose": 160.71,
+      "predictions": [
+        {"day": 1, "price": 162.48},
+        {"day": 2, "price": 161.55},
+        {"day": 3, "price": 158.51},
+        {"day": 4, "price": 163.58},
+        {"day": 5, "price": 159.09},
+        {"day": 6, "price": 164.76},
+        {"day": 7, "price": 158.01},
+        {"day": 8, "price": 160.29},
+        {"day": 9, "price": 164.99},
+        {"day": 10, "price": 165.58}
+      ],
+      "MiniChart": [78.08, 93.86, 99.17, 72.05, 56.75, 82.32, 86.95, 83.05, 90.57, 95.85, 81.52, 51.46, 53.02, 94.4, 77.68, 68.78, 76.05, 62.62, 63.57, 64.29, 74.75]
+    },
+    {
+      "stockCode": "MSFT",
+      "companyName": "Microsoft Corporation",
+      "currentPrice": 153.97,
+      "lastTradingDayClose": 149.59,
+      "predictions": [
+        {"day": 1, "price": 145.22},
+        {"day": 2, "price": 149.69},
+        {"day": 3, "price": 146.77},
+        {"day": 4, "price": 146.6},
+        {"day": 5, "price": 153.07},
+        {"day": 6, "price": 151.73},
+        {"day": 7, "price": 151.66},
+        {"day": 8, "price": 150.5},
+        {"day": 9, "price": 149.89},
+        {"day": 10, "price": 146.43}
+      ],
+      "MiniChart": [64.47, 76.9, 88.05, 81.36, 92.18, 85.88, 64.48, 53.06, 53.56, 79.64, 96.93, 59.33, 99.41, 69.2, 95.8, 99.05, 57.62, 78.69, 84.15, 95.08, 91.91]
+    },
+    {
+      "stockCode": "GOOGL",
+      "companyName": "Alphabet Inc.",
+      "currentPrice": 135.49,
+      "lastTradingDayClose": 136.3,
+      "predictions": [
+        {"day": 1, "price": 141.28},
+        {"day": 2, "price": 131.32},
+        {"day": 3, "price": 138.56},
+        {"day": 4, "price": 135.93},
+        {"day": 5, "price": 135.29},
+        {"day": 6, "price": 139.75},
+        {"day": 7, "price": 132.01},
+        {"day": 8, "price": 134.59},
+        {"day": 9, "price": 135.97},
+        {"day": 10, "price": 137.21}
+      ],
+      "MiniChart": [65.91, 67.77, 69.03, 76.94, 99.04, 61.1, 90.08, 90.88, 77.95, 80.08, 51.68, 59.51, 81.54, 82.58, 58.25, 75.22, 51.17, 76.28, 77.74, 78.28, 66.34]
+    },
+    {
+      "stockCode": "AMZN",
+      "companyName": "Amazon.com Inc.",
+      "currentPrice": 101.76,
+      "lastTradingDayClose": 106.46,
+      "predictions": [
+        {"day": 1, "price": 101.52},
+        {"day": 2, "price": 106.51},
+        {"day": 3, "price": 110.9},
+        {"day": 4, "price": 104.51},
+        {"day": 5, "price": 106.41},
+        {"day": 6, "price": 110.89},
+        {"day": 7, "price": 107.86},
+        {"day": 8, "price": 111.19},
+        {"day": 9, "price": 108.63},
+        {"day": 10, "price": 107.17}
+      ],
+      "MiniChart": [96.34, 99.13, 70.77, 53.19, 74.44, 88.12, 88.81, 77.91, 87.68, 68.44, 79.98, 79.09, 91.18, 66.22, 81.08, 50.48, 93.81, 61.32, 53.11, 60.61, 78.67]
+    },
+    {
+      "stockCode": "FB",
+      "companyName": "Meta Platforms Inc.",
+      "currentPrice": 143.72,
+      "lastTradingDayClose": 144.12,
+      "predictions": [
+        {"day": 1, "price": 146.25},
+        {"day": 2, "price": 142.74},
+        {"day": 3, "price": 143.78},
+        {"day": 4, "price": 139.13},
+        {"day": 5, "price": 142.05},
+        {"day": 6, "price": 146.13},
+        {"day": 7, "price": 144.99},
+        {"day": 8, "price": 142.89},
+        {"day": 9, "price": 140.29},
+        {"day": 10, "price": 141.78}
+      ],
+      "MiniChart": [57.57, 63.01, 83.32, 82.64, 95.22, 92.78, 89.12, 51.23, 84.6, 88.1, 56.25, 68.21, 52.89, 51.11, 56.07, 59.11, 98.11, 92.45, 57.87, 84.06, 81.77]
+    }
+  ]
+  

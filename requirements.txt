@@ -8,7 +8,10 @@ numpy
 yfinance
 yahooquery
 scikit-learn
-Flask==2.0.1
-request
+Flask
+# request
 jsonify
 google-cloud-bigquery
+python-dotenv
+db_dtypes
+ib_insync
