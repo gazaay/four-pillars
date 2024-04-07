@@ -13,6 +13,19 @@ ChartJS.register(
 );
 
 const MiniChart = ({ dataPoints }) => {
+
+  dataPoints = [
+    {"day": 1, "price": 162.48},
+    {"day": 2, "price": 161.55},
+    {"day": 3, "price": 158.51},
+    {"day": 4, "price": 163.58},
+    {"day": 5, "price": 159.09},
+    {"day": 6, "price": 164.76},
+    {"day": 7, "price": 158.01},
+    {"day": 8, "price": 160.29},
+    {"day": 9, "price": 164.99},
+    {"day": 10, "price": 165.58}
+  ];
   // Ensure dataPoints is defined before proceeding to map over it
   if (!dataPoints) {
     // Optionally, you can return null or some placeholder component here

@@ -3,7 +3,7 @@ import axios from 'axios';
 import logo from './logo.svg';
 import './App.css';
 import StockTable from './components/StockTable';
-import mockData from './data/mockData.json';  // Import the mock data
+import mockData from './data/bquxjob_118aa86a_18ea88300ea.json';  // Import the mock data
 
 
 function App() {

@@ -1,4 +1,4 @@
-.App {
+/* .App {
   text-align: center;
 }
 
@@ -35,4 +35,55 @@
   to {
     transform: rotate(360deg);
   }
+} */
+
+/* Adjusting the overall application styling to match Google's minimalistic approach */
+.App {
+  text-align: center;
+  font-family: 'Roboto', sans-serif; /* Google's preferred font */
+}
+
+.App-header {
+  background-color: #fff; /* Light background */
+  color: #202124; /* Slightly off-black text for easier reading */
+}
+
+.App-link {
+  color: #1a73e8; /* Google's link color */
+}
+
+/* Table adjustments for a cleaner look */
+.TableContainer {
+  box-shadow: none; /* Removing box shadow for a flatter design */
+}
+
+.TableHead {
+  background-color: #f8f9fa; /* Light grey background for the table header */
+}
+
+.TableRow {
+  border-bottom: 1px solid #e0e0e0; /* Lighter border for rows */
+}
+
+.TableCell, .TableSortLabel {
+  font-weight: normal; /* Less bold fonts */
+  color: #202124; /* Matching Google's text color */
+}
+
+/* Icons and buttons adjustments */
+.IconButton {
+  color: #5f6368; /* Muted icon color */
+}
+
+/* More specific adjustments can be added as needed */
+.verticalText {
+  writing-mode: vertical-rl; /* This will make the text vertical */
+  text-align: center; /* Centers text vertically, might need adjustment based on overall cell styling */
+  transform: rotate(0deg); /* Optional: Rotates the text if you want it in the opposite direction */
+}
+
+.horizontalContainer {
+  display: flex; /* This makes the child elements (divs) layout horizontally */
+  justify-content: flex-end; /* Aligns the children to the right; adjust as needed */
+  align-items: center; /* Centers the items vertically within the container, if needed */
 }

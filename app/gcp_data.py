@@ -110,18 +110,20 @@ def query_stock_info(symbol, project_id='stock8word', dataset_name='GG88', table
 
     return result_df
 
-# Example usage:
-config_df = get_config()
-print(config_df)
+# # Example usage:
+# config_df = get_config()
+# print(config_df)
+
+# print( config_df[config_df['item'] == 'column_name_mapping']['content'].iloc[0])
 
 
-# Example usage:
-symbol_to_query = '00001'  # Replace with the symbol you want to query
-result_df = query_stock_info(symbol=symbol_to_query)
-print(result_df)
+# # Example usage:
+# symbol_to_query = '00001'  # Replace with the symbol you want to query
+# result_df = query_stock_info(symbol=symbol_to_query)
+# print(result_df)
 
-# Example usage:
-stock_list = query_stock_info(symbol='%')
+# # Example usage:
+# stock_list = query_stock_info(symbol='%')
 
-stock_list['ric_code'] = stock_list['ric_code'].str[1:]
-print(stock_list)
+# stock_list['ric_code'] = stock_list['ric_code'].str[1:]
+# print(stock_list)
