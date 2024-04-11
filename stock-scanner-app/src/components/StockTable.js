@@ -266,7 +266,7 @@ const StockTable = ({ stocks }) => {
                   
                   {/* Add more cells as needed */}
 
-                  <TableCell align="right"><MiniChart dataPoints={row.MiniChart} />
+                  <TableCell align="right"><MiniChart dataPoints={row.MiniChart} symbol={row.symbol}/>
                   </TableCell>
                 </TableRow>
                 <TableRow>

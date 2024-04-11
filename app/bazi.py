@@ -392,7 +392,9 @@ def calculate_day_heavenly_current(year, month, day, hour, mins):
 
     #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
-
+    if hour == 23: 
+        day = day + 1
+        hour = 0
 
     if year >= 2000:
     # Calculate the intermediate value
@@ -445,6 +447,9 @@ def calculate_day_heavenly_current(year, month, day, hour, mins):
 
 def calculate_day_heavenly_base(year, month, day, hour, mins):
 
+    if hour == 23: 
+        day = day + 1
+        hour = 0
     #Chinese calendar is solar calendar
     # year, month, day = convert_Solar_to_Luna(year, month, day)
 

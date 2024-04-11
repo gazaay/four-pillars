@@ -439,12 +439,13 @@ from dateutil.relativedelta import relativedelta
 current_date = datetime(2023, 10, 16, 6)  # Example: January 1st, 2024 at 12:00
 next_date = current_date 
 
-for i in range(1, 18):
+for i in range(0, 45):
     # Add i months to current_date
     print(f"################# {next_date.year,next_date.month,next_date.day,next_date.hour} #################")
     # Assuming bazi.get_heavenly_branch_ymdh_pillars_current is a method call that you have defined or imported
     print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next_date.year,next_date.month,next_date.day, next_date.hour)}")
-    next_date = current_date + relativedelta(months=i)
+    next_date = current_date + relativedelta(hours=i)
+    # next_date = current_date + relativedelta(hour=i)
     
 # year = 2023
 # month = 11

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import uuid
 from app  import bazi
 import json
 import pandas as pd
@@ -9,6 +10,7 @@ from google.cloud import secretmanager
 from google.cloud import bigquery
 from app.config_loader import global_config, get_config, update_config_content, update_config_field
 from app.feature_engineering import feature_engineering
+from app.gcp_data import add_new_stock_info
 
 # Load the configuration at application start
 print (global_config["column_name_mapping"].items())
@@ -21,13 +23,13 @@ print (global_config["column_name_mapping"].items())
 # print(f"here is the path {service_account_path}")
 
 # Testing if feature engineering works on local
-symbol_to_query ="00001"
-ric_to_query="0001.hk"
-today = datetime.now()
-master_start_date = today - timedelta(days=1)
-master_end_date = today + timedelta(days=20)
-merged_and_filtered_df = feature_engineering(symbol_to_query, ric_to_query, master_start_date, master_end_date)
-print(merged_and_filtered_df)
+# symbol_to_query ="00001"
+# ric_to_query="0001.hk"
+# today = datetime.now()
+# master_start_date = today - timedelta(days=1)
+# master_end_date = today + timedelta(days=20)
+# merged_and_filtered_df = feature_engineering(symbol_to_query, ric_to_query, master_start_date, master_end_date)
+# print(merged_and_filtered_df)
 
 
 
@@ -96,3 +98,46 @@ print(merged_and_filtered_df)
 # global_config["column_name_mapping"] = config_df[config_df['item'] == 'column_name_mapping']['content'].iloc[0]
 
 # print (global_config["column_name_mapping"].items())
+
+
+
+##########################################
+# BELOW ARE SCRIPTS TO ADD HSI BD to Stock Info
+##########################################
+
+# new_row_data = {
+#     "birthday_day_time": "1969-11-24 09:30:00.000000 UTC",
+#     "bd_year": "1969",
+#     "bd_month": "11",
+#     "bd_day": "24",
+#     "ticker": "HSI",
+#     "ric_code": "HSI.hk",
+#     "bd_minutes": "30",
+#     "bd_hour": "9",
+#     "UUID": str(uuid.uuid4()),
+#     "last_modified_date": str(datetime.now())
+# }
+
+# # Call the function
+# add_new_stock_info('stock8word', 'GG88', 'stock_info', new_row_data)
+
+##########################################
+# BELOW ARE SCRIPTS TO ADD HSI BD to Stock Info
+##########################################
+
+new_row_data = {
+    "birthday_day_time": "1957-03-03 21:30:00.000000 UTC",
+    "bd_year": "1957",
+    "bd_month": "3",
+    "bd_day": "3",
+    "ticker": "^GSPC",
+    "ric_code": "^GSPC",
+    "bd_minutes": "30",
+    "bd_hour": "21",
+    "UUID": str(uuid.uuid4()),
+    "last_modified_date": str(datetime.now())
+}
+
+# Call the function
+add_new_stock_info('stock8word', 'GG88', 'stock_info', new_row_data)
+

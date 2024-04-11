@@ -51,6 +51,7 @@ def get_config(project_id='stock8word', dataset_name='GG88', table_name='config'
 # Call this function at the start of your application
 config_df = get_config()
 global_config["column_name_mapping"] = config_df[config_df['item'] == 'column_name_mapping']['content'].iloc[0]
+global_config["custom_encoding_mapping"] = config_df[config_df['item'] == 'custom_encoding_mapping']['content'].iloc[0]
 
 logger.info(global_config)
 

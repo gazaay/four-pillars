@@ -12,8 +12,8 @@ ChartJS.register(
   Legend
 );
 
-const MiniChart = ({ dataPoints }) => {
-
+const MiniChart = ({ dataPoints, symbol }) => {
+  const imagePath = `/minigraph/${symbol}.jpg`;
   dataPoints = [
     {"day": 1, "price": 162.48},
     {"day": 2, "price": 161.55},
@@ -64,7 +64,10 @@ const MiniChart = ({ dataPoints }) => {
     },
   };
 
-  return <Line data={data} options={options} />;
+  // return <Line data={data} options={options} />;
+  return <div>
+          <img src={imagePath} alt={`${symbol} Mini Chart`} width="250px" />
+        </div>;
 };
 
 export default MiniChart;

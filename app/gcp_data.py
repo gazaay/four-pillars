@@ -110,6 +110,92 @@ def query_stock_info(symbol, project_id='stock8word', dataset_name='GG88', table
 
     return result_df
 
+from google.cloud import bigquery
+
+def update_stock_info_field(ticker, field_name, new_value, 
+                            project_id='stock8word', dataset_name='GG88', table_name='stock_info'):
+    """
+    Updates a specified field for a stock in the stock_info table.
+
+    Parameters:
+    - project_id (str): Google Cloud project ID.
+    - dataset_name (str): BigQuery dataset name.
+    - table_name (str): BigQuery table name.
+    - ticker (str): The ticker symbol of the stock to update.
+    - field_name (str): The name of the field to update.
+    - new_value (str or int): The new value to set for the field.
+
+    Returns:
+    - None
+    """
+    client = bigquery.Client(project=project_id)
+
+    # Construct the SQL query to update the specified field for the given ticker
+    query = f"""
+    UPDATE `{project_id}.{dataset_name}.{table_name}`
+    SET {field_name} = @new_value
+    WHERE ticker = @ticker
+    """
+
+    # Set up the query parameters to prevent SQL injection
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("new_value", "STRING", new_value),
+            bigquery.ScalarQueryParameter("ticker", "STRING", ticker)
+        ]
+    )
+
+    # Execute the update query
+    client.query(query, job_config=job_config)
+
+    print(f"Stock info for ticker '{ticker}' updated successfully.")
+
+from google.cloud import bigquery
+
+def add_new_stock_info(project_id, dataset_name, table_name, new_row_data):
+    """
+    Adds a new row to the stock_info table.
+
+    Parameters:
+    - project_id (str): Google Cloud project ID.
+    - dataset_name (str): BigQuery dataset name.
+    - table_name (str): BigQuery table name.
+    - new_row_data (dict): A dictionary representing the new row to add. Keys should match the column names.
+
+    Returns:
+    - None
+    """
+    client = bigquery.Client(project=project_id)
+    table_id = f"{project_id}.{dataset_name}.{table_name}"
+
+    # Insert the new row
+    errors = client.insert_rows_json(table_id, [new_row_data])  
+    
+    # Make sure new_row_data is a list of dictionaries
+
+    if errors == []:
+        print("New row has been added.")
+    else:
+        print("Errors occurred while inserting the row:", errors)
+
+# new_row_data = {
+#     "birthday_day_time": "2024-04-01 09:30:00.000000 UTC",
+#     "bd_year": "2024",
+#     "bd_month": "4",
+#     "bd_day": "1",
+#     "ticker": "01234",
+#     "ric_code": "01234.hk",
+#     "bd_minutes": "30",
+#     "bd_hour": "9",
+#     "UUID": "unique-uuid-1234-5678",
+#     "last_modified_date": "2024-04-07 10:00:00.000000 UTC"
+# }
+
+# # Call the function
+# add_new_stock_info('stock8word', 'GG88', 'stock_info', new_row_data)
+
+
+
 # # Example usage:
 # config_df = get_config()
 # print(config_df)
