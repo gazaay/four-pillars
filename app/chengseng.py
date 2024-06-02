@@ -55,7 +55,7 @@ def process_8w_row(index, row):
                         hour = parsed_time.hour
 
                         # logger.info(f"{index} - {year} - {month} - {day} - {hour}Started processing")
-                        result_current = bazi.get_heavenly_branch_ymdh_pillars_current(year,month,day,hour)
+                        result_current = bazi.get_heavenly_branch_ymdh_pillars_current_Option_2(year,month,day,hour)
 
                         with lock:
                             enhanced_row = row.copy()
@@ -72,7 +72,7 @@ def process_8w_row(index, row):
                     except Exception as e:
                             logger.info(f"{index} -  An error occurred: {e}")
                             current_attempt += 1
-                            
+
 
 
 def adding_8w_pillars( sorted_df):
