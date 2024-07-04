@@ -71,6 +71,11 @@ class Backtest:
     def check_entry_conditions(self, thesis_instance, row, date_column):
         entry_signal, entry_price, trade_type = thesis_instance.evaluate(row)
         if entry_signal: 
+            # Loop below for the number of trades and if there are open trades. then we should enter double amount of trades
+            for position in self.positions[:]:
+                if position['trade_type'] == trade_type:
+                    print(f"Entry signal detected: {trade_type} trade at {entry_price}")
+                    self.positions.append({'entry_price': entry_price, 'entry_date': row[date_column], 'trade_type': trade_type})
             print(f"Entry signal detected: {trade_type} trade at {entry_price}")
             self.positions.append({'entry_price': entry_price, 'entry_date': row[date_column], 'trade_type': trade_type})
             thesis_instance.current_trades = self.positions
