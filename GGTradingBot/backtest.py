@@ -19,7 +19,8 @@ class Backtest:
         self.positions = []
         self.equity_curve = []
 
-    def get_date_column(self, data):
+    @staticmethod
+    def get_date_column(data):
         if 'Datetime' in data.columns:
             return 'Datetime'
         elif 'Date' in data.columns:
@@ -29,7 +30,11 @@ class Backtest:
 
     def run_backtest(self, symbol, start_date, end_date, interval, current_time):
         thesis_instance = self.load_thesis(symbol, interval, current_time)
+
+        thesis_instance.set_intial_capital(self.initial_capital)
+
         data = self.api.get_data(symbol, start_date, end_date, interval)
+        thesis_instance.set_date_or_datetime_column(self.get_date_column(data))
         trades = []
         equity_curve = []
 
@@ -37,6 +42,7 @@ class Backtest:
         data['RSI'] = talib.RSI(data['Close'], timeperiod=thesis_instance.rsi_period)
 
         date_column = self.get_date_column(data)
+        thesis_instance.set_equity_curve(self.equity_curve)
 
         for index, row in data.iterrows():
             current_date = row[date_column]
@@ -69,15 +75,25 @@ class Backtest:
                 self.log_trade(trade)
 
     def check_entry_conditions(self, thesis_instance, row, date_column):
-        entry_signal, entry_price, trade_type = thesis_instance.evaluate(row)
+        entry_signal, entry_price, trade_type, qty = thesis_instance.evaluate(row)
         if entry_signal: 
-            # Loop below for the number of trades and if there are open trades. then we should enter double amount of trades
-            for position in self.positions[:]:
-                if position['trade_type'] == trade_type:
-                    print(f"Entry signal detected: {trade_type} trade at {entry_price}")
-                    self.positions.append({'entry_price': entry_price, 'entry_date': row[date_column], 'trade_type': trade_type})
-            print(f"Entry signal detected: {trade_type} trade at {entry_price}")
-            self.positions.append({'entry_price': entry_price, 'entry_date': row[date_column], 'trade_type': trade_type})
+            # If already one position is open, then open another position with the same entry price
+            # for position in self.positions[:]:
+            #     if position['trade_type'] == trade_type:
+            #         print(f"Entry signal detected: {trade_type} trade at {entry_price}")
+            #         self.positions.append({'entry_price': entry_price, 'entry_date': row[date_column], 'trade_type': trade_type})
+            # print(f"Entry signal detected: {trade_type} trade at {entry_price}")
+            # self.positions.append({'entry_price': entry_price, 'entry_date': row[date_column], 'trade_type': trade_type})
+            # thesis_instance.current_trades = self.positions
+
+            # Let the thesis to define how many qty to buy 
+            # open_trade_count = sum(1 for position in self.positions if position['trade_type'] == trade_type)
+            # total_qty = qty * (1 + open_trade_count)
+
+            for _ in range(int(qty)):
+                print(f"Entry signal detected: {trade_type} trade at {entry_price}")
+                self.positions.append({'entry_price': entry_price, 'entry_date': row[date_column], 'trade_type': trade_type})
+
             thesis_instance.current_trades = self.positions
 
     def update_equity_curve(self, current_date, current_price):

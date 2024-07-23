@@ -13,7 +13,19 @@ class Thesis1:
         self.daily_loss = 0
         self.current_trades = []
         self.dail_loss_skip = 0
+        self.equity_curve = []
         self.exit_strategy = ExitStrategy('standard', {'take_profit': 1/80, 'stop_loss': 1/4})
+        self.initial_capital = 0
+        self.DATEORDATETIME = 'Date'
+
+    def set_date_or_datetime_column (self, date_or_datetime):
+        self.DATEORDATETIME = date_or_datetime
+
+    def set_intial_capital(self, initial_capital):
+        self.initial_capital = initial_capital
+
+    def set_equity_curve(self, equity_curve):
+        self.equity_curve = equity_curve
 
     def evaluate(self, row):
         if len(self.current_trades) >= self.max_concurrent_trades:

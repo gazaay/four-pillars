@@ -4,22 +4,22 @@ import datetime
 from pprint import pprint
 
 def main():
-    thesis_name = 'thesis1'
+    thesis_name = 'thesis2'
     initial_capital = 10000
     slippage = 10
     commission = 5
     order_size = 50
-    max_concurrent_trades = 400
+    max_concurrent_trades = 10
     daily_loss_threshold = 5
 
     backtest = Backtest(initial_capital, slippage, commission, order_size, max_concurrent_trades, daily_loss_threshold, thesis_name)
 
     symbol = '^HSI'
-    interval = '30m'  # Change this to '1m', '5m', '15m', '30m', '1h', '4h', '1d', '1wk' for different intervals
+    interval = '1h'  # Change this to '1m', '5m', '15m', '30m', '1h', '4h', '1d', '1wk' for different intervals
     current_time = datetime.datetime.now()
 
     trade_start_date = '2024-06-01'
-    trade_end_date = '2024-07-04'
+    trade_end_date = '2024-07-11'
 
     thesis_instance = backtest.load_thesis(symbol, interval, current_time)
     backtest_summary = backtest.run_backtest(symbol, trade_start_date, trade_end_date, interval, current_time)
