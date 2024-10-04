@@ -8,7 +8,7 @@ class Thesis2:
         self.current_time = current_time
         self.max_concurrent_trades = max_concurrent_trades
         self.daily_loss_threshold = daily_loss_threshold
-        self.rsi_period = 11  # Define the RSI period here
+        self.rsi_period = 9  # Define the RSI period here
         self.tracking_long = False
         self.tracking_short = False
         self.daily_loss = 0

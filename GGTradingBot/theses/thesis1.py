@@ -16,7 +16,7 @@ class Thesis1:
         self.equity_curve = []
         self.exit_strategy = ExitStrategy('standard', {'take_profit': 1/80, 'stop_loss': 1/4})
         self.initial_capital = 0
-        self.DATEORDATETIME = 'Date'
+        self.DATEORDATETIME = 'DateTime'
 
     def set_date_or_datetime_column (self, date_or_datetime):
         self.DATEORDATETIME = date_or_datetime
@@ -29,11 +29,11 @@ class Thesis1:
 
     def evaluate(self, row):
         if len(self.current_trades) >= self.max_concurrent_trades:
-            return False, None, None
+            return False, None, None, None
         if self.daily_loss >= self.daily_loss_threshold and self.dail_loss_skip < 8:
             print("Daily loss threshold reached")
             self.dail_loss_skip += 1
-            return False, None, None
+            return False, None, None, None
         if self.daily_loss >= self.daily_loss_threshold and self.dail_loss_skip >= 8:
             self.daily_loss = 0
             self.dail_loss_skip = 0
@@ -41,14 +41,14 @@ class Thesis1:
             self.tracking_long = True
         if self.tracking_long and row['RSI'] >= 29:
             self.tracking_long = False
-            return True, row['Close'], 'long'
+            return True, row['Close'], 'long', 1
         if not self.tracking_short and row['RSI'] > 70:
             self.tracking_short = True
         if self.tracking_short and row['RSI'] <= 69:
             self.tracking_short = False
-            return True, row['Close'], 'short'
+            return True, row['Close'], 'short', 1
 
-        return False, None, None
+        return False, None, None, None
 
     def should_exit(self, entry_price, current_price, trade_type):
         return self.exit_strategy.should_exit(entry_price, current_price, trade_type)

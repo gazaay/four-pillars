@@ -445,6 +445,9 @@ for i in range(0, 1):
     print(f"################# {next_date.year,next_date.month,next_date.day,next_date.hour} #################")
     # Assuming bazi.get_heavenly_branch_ymdh_pillars_current is a method call that you have defined or imported
     print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next_date.year,next_date.month,next_date.day, next_date.hour)}")
+    print(f"{bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(next_date.year,next_date.month,next_date.day, next_date.hour)}")
+
+    
     next_date = current_date + relativedelta(days=i)
     # next_date = current_date + relativedelta(hour=i)
     

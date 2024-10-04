@@ -843,6 +843,7 @@ def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, ho
     heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
     dark_hour_stem = calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem )
 
+    flip_pillar(year, month, day, hour, Pillar.YEAR)
 
     return {
             "時": resolveHeavenlyStem(heavenly_hour_stem) + resolveEarthlyBranch(earthly_hour_stem),
@@ -872,3 +873,216 @@ def get_heavenly_branch_ymdh_pillars_current_Option_2(year: int, month: int, day
             "年": resolveHeavenlyStem(heavenly_stem) + resolveEarthlyBranch(earthly_branch),
             "-月": dark_month_stem,
            }
+
+def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int, day: int, hour: int):
+    # Calculate normal heavenly stems and earthly branches
+    heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+    dark_month_stem = calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
+    heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
+    heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_current(year, month, day, hour, 15)
+    heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
+    dark_hour_stem = calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem)
+
+    # Create the flipped pillars using the 'earthly_flip' function
+    flipped_year_stem, flipped_year_branch = earthly_flip(year, month, day, hour, Pillar.YEAR, Direction.FORWARD)
+    flipped_month_stem, flipped_month_branch = earthly_flip(year, month, day, hour, Pillar.MONTH, Direction.FORWARD)
+    flipped_day_stem, flipped_day_branch = earthly_flip(year, month, day, hour, Pillar.DAY, Direction.FORWARD)
+    flipped_hour_stem, flipped_hour_branch = earthly_flip(year, month, day, hour, Pillar.HOUR, Direction.FORWARD)
+
+    # Return a dictionary with both original and flipped pillars
+    return {
+        "時": resolveHeavenlyStem(heavenly_hour_stem) + resolveEarthlyBranch(earthly_hour_stem),
+        "日": resolveHeavenlyStem(heavenly_day_stem) + resolveEarthlyBranch(earthly_day_stem),
+        "-時": dark_hour_stem,
+        "月": resolveHeavenlyStem(heavenly_month_stem) + resolveEarthlyBranch(earthly_month_stem),
+        "年": resolveHeavenlyStem(heavenly_stem) + resolveEarthlyBranch(earthly_branch),
+        "-月": dark_month_stem,
+        # Add flipped pillars to the output
+        "合年": resolveHeavenlyStem(flipped_year_stem) + resolveEarthlyBranch(flipped_year_branch),
+        "合月": resolveHeavenlyStem(flipped_month_stem) + resolveEarthlyBranch(flipped_month_branch),
+        "合日": resolveHeavenlyStem(flipped_day_stem) + resolveEarthlyBranch(flipped_day_branch),
+        "合時": resolveHeavenlyStem(flipped_hour_stem) + resolveEarthlyBranch(flipped_hour_branch),
+    }
+
+
+from enum import Enum
+from datetime import datetime
+
+# Define the 8wPillar ENUM
+class Pillar(Enum):
+    HOUR = "HOUR"
+    DAY = "DAY"
+    MONTH = "MONTH"
+    YEAR = "YEAR"
+
+
+# Define the Direction ENUM for return values
+class Direction(Enum):
+    FORWARD = "FORWARD"
+    BACKWARD = "BACKWARD"
+
+# Function to check whether the date is forward or backward
+def pillar_forward_or_backward(year: int, month: int, day: int, hour: int, pillar: Pillar) -> Direction:
+    input_time = datetime(year, month, day, hour)
+    current_time = datetime.now()
+
+    # Determine the difference based on the given Pillar
+    if pillar == Pillar.HOUR:
+        delta = (current_time - input_time).total_seconds() / 3600  # Difference in hours
+    elif pillar == Pillar.DAY:
+        delta = (current_time - input_time).days  # Difference in days
+    elif pillar == Pillar.MONTH:
+        delta = (current_time.year - input_time.year) * 12 + (current_time.month - input_time.month)  # Difference in months
+    elif pillar == Pillar.YEAR:
+        delta = current_time.year - input_time.year  # Difference in years
+
+    # Return Direction enum: FORWARD if input_time is in the future, BACKWARD if in the past
+    return Direction.FORWARD if delta < 0 else Direction.BACKWARD
+
+# Flip pillar based on direction
+def flip_pillar(year: int, month: int, day: int, hour: int, pillar: Pillar):
+    # Call the relevant functions based on pillar
+    if pillar == Pillar.MONTH:
+        heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+        dark_month_stem = calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
+    elif pillar == Pillar.YEAR:
+        heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
+    elif pillar == Pillar.DAY:
+        heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_current(year, month, day, hour, 15)
+    elif pillar == Pillar.HOUR:
+        heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
+        dark_hour_stem = calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem)
+
+    # Call the direction checker
+    direction = pillar_forward_or_backward(year, month, day, hour, pillar)
+
+    # If the direction is forward, call earthly_flip
+    earthly_flip(year, month, day, hour, pillar, direction)
+
+earthly_branch_pairs = {
+    EarthlyBranch.ZI: (EarthlyBranch.CHOU, 1),   # ZI -> CHOU is 1 step forward
+    EarthlyBranch.YIN: (EarthlyBranch.HAI, 9),   # YIN -> HAI is 9 steps forward
+    EarthlyBranch.MAO: (EarthlyBranch.XU, 7),    # MAO -> XU is 7 steps forward
+    EarthlyBranch.CHEN: (EarthlyBranch.YOU, 5),  # CHEN -> YOU is 5 steps forward
+    EarthlyBranch.SI: (EarthlyBranch.SHEN, 3),   # SI -> SHEN is 3 steps forward
+    EarthlyBranch.WU: (EarthlyBranch.WEI, 1),    # WU -> WEI is 1 step forward
+
+    # Reverse pairs
+    EarthlyBranch.CHOU: (EarthlyBranch.ZI, 11),   # CHOU -> ZI is 11 steps backward
+    EarthlyBranch.HAI: (EarthlyBranch.YIN, 3),    # HAI -> YIN is 3 steps backward
+    EarthlyBranch.XU: (EarthlyBranch.MAO, 5),     # XU -> MAO is 5 steps backward
+    EarthlyBranch.YOU: (EarthlyBranch.CHEN, 7),   # YOU -> CHEN is 7 steps backward
+    EarthlyBranch.SHEN: (EarthlyBranch.SI, 9),    # SHEN -> SI is 9 steps backward
+    EarthlyBranch.WEI: (EarthlyBranch.WU, 11)     # WEI -> WU is 11 steps backward
+}
+
+# Define the Heavenly Stems as an enumeration
+class HeavenlyStem(Enum):
+    JIA = 1   # 甲
+    YI = 2    # 乙
+    BING = 3  # 丙
+    DING = 4  # 丁
+    WU = 5    # 戊
+    JI = 6    # 己
+    GENG = 7  # 庚
+    XIN = 8   # 辛
+    REN = 9   # 壬
+    GUI = 0   # 癸
+
+def earthly_flip(year: int, month: int, day: int, hour: int, pillar: Pillar, direction: Direction):
+    """
+    This function adjusts the Heavenly Stem and Earthly Branch based on the selected pillar (year, month, day, or hour) 
+    and the direction (forward or backward). The adjustments are based on defined relationships between 
+    Earthly Branches and Heavenly Stems.
+    
+    Returns:
+        new_stem (HeavenlyStem): The new Heavenly Stem after the flip.
+        paired_earthly_branch (EarthlyBranch): The new Earthly Branch after the flip.
+    """
+
+    # Identify the Heavenly Stem and Earthly Branch based on the pillar type
+    if pillar == Pillar.MONTH:
+        heavenly_stem, earthly_branch = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+    elif pillar == Pillar.YEAR:
+        heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
+    elif pillar == Pillar.DAY:
+        heavenly_stem, earthly_branch = calculate_day_heavenly_current(year, month, day, hour, 15)
+    elif pillar == Pillar.HOUR:
+        heavenly_stem, earthly_branch = calculate_hour_heavenly(year, month, day, hour)
+
+    # Convert to enum based on the new EarthlyBranch Enum (expects `earthly_branch` as an integer)
+    earthly_branch_enum = EarthlyBranch(earthly_branch)
+
+    # Define all Heavenly Stems in a list for cycle operations
+    heavenly_stems = list(HeavenlyStem)
+
+    # Get the associated pair and step count for the given Earthly Branch
+    paired_earthly_branch, steps_forward = earthly_branch_pairs.get(earthly_branch_enum, (None, 0))
+
+    # If there is no pair or step count, handle the error or set default
+    if paired_earthly_branch is None:
+        print(f"No pair found for earthly branch {earthly_branch_enum}")
+        return None, None
+
+    # Determine the number of steps to move based on direction
+    if direction == Direction.FORWARD:
+        step_count = steps_forward  # Move forward by the given steps
+    else:
+        step_count = 12 - steps_forward  # Move backward in a 12-branch cycle
+
+    # Convert the current Heavenly Stem to its enum if necessary
+    heavenly_stem_enum = HeavenlyStem(heavenly_stem)
+
+    # Calculate the new Heavenly Stem index
+    current_index = heavenly_stems.index(heavenly_stem_enum)  # Find the index of the current stem
+    new_index = (current_index + step_count) % len(heavenly_stems)  # Calculate the new index with wrapping
+    new_stem = heavenly_stems[new_index]  # Get the new Heavenly Stem
+
+    # Output the new Heavenly Stem for debugging purposes
+    print(f"For Pillar {pillar} Original Heavenly Stem: {heavenly_stem_enum.name}, New Heavenly Stem: {new_stem.name}")
+
+    # Return both the new Heavenly Stem and the paired Earthly Branch
+    return new_stem, paired_earthly_branch
+
+def earthly_flip_2(year: int, month: int, day: int, hour: int, pillar: Pillar, direction: Direction):
+
+
+    # Identify the Heavenly Stem and Earthly Branch based on the pillar type
+    if pillar == Pillar.MONTH:
+        heavenly_stem, earthly_branch = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+    elif pillar == Pillar.YEAR:
+        heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
+    elif pillar == Pillar.DAY:
+        heavenly_stem, earthly_branch = calculate_day_heavenly_current(year, month, day, hour, 15)
+    elif pillar == Pillar.HOUR:
+        heavenly_stem, earthly_branch = calculate_hour_heavenly(year, month, day, hour)
+
+    print(resolveHeavenlyStem(heavenly_stem))
+    # Convert heavenly_stem to enum, assuming functions return strings
+    heavenly_stem_enum = HeavenlyStemCN[resolveHeavenlyStem(heavenly_stem)]  # e.g., "甲" becomes HeavenlyStemCN.JIA
+    earthly_branch_enum = EarthlyBranchCN[resolveEarthlyBranch(earthly_branch)]  # e.g., "子" becomes EarthlyBranchCN.ZI
+
+    # List of all Heavenly Stem CNs in cycle order
+    heavenly_stems = list(HeavenlyStemCN)
+
+    # Get the associated pair and step count for the given earthly branch
+    paired_earthly_branch, steps_forward = earthly_branch_pairs.get(earthly_branch_enum, (None, 0))
+
+    # If there is no pair or step count, handle the error or set default
+    if paired_earthly_branch is None:
+        print(f"No pair found for earthly branch {earthly_branch_enum}")
+        return
+
+    # Determine the number of steps to move based on direction
+    if direction == Direction.FORWARD:
+        step_count = steps_forward  # Move forward by the given steps
+    else:
+        step_count = len(heavenly_stems) - steps_forward  # Move backward
+
+    # Calculate the new position in the Heavenly Stem cycle
+    current_index = heavenly_stems.index(heavenly_stem_enum)
+    new_index = (current_index + step_count) % len(heavenly_stems)
+    new_stem = heavenly_stems[new_index]
+
+    # Output the new Heavenly Stem
+    print(f"Original Heavenly Stem: {heavenly_stem_enum}, New Heavenly Stem: {new_stem}")
