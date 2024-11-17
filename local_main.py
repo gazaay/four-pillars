@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
 from fastapi import FastAPI
 from app  import bazi
+from app import chengseng
 import logging
 
 import concurrent.futures
 from tqdm import tqdm
 import random
-
+import pandas as pd
 
 
 app = FastAPI()
@@ -114,10 +115,10 @@ def get_heavenly_branch_ymdh_pillars_base(year: int, month: int, day: int, hour:
 
 # Calculate for normal 8w
 def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month,day, hour)
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_baselife_time(year, month,day, hour)
     dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_current(year, month, day, hour, 15)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_base(year, month, day, hour, 13)
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     dark_hour_stem = bazi.calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem )
     
@@ -136,7 +137,7 @@ def get_heavenly_branch_ymdh_pillars_current(year: int, month: int, day: int, ho
 
 # Calculate for normal 8w
 def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int):
-    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)(year, month,day)
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)(year, month,day)
     dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
     heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_current(year, month, day, hour, 15)
@@ -318,13 +319,13 @@ hour = 13
 
 # # My
 # # 歲次：
-# year = 1979
-# month = 4
-# day =27
-# hour = 11
+year = 1979
+month = 4
+day =27
+hour = 13
 
-# result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
-# logger.info (result)
+result = get_heavenly_branch_ymdh_pillars_current(year, month, day, hour)
+logger.info (result)
 # print("##################################/n")
 # year = 2023
 # month = 12
@@ -436,7 +437,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 # Assuming current_date is initialized, e.g.,
-current_date = datetime(2024, 3, 22, 10)  # Example: January 1st, 2024 at 12:00
+current_date = datetime(1979, 4, 27, 13)  # Example: January 1st, 2024 at 12:00
 
 next_date = current_date 
 
@@ -628,3 +629,22 @@ specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, H
         
 #     if solar_old != solar_new:
 #         print(f"Mismatch for date {target_date} - {result_new}: Old method = {solar_old}, New method = {solar_new}")   
+
+
+
+# @title Step 3: Define time range
+today = datetime.now()
+# Set the time to 9:30 AM
+today = today.replace(hour=9, minute=00, second=0, microsecond=0)
+
+start_date = today - timedelta(days=30)
+end_date = today + timedelta(days=10)
+
+# @title Step 4: Create a blank data frame with time column
+time_range = pd.date_range(start=start_date, end=end_date, freq='1H').union(pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
+dataset = pd.DataFrame({'time': time_range})
+
+# @title Step 5: Adding 8w pillars to the dataset
+dataset = chengseng.adding_8w_pillars(dataset)
+
+print(dataset)

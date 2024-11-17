@@ -84,7 +84,7 @@ def adding_8w_pillars( sorted_df):
                              '流時', '流日', '-流時', '流月', '流年', '-流月']
 
     for column in columns_to_initialize:
-            _local_df[column] = np.nan
+            _local_df[column] = ""
 
     # Set the maximum number of threads you want to use
     max_threads = 200  # Change this as needed

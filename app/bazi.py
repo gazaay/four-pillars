@@ -876,16 +876,23 @@ def get_heavenly_branch_ymdh_pillars_current_Option_2(year: int, month: int, day
 
 def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int, day: int, hour: int):
     # Calculate normal heavenly stems and earthly branches
-    heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+    heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)
     dark_month_stem = calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
-    heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_current(year, month, day, hour, 15)
+    heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_base(year, month, day, hour, 15)
     heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
     dark_hour_stem = calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem)
+    # # Calculate normal heavenly stems and earthly branches
+    # heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+    # dark_month_stem = calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
+    # heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
+    # heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_current(year, month, day, hour, 15)
+    # heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
+    # dark_hour_stem = calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem)
 
     # Create the flipped pillars using the 'earthly_flip' function
-    flipped_year_stem, flipped_year_branch = earthly_flip(year, month, day, hour, Pillar.YEAR, Direction.FORWARD)
-    flipped_month_stem, flipped_month_branch = earthly_flip(year, month, day, hour, Pillar.MONTH, Direction.FORWARD)
+    flipped_year_stem, flipped_year_branch = earthly_flip(year, month, day, hour, Pillar.YEAR, Direction.BACKWARD)
+    flipped_month_stem, flipped_month_branch = earthly_flip(year, month, day, hour, Pillar.MONTH, Direction.BACKWARD)
     flipped_day_stem, flipped_day_branch = earthly_flip(year, month, day, hour, Pillar.DAY, Direction.FORWARD)
     flipped_hour_stem, flipped_hour_branch = earthly_flip(year, month, day, hour, Pillar.HOUR, Direction.FORWARD)
 
@@ -1028,7 +1035,7 @@ def earthly_flip(year: int, month: int, day: int, hour: int, pillar: Pillar, dir
     if direction == Direction.FORWARD:
         step_count = steps_forward  # Move forward by the given steps
     else:
-        step_count = 12 - steps_forward  # Move backward in a 12-branch cycle
+        step_count = 10 - steps_forward  # Move backward in a 12-branch cycle
 
     # Convert the current Heavenly Stem to its enum if necessary
     heavenly_stem_enum = HeavenlyStem(heavenly_stem)
@@ -1037,7 +1044,7 @@ def earthly_flip(year: int, month: int, day: int, hour: int, pillar: Pillar, dir
     current_index = heavenly_stems.index(heavenly_stem_enum)  # Find the index of the current stem
     new_index = (current_index + step_count) % len(heavenly_stems)  # Calculate the new index with wrapping
     new_stem = heavenly_stems[new_index]  # Get the new Heavenly Stem
-
+    old_stem = heavenly_stems[current_index]
     # Output the new Heavenly Stem for debugging purposes
     print(f"For Pillar {pillar} Original Heavenly Stem: {heavenly_stem_enum.name}, New Heavenly Stem: {new_stem.name}")
 
