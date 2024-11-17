@@ -402,7 +402,7 @@ def calculate_month_heavenly_withSeason_for_baselife_time(year, _month: int, day
     # if quotient_solar == 0:
     #         quotient_solar = 12
     month = quotient_solar
-    logger.info(f"The solar term is {solar_term} The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
+    logger.debug(f"The solar term is {solar_term} The date {year, month, day, hour} month {solar_month_index} day {day} with Solar_Month_index {solar_month_index} Season is {quotient_solar} with {solar_term} and reminder is {reminder}")
 
     heavenly_stem_index = (year - 3) % 10
     logger.debug(f"Year Heavenly Index is {heavenly_stem_index} and team is { HeavenlyStem(heavenly_stem_index)}")
@@ -1028,7 +1028,7 @@ def earthly_flip(year: int, month: int, day: int, hour: int, pillar: Pillar, dir
 
     # If there is no pair or step count, handle the error or set default
     if paired_earthly_branch is None:
-        print(f"No pair found for earthly branch {earthly_branch_enum}")
+        logger.debug(f"No pair found for earthly branch {earthly_branch_enum}")
         return None, None
 
     # Determine the number of steps to move based on direction
@@ -1046,7 +1046,7 @@ def earthly_flip(year: int, month: int, day: int, hour: int, pillar: Pillar, dir
     new_stem = heavenly_stems[new_index]  # Get the new Heavenly Stem
     old_stem = heavenly_stems[current_index]
     # Output the new Heavenly Stem for debugging purposes
-    print(f"For Pillar {pillar} Original Heavenly Stem: {heavenly_stem_enum.name}, New Heavenly Stem: {new_stem.name}")
+    logger.debug(f"For Pillar {pillar} Original Heavenly Stem: {heavenly_stem_enum.name}, New Heavenly Stem: {new_stem.name}")
 
     # Return both the new Heavenly Stem and the paired Earthly Branch
     return new_stem, paired_earthly_branch

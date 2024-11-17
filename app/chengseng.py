@@ -55,11 +55,11 @@ def process_8w_row(index, row):
                         hour = parsed_time.hour
 
                         # logger.info(f"{index} - {year} - {month} - {day} - {hour}Started processing")
-                        result_current = bazi.get_heavenly_branch_ymdh_pillars_current_Option_2(year,month,day,hour)
+                        result_current = bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year,month,day,hour)
 
                         with lock:
                             enhanced_row = row.copy()
-                            enhanced_row["流時"] = result_current["時"]
+                            enhanced_row["流時"] = str(result_current["時"])
                             enhanced_row["流日"] = result_current["日"]
                             enhanced_row["-流時"] = result_current["-時"]
                             enhanced_row["流月"] = result_current["月"]
@@ -86,6 +86,9 @@ def adding_8w_pillars( sorted_df):
     for column in columns_to_initialize:
         _local_df[column] = "_"
 
+    # If you only want to see the column names
+    print("\nColumn names:")
+    print(_local_df.columns.tolist())
     # Set the maximum number of threads you want to use
     max_threads = 200  # Change this as needed
 
