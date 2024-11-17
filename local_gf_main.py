@@ -52,11 +52,11 @@ print(f" {year} - {month} - {day} - {hour} - {datetime.now()} - {sorted_df_with_
 today = datetime.now()
 # Set the time to 9:30 AM
 today = today.replace(hour=9, minute=30, second=0, microsecond=0)
-start_date = today - timedelta(days=5)
-end_date = today + timedelta(days=5)
+start_date = today - timedelta(days=1525)
+end_date = today + timedelta(days=220)
 
 # Step 4: Create a blank data frame with time column
-time_range = pd.date_range(start=start_date, end=end_date, freq='2H').union(pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
+time_range = pd.date_range(start=start_date, end=end_date, freq='2h').union(pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
 dataset = pd.DataFrame({'time': time_range})
 
 # Step 5: Adding 8w pillars to the dataset

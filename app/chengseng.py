@@ -59,6 +59,7 @@ def process_8w_row(index, row):
 
                         with lock:
                             enhanced_row = row.copy()
+
                             enhanced_row["流時"] = str(result_current["時"])
                             enhanced_row["流日"] = result_current["日"]
                             enhanced_row["-流時"] = result_current["-時"]
@@ -90,7 +91,7 @@ def adding_8w_pillars( sorted_df):
     print("\nColumn names:")
     print(_local_df.columns.tolist())
     # Set the maximum number of threads you want to use
-    max_threads = 200  # Change this as needed
+    max_threads = 5000  # Change this as needed
 
     rows = _local_df
     total_rows = len(rows)
@@ -99,8 +100,9 @@ def adding_8w_pillars( sorted_df):
             # Wrap the executor with tqdm for progress tracking
             with tqdm(total=total_rows, desc="Processing", unit="row", dynamic_ncols=True) as pbar:
                     # Submit each row for processing in parallel
+                    rows["流時"] = pd.Series(dtype='object')
                     futures = [executor.submit(process_8w_row, index, row) for index, row in rows.iterrows()]
-
+                    
                     # Process completed tasks
                     for future in concurrent.futures.as_completed(futures):
                             # Update the progress bar for each completed task
