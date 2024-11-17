@@ -17,3 +17,4 @@ db_dtypes
 ib_insync
 google-cloud-secret-manager
 functions-framework
+numba
