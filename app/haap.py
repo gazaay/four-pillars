@@ -39,7 +39,71 @@ logger = logging.getLogger(__name__)
 # 地支三合						
 # 申子辰合成水局	巳酉丑合成金局	寅午戌合成火局	亥卯未合成木局。	
 # 
+
 def base_add_haap_features_to_df(df, columns_to_initialize, columns_to_combine, haap_style="合"):
+  # Create a copy of the dataframe
+  happ_df = df.copy()
+  
+  # Pre-calculate all 地支 columns at once using vectorized operations
+  for col in columns_to_initialize:
+      if col in df.columns:
+          happ_df[col + '_地支'] = df[col].astype(str).str[-1]
+  
+  # Initialize dictionary for combination columns
+  combination_columns = {}
+  
+  with tqdm(total=len(df), desc=f"Processing rows - {haap_style}") as pbar:
+      for chunk_start in range(0, len(df), chunk_size):
+          chunk_end = min(chunk_start + chunk_size, len(df))
+          chunk_indices = df.index[chunk_start:chunk_end]
+          
+          # Process each combination pattern
+          for combine_col in columns_to_combine:
+              # Count required occurrences for each 地支 in combine_col
+              required_counts = {}
+              for char in combine_col:
+                  required_counts[char] = required_counts.get(char, 0) + 1
+              
+              for idx in chunk_indices:
+                  found_counts = {}
+                  results_combined = []
+                  
+                  for col in columns_to_initialize:
+                      if col in happ_df.columns:
+                          # Convert to string and get the value explicitly
+                          last_char = str(happ_df.at[idx, col + '_地支'])
+                          
+                          # Check if it's a valid string before comparing
+                          if isinstance(last_char, str) and last_char in combine_col:
+                              current_count = found_counts.get(last_char, 0)
+                              required_count = required_counts.get(last_char, 0)
+                              
+                              if current_count < required_count:
+                                  results_combined.append(last_char)
+                                  found_counts[last_char] = current_count + 1
+                  
+                  if len(results_combined) > 1:
+                      valid_combination = True
+                      for char, required_count in required_counts.items():
+                          if found_counts.get(char, 0) != required_count:
+                              valid_combination = False
+                              break
+                      
+                      if valid_combination:
+                          col_name = f"{haap_style}_{''.join(combine_col)}"
+                          if col_name not in combination_columns:
+                              combination_columns[col_name] = np.zeros(len(df), dtype=int)
+                          combination_columns[col_name][happ_df.index.get_loc(idx)] = 1
+          
+          pbar.update(chunk_end - chunk_start)
+  
+  # Add all combination columns at once
+  for col_name, values in combination_columns.items():
+      happ_df[col_name] = values
+  
+  return happ_df
+
+def zzzzzzbase_add_haap_features_to_df(df, columns_to_initialize, columns_to_combine, haap_style="合"):
     # Create a copy of the dataframe
     happ_df = df.copy()
     
