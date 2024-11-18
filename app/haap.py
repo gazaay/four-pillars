@@ -51,7 +51,8 @@ def base_add_haap_features_to_df(df, columns_to_initialize, columns_to_combine, 
   
   # Initialize dictionary for combination columns
   combination_columns = {}
-  
+  # Process rows in chunks for better performance
+  chunk_size = 1000
   with tqdm(total=len(df), desc=f"Processing rows - {haap_style}") as pbar:
       for chunk_start in range(0, len(df), chunk_size):
           chunk_end = min(chunk_start + chunk_size, len(df))
