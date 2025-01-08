@@ -140,7 +140,7 @@ def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int)
     heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)(year, month,day)
     dark_month_stem = bazi.calculate_dark_stem(heavenly_month_stem, earthly_month_stem)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month, day)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_current(year, month, day, hour, 15)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_with_half(year, month, day, hour, 15)
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     dark_hour_stem = bazi.calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem )
     
@@ -162,7 +162,7 @@ def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int)
 def get_heavenly_branch_ymdh_splitpillars(year: int, month: int, day: int, hour: int):
     heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(year, month)
     heavenly_stem, earthly_branch = bazi.calculate_year_heavenly(year, month,1)
-    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_current(year, month, day, hour, 15)
+    heavenly_day_stem, earthly_day_stem = bazi.calculate_day_heavenly_with_half(year, month, day, hour, 15)
     heavenly_hour_stem, earthly_hour_stem = bazi.calculate_hour_heavenly(year, month, day, hour)
     return {"年天": bazi.resolveHeavenlyStem(heavenly_stem), 
             "年地": bazi.resolveEarthlyBranch(earthly_branch), 
@@ -432,23 +432,117 @@ logger.info (result)
 #     next = current_date + timedelta(months=i)
 #     print(f"################# {next.year,next.month,next.day,next.hour} #################")
 #     print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next.year,next.month,next.day , next.hour )}")
-    
+def format_bazi_output(data_dict):
+    # First row: Keys
+    keys = list(data_dict.keys())
+    print(" ".join(f"{key:^4}" for key in keys))
+
+    # Second and third rows: Split the values (assuming each value is 2 characters)
+    values = list(data_dict.values())
+    first_chars = [val[0] for val in values]
+    second_chars = [val[1] for val in values]
+
+    # Print second row (first characters)
+    print(" ".join(f"{char:^4}" for char in first_chars))
+
+    # Print third row (second characters)
+    print(" ".join(f"{char:^4}" for char in second_chars))
+
+def format_bazi_output_2(data_dict):
+    # First row: Keys
+    keys = list(data_dict.keys())
+    print(" ".join(f"{key:<5}" for key in keys))
+
+    # Second and third rows: Split the values
+    values = list(data_dict.values())
+    first_chars = [val[0] for val in values]
+    second_chars = [val[1] for val in values]
+
+    # Print second row (first characters)
+    print(" ".join(f"{char:<5}" for char in first_chars))
+
+    # Print third row (second characters)
+    print(" ".join(f"{char:<5}" for char in second_chars))
+
+def format_bazi_output_3(data_dict):
+    # Define the groups - now including negative entries
+    basic_keys = ['時', '日',  '-日', '-時','月', '年', '-年','-月']
+    he_keys = ['合時', '合日',  '-合日', '-合時','合月', '合年', '-合年','-合月', ]
+    hai_keys = ['害時', '害日', '-害日', '-害時',  '害月', '害年', '-害年', '-害月', ]
+    po_keys = ['破時', '破日', '-破時', '-破日', '破月', '破年', '-破月', '-破年']
+
+    def format_group(keys, values):
+        # First two rows: keys
+        first_row = []
+        second_row = []
+        for key in keys:
+            if key in values:  # Only process if key exists in data
+                if key.startswith('-'):
+                    # For negative entries, show empty space in name rows
+                    first_row.append("  ")
+                    second_row.append("  ")
+                else:
+                    if len(key) == 1:
+                        first_row.append(key)
+                        second_row.append(" ")
+                    else:
+                        first_row.append(key[0])
+                        second_row.append(key[-1])
+
+        # Get values for existing keys
+        third_row = []
+        fourth_row = []
+        for key in keys:
+            if key in values:
+                value = values[key]
+                third_row.append(value[0])
+                fourth_row.append(value[1])
+
+        return [
+            "".join(f"{char:<1}" for char in first_row),
+            "".join(f"{char:<1}" for char in second_row),
+            "".join(f"{char:<1}" for char in third_row),
+            "".join(f"{char:<1}" for char in fourth_row)
+        ]
+
+    # Format and print each group
+    groups = [
+        (basic_keys, "Basic Pillars"),
+        (he_keys, "He (合) Group"),
+        (hai_keys, "Hai (害) Group"),
+        (po_keys, "Po (破) Group")
+    ]
+
+    for keys, group_name in groups:
+        rows = format_group(keys, data_dict)
+        if any(row.strip() for row in rows):  # Only print if there's data
+            for row in rows:
+                print(row)
+            print()
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 # Assuming current_date is initialized, e.g.,
-current_date = datetime(1979, 4, 27, 13)  # Example: January 1st, 2024 at 12:00
+current_date = datetime(2025, 1, 7, 9)  # Example: January 1st, 2024 at 12:00
+current_date = datetime(2025, 1, 7, 9)  # Example: January 1st, 2024 at 12:00
+current_date = datetime(2025, 1, 7, 9)  # Example: January 1st, 2024 at 12:00
+current_date = datetime(1989, 9, 28, 13)  # Example: January 1st, 2024 at 12:00
+# current_date = datetime(2024, 10, 2, 9)  # Example: January 1st, 2024 at 12:00
+# current_date = datetime(2022, 3, 16, 13)  # Example: January 1st, 2024 at 12:00
+# current_date = datetime(1979, 4, 27, 13)  # Example: January 1st, 2024 at 12:00
 
 next_date = current_date 
 
 for i in range(0, 1):
     # Add i months to current_date
-    print(f"################# {next_date.year,next_date.month,next_date.day,next_date.hour} #################")
     # Assuming bazi.get_heavenly_branch_ymdh_pillars_current is a method call that you have defined or imported
     print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next_date.year,next_date.month,next_date.day, next_date.hour)}")
     print(f"{bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(next_date.year,next_date.month,next_date.day, next_date.hour)}")
+    bazi_data = bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(next_date.year, next_date.month, next_date.day, next_date.hour)
+    print(f"##### {next_date.year}/{next_date.month}/{next_date.day} {next_date.hour}:00 #####")
+    format_bazi_output_3(bazi_data) 
 
-    
     next_date = current_date + relativedelta(days=i)
     # next_date = current_date + relativedelta(hour=i)
     
@@ -541,7 +635,7 @@ for i in range(0, 1):
 # logger.info(f"{bazi.calculate_day_heavenly(year, month, day)}")
 # logger.info(f"{get_heavenly_branch_ymd(year, month, day)}")
 # Creating a datetime object for a specific date and time
-specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, Hour, Minute, Second
+# specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, Hour, Minute, Second
 # logger.info(f"{bazi.get_Luna_Month_With_Season(specific_datetime)}")
 
 
@@ -569,17 +663,17 @@ specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, H
 #     # counting()
 
 
-#     try:
-        
-#         year = 2023
-#         month = 8
-#         day = 23
-#         hour = 9
-        
-#         result_current = get_heavenly_branch_ymdh_pillars(year,month,day,hour)
-#     except Exception as e:
-#         print("Error: {0}".format(e))
-             
+# try:
+    
+#     year = 2023
+#     month = 8
+#     day = 23
+#     hour = 9
+    
+#     result_current = get_heavenly_branch_ymdh_pillars(year,month,day,hour)
+# except Exception as e:
+#     print("Error: {0}".format(e))
+            
 
 
 
@@ -633,18 +727,18 @@ specific_datetime = datetime(year, month,day,hour, 30, 0)  # Year, Month, Day, H
 
 
 # @title Step 3: Define time range
-today = datetime.now()
-# Set the time to 9:30 AM
-today = today.replace(hour=9, minute=00, second=0, microsecond=0)
+# today = datetime.now()
+# # Set the time to 9:30 AM
+# today = today.replace(hour=9, minute=00, second=0, microsecond=0)
 
-start_date = today - timedelta(days=30)
-end_date = today + timedelta(days=10)
+# start_date = today - timedelta(days=30)
+# end_date = today + timedelta(days=10)
 
-# @title Step 4: Create a blank data frame with time column
-time_range = pd.date_range(start=start_date, end=end_date, freq='1H').union(pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
-dataset = pd.DataFrame({'time': time_range})
+# # @title Step 4: Create a blank data frame with time column
+# time_range = pd.date_range(start=start_date, end=end_date, freq='1H').union(pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
+# dataset = pd.DataFrame({'time': time_range})
 
-# @title Step 5: Adding 8w pillars to the dataset
-dataset = chengseng.adding_8w_pillars(dataset)
+# # @title Step 5: Adding 8w pillars to the dataset
+# dataset = chengseng.adding_8w_pillars(dataset)
 
-print(dataset)
+# print(dataset)
