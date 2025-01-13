@@ -1,3 +1,4 @@
 firebase_functions~=0.1.0
 functions-framework==3.*
 flask==2.*
+git+https://github.com/gazaay/four-pillars.git@main#egg=bazi

@@ -8,7 +8,7 @@ setup(
         # Add any dependencies your package needs here
     ],
     description="A package for Bazi calculations",
-    author="Your Name",
+    author="Gary Lam",
     author_email="garylamj@gmail.com",
     url="https://github.com/gazaay/four-pillars",
 )
