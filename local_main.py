@@ -523,26 +523,36 @@ def format_bazi_output_3(data_dict):
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+def generate_bazi_analysis(input_date: datetime):
+    next_date = input_date
+    print(f"##### {next_date.year}/{next_date.month}/{next_date.day} {next_date.hour}:00 #####")
+    bazi_data = bazi.get_ymdh_current(next_date.year, next_date.month, next_date.day, next_date.hour)
+    format_bazi_output_3(bazi_data) 
+    bazi_data = bazi.get_ymdh_base(next_date.year, next_date.month, next_date.day, next_date.hour)
+    format_bazi_output_3(bazi_data) 
+
 # Assuming current_date is initialized, e.g.,
-current_date = datetime(2025, 1, 7, 9)  # Example: January 1st, 2024 at 12:00
 current_date = datetime(2025, 1, 7, 9)  # Example: January 1st, 2024 at 12:00
 current_date = datetime(2025, 1, 7, 9)  # Example: January 1st, 2024 at 12:00
 current_date = datetime(1989, 9, 28, 13)  # Example: January 1st, 2024 at 12:00
 # current_date = datetime(2024, 10, 2, 9)  # Example: January 1st, 2024 at 12:00
 # current_date = datetime(2022, 3, 16, 13)  # Example: January 1st, 2024 at 12:00
-# current_date = datetime(1979, 4, 27, 13)  # Example: January 1st, 2024 at 12:00
+current_date = datetime(1979, 4, 27, 13)  # Example: January 1st, 2024 at 12:00
+generate_bazi_analysis(current_date)
+
+current_date = datetime(2025, 1, 13, 9)  # Example: January 1st, 2024 at 12:00
 
 next_date = current_date 
 
-for i in range(0, 1):
+for i in range(0, 5):
     # Add i months to current_date
-    # Assuming bazi.get_heavenly_branch_ymdh_pillars_current is a method call that you have defined or imported
-    print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next_date.year,next_date.month,next_date.day, next_date.hour)}")
-    print(f"{bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(next_date.year,next_date.month,next_date.day, next_date.hour)}")
-    bazi_data = bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(next_date.year, next_date.month, next_date.day, next_date.hour)
-    print(f"##### {next_date.year}/{next_date.month}/{next_date.day} {next_date.hour}:00 #####")
-    format_bazi_output_3(bazi_data) 
-
+    # # Assuming bazi.get_heavenly_branch_ymdh_pillars_current is a method call that you have defined or imported
+    # print(f"{bazi.get_heavenly_branch_ymdh_pillars_current(next_date.year,next_date.month,next_date.day, next_date.hour)}")
+    # print(f"{bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(next_date.year,next_date.month,next_date.day, next_date.hour)}")
+    # bazi_data = bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(next_date.year, next_date.month, next_date.day, next_date.hour)
+    # print(f"##### {next_date.year}/{next_date.month}/{next_date.day} {next_date.hour}:00 #####")
+    # format_bazi_output_3(bazi_data) 
+    generate_bazi_analysis(next_date)
     next_date = current_date + relativedelta(days=i)
     # next_date = current_date + relativedelta(hour=i)
     

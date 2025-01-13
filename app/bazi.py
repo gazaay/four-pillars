@@ -977,14 +977,28 @@ def get_heavenly_branch_ymdh_pillars_current_Option_2(year: int, month: int, day
             "年": resolveHeavenlyStem(heavenly_stem) + resolveEarthlyBranch(earthly_branch),
             "-月": dark_month_stem,
            }
+def get_ymdh_current(year: int, month: int, day: int, hour: int): 
+    return get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year, month, day, hour, True)
+def get_ymdh_base(year: int, month: int, day: int, hour: int): 
+    return get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year, month, day, hour)
 
-def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int, day: int, hour: int):
+def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int, day: int, hour: int,
+    is_current: bool = False):
     # Calculate normal heavenly stems and earthly branches
-    heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)
+    
+    if (is_current):
+        heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+        heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_with_half(year, month, day, hour, 15)
+    else:
+        heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)
+        heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_base(year, month, day, hour, 15)
+        
+
+    
+    
     heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
     heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time(year, month, day)
-    heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_with_half(year, month, day, hour, 15)
-    heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_base(year, month, day, hour, 15)
+    
     heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
 
     # # Calculate normal heavenly stems and earthly branches
