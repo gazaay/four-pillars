@@ -3343,3 +3343,7 @@ python3 -m pip uninstall bazi
 python3 -m pip install bazi
 
 python3 -m uvicorn main:app --reload
+
+python3 -m pip show bazi  # Check installation
+python3 test_bazi.py     # Run test script
+
