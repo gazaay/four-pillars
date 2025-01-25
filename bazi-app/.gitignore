@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
+gf8wservice-firebase-adminsdk-chn1k-ef1503aaf9.json
 
 # Firebase cache
 .firebase/

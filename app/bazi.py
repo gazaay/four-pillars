@@ -343,7 +343,7 @@ def calculate_year_heavenly(year, month: int, day):
     earthly_branch = EarthlyBranch(earthly_branch_index )
     logger.debug(f"Year Earthly Branch {earthly_branch.value}")
     
-    return heavenly_stem.value, earthly_branch.value
+    return HeavenlyStem(heavenly_stem.value), EarthlyBranch(earthly_branch.value)
 
 def calculate_year_heavenly_for_current_time(year, month: int, day):
     if month == 0:
@@ -979,6 +979,7 @@ def get_heavenly_branch_ymdh_pillars_current_Option_2(year: int, month: int, day
            }
 def get_ymdh_current(year: int, month: int, day: int, hour: int): 
     return get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year, month, day, hour, True)
+    
 def get_ymdh_base(year: int, month: int, day: int, hour: int): 
     return get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year, month, day, hour)
 
@@ -989,15 +990,19 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
     if (is_current):
         heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
         heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_with_half(year, month, day, hour, 15)
+        heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
+        heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time(year, month, day)
     else:
         heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)
         heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_base(year, month, day, hour, 15)
+        heavenly_stem, earthly_branch = calculate_year_heavenly(year, month, day)
+        print("We are doing base pillar")
         
 
     
     
-    heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
-    heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time(year, month, day)
+    
+
     
     heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
 
