@@ -448,8 +448,8 @@ python3.12 -m venv venv
 Let me know if you need any clarification or encounter other issues!
 
 1052  history
- 1053  rm -rf node_modules package-lock.json
- 1054  npm install
+rm -rf node_modules package-lock.json
+npm install
  1055  firebase emulators:start
  1056  python3.12 -m venv venv
  1057  firebase emulators:start
@@ -462,3 +462,11 @@ Let me know if you need any clarification or encounter other issues!
  1064  cd ..
  1065  firebase emulators:start
  1066  firebase emulators:start
+
+ rm -rf node_modules package-lock.json
+ python3.12 -m venv venv
+ source venv/bin/activate
+ pip install --upgrade pydantic
+ pip install -r requirements.txt
+ cd ..
+ firebase emulators:start
