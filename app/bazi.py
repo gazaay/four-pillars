@@ -7,6 +7,7 @@ import bisect
 import pandas as pd
 from pytz import timezone
 from datetime import datetime, timedelta
+from typing import Union, Tuple
 
 __name__ = "bazi"
 
@@ -301,6 +302,53 @@ def get_cheung_sheng(stem_branch):
     }
 
     return cheung_sheng_dict.get(stem_branch, "Unknown")
+class ChineseCalendarConverter:
+    @staticmethod
+    def chinese_to_enum(chinese_char: str) -> Union[HeavenlyStem, EarthlyBranch]:
+        """
+        Convert Chinese character to either HeavenlyStem or EarthlyBranch enum.
+
+        Args:
+            chinese_char (str): Chinese character
+
+        Returns:
+            Union[HeavenlyStem, EarthlyBranch]: Corresponding enum value
+
+        Raises:
+            ValueError: If character not found
+        """
+        # Try Heavenly Stem first
+        heavenly_reverse = {stem.value: stem.name for stem in HeavenlyStemCN}
+        if chinese_char in heavenly_reverse:
+            return HeavenlyStem[heavenly_reverse[chinese_char]]
+
+        # Try Earthly Branch
+        earthly_reverse = {branch.value: branch.name for branch in EarthlyBranchCN}
+        if chinese_char in earthly_reverse:
+            return EarthlyBranch[earthly_reverse[chinese_char]]
+
+        raise ValueError(f"Character {chinese_char} not found in Heavenly Stems or Earthly Branches")
+
+    @staticmethod
+    def enum_to_chinese(enum_value: Union[HeavenlyStem, EarthlyBranch]) -> str:
+        """
+        Convert enum value to Chinese character.
+
+        Args:
+            enum_value: HeavenlyStem or EarthlyBranch enum value
+
+        Returns:
+            str: Corresponding Chinese character
+        """
+        if isinstance(enum_value, HeavenlyStem):
+            return HeavenlyStemCN[enum_value.name].value
+        elif isinstance(enum_value, EarthlyBranch):
+            return EarthlyBranchCN[enum_value.name].value
+        else:
+            raise ValueError("Input must be HeavenlyStem or EarthlyBranch enum")
+
+# Example usage:
+converter = ChineseCalendarConverter()
 
 def SixtyStem(index: int) :
 
@@ -1027,10 +1075,14 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
     haaped_day_stem, haaped_day_branch = earthly_haap_po_xin_old(year, month, day, hour, Pillar.DAY, self_dir, JoinType.HAAP)
     haaped_hour_stem, haaped_hour_branch = earthly_haap_po_xin_old(year, month, day, hour, Pillar.HOUR, self_dir, JoinType.HAAP)
 
-    haaped_dark_hour_stem = calculate_dark_stem(haaped_hour_stem, haaped_hour_branch, self_dir)
-    haaped_dark_day_stem = calculate_dark_stem(haaped_day_stem, haaped_day_branch, self_dir)
-    haaped_dark_month_stem = calculate_dark_stem(haaped_month_stem, haaped_month_branch, external_dir)
-    haaped_dark_year_stem = calculate_dark_stem(haaped_year_stem, haaped_year_branch,external_dir )
+    haaped_dark_year_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_year_stem[0]),  converter.chinese_to_enum(dark_year_stem[1]), self_dir, JoinType.HAAP)
+    haaped_dark_month_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_month_stem[0]),  converter.chinese_to_enum(dark_month_stem[1]), self_dir, JoinType.HAAP)
+    haaped_dark_day_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_day_stem[0]),  converter.chinese_to_enum(dark_day_stem[1]), self_dir, JoinType.HAAP)
+    haaped_dark_hour_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_hour_stem[0]),  converter.chinese_to_enum(dark_hour_stem[1]), self_dir, JoinType.HAAP)
+    # haaped_dark_hour_stem = calculate_dark_stem(haaped_hour_stem, haaped_hour_branch, self_dir)
+    # haaped_dark_day_stem = calculate_dark_stem(haaped_day_stem, haaped_day_branch, self_dir)
+    # haaped_dark_month_stem = calculate_dark_stem(haaped_month_stem, haaped_month_branch, external_dir)
+    # haaped_dark_year_stem = calculate_dark_stem(haaped_year_stem, haaped_year_branch,external_dir )
 
     # Create the flipped pillars using the 'earthly_flip' function
     hai_year_stem, hai_year_branch = earthly_haap_po_xin_old(year, month, day, hour, Pillar.YEAR, external_dir, JoinType.HAI)
@@ -1038,10 +1090,16 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
     hai_day_stem, hai_day_branch = earthly_haap_po_xin_old(year, month, day, hour, Pillar.DAY, self_dir, JoinType.HAI)
     hai_hour_stem, hai_hour_branch = earthly_haap_po_xin_old(year, month, day, hour, Pillar.HOUR, self_dir, JoinType.HAI)
 
-    hai_dark_hour_stem = calculate_dark_stem(hai_hour_stem, hai_hour_branch, self_dir)
-    hai_dark_day_stem = calculate_dark_stem(hai_day_stem, hai_day_branch, self_dir)
-    hai_dark_month_stem = calculate_dark_stem(hai_month_stem, hai_month_branch, external_dir)
-    hai_dark_year_stem = calculate_dark_stem(hai_year_stem, hai_year_branch,external_dir )
+
+    hai_dark_year_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_year_stem[0]),  converter.chinese_to_enum(dark_year_stem[1]), self_dir, JoinType.HAAP)
+    hai_dark_month_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_month_stem[0]),  converter.chinese_to_enum(dark_month_stem[1]), self_dir, JoinType.HAAP)
+    hai_dark_day_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_day_stem[0]),  converter.chinese_to_enum(dark_day_stem[1]), self_dir, JoinType.HAAP)
+    hai_dark_hour_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_hour_stem[0]),  converter.chinese_to_enum(dark_hour_stem[1]), self_dir, JoinType.HAAP)
+
+    # hai_dark_hour_stem = calculate_dark_stem(hai_hour_stem, hai_hour_branch, self_dir)
+    # hai_dark_day_stem = calculate_dark_stem(hai_day_stem, hai_day_branch, self_dir)
+    # hai_dark_month_stem = calculate_dark_stem(hai_month_stem, hai_month_branch, external_dir)
+    # hai_dark_year_stem = calculate_dark_stem(hai_year_stem, hai_year_branch,external_dir )
 
 
 
@@ -1051,10 +1109,14 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
     po_day_stem, po_day_branch = earthly_haap_po_xin_old(year, month, day, hour, Pillar.DAY, self_dir, JoinType.PO)
     po_hour_stem, po_hour_branch = earthly_haap_po_xin_old(year, month, day, hour, Pillar.HOUR, self_dir, JoinType.PO)
 
-    po_dark_hour_stem = calculate_dark_stem( po_hour_stem,  po_hour_branch, self_dir)
-    po_dark_day_stem = calculate_dark_stem( po_day_stem,  po_day_branch, self_dir)
-    po_dark_month_stem = calculate_dark_stem( po_month_stem,  po_month_branch, external_dir)
-    po_dark_year_stem = calculate_dark_stem( po_year_stem, po_year_branch,external_dir )
+    po_dark_year_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_year_stem[0]),  converter.chinese_to_enum(dark_year_stem[1]), self_dir, JoinType.HAAP)
+    po_dark_month_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_month_stem[0]),  converter.chinese_to_enum(dark_month_stem[1]), self_dir, JoinType.HAAP)
+    po_dark_day_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_day_stem[0]),  converter.chinese_to_enum(dark_day_stem[1]), self_dir, JoinType.HAAP)
+    po_dark_hour_stem = to_pillar_haap_po_xin(converter.chinese_to_enum(dark_hour_stem[0]),  converter.chinese_to_enum(dark_hour_stem[1]), self_dir, JoinType.HAAP)
+    # po_dark_hour_stem = calculate_dark_stem( po_hour_stem,  po_hour_branch, self_dir)
+    # po_dark_day_stem = calculate_dark_stem( po_day_stem,  po_day_branch, self_dir)
+    # po_dark_month_stem = calculate_dark_stem( po_month_stem,  po_month_branch, external_dir)
+    # po_dark_year_stem = calculate_dark_stem( po_year_stem, po_year_branch,external_dir )
 
     # Return a dictionary with both original and flipped pillars
     return {
@@ -1287,8 +1349,12 @@ def earthly_haap_po_xin_old(year: int, month: int, day: int, hour: int, pillar: 
     #     dark_hour_stem = calculate_dark_stem(heavenly_hour_stem, earthly_hour_stem)
     # elif pillar == Pillar.DARKYEAR:
     #     dark_year_stem = calculate_dark_stem(heavenly_stem, earthly_branch)
-            
-
+    return haap_po_xin(heavenly_stem, earthly_branch, direction, type)       
+def to_pillar_haap_po_xin (heavenly_stem: HeavenlyStem,  earthly_branch: EarthlyBranch, direction: Direction, type: JoinType ):
+    out_heavenly, out_earthly = haap_po_xin(heavenly_stem,  earthly_branch, direction, type )
+    return resolveHeavenlyStem(out_heavenly) + resolveEarthlyBranch(out_earthly)
+    
+def haap_po_xin(heavenly_stem: HeavenlyStem,  earthly_branch: EarthlyBranch, direction: Direction, type: JoinType ):
 
     # Convert to enum based on the new EarthlyBranch Enum (expects `earthly_branch` as an integer)
     earthly_branch_enum = EarthlyBranch(earthly_branch)
@@ -1329,8 +1395,7 @@ def earthly_haap_po_xin_old(year: int, month: int, day: int, hour: int, pillar: 
     new_index = (current_index + step_count) % len(heavenly_stems)  # Calculate the new index with wrapping
     new_stem = heavenly_stems[new_index]  # Get the new Heavenly Stem
     old_stem = heavenly_stems[current_index]
-    # Output the new Heavenly Stem for debugging purposes
-    logger.debug(f"For Pillar {pillar} Original Heavenly Stem: {heavenly_stem_enum.name}, New Heavenly Stem: {new_stem.name}")
+   
 
     # Return both the new Heavenly Stem and the paired Earthly Branch
     return new_stem, paired_earthly_branch

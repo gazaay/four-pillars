@@ -539,6 +539,7 @@ current_date = datetime(1989, 9, 28, 13)  # Example: January 1st, 2024 at 12:00
 # current_date = datetime(2024, 10, 2, 9)  # Example: January 1st, 2024 at 12:00
 # current_date = datetime(2022, 3, 16, 13)  # Example: January 1st, 2024 at 12:00
 current_date = datetime(1979, 4, 27, 13)  # Example: January 1st, 2024 at 12:00
+generate_bazi_analysis(current_date)
 current_date = datetime(2025, 1, 17, 9)  # Example: January 1st, 2024 at 12:00
 generate_bazi_analysis(current_date)
 
