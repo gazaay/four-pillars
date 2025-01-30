@@ -1057,8 +1057,8 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
     dark_year_stem = calculate_dark_stem(heavenly_stem, earthly_branch,external_dir )
 
     # Create the flipped pillars using the 'earthly_flip' function
-    haaped_year_stem, haaped_year_branch = haap_po_xin(heavenly_stem,  earthly_branch, self_dir, JoinType.HAAP)
-    haaped_month_stem, haaped_month_branch = haap_po_xin(heavenly_month_stem,  earthly_month_stem, self_dir, JoinType.HAAP)
+    haaped_year_stem, haaped_year_branch = haap_po_xin(heavenly_stem,  earthly_branch, external_dir, JoinType.HAAP)
+    haaped_month_stem, haaped_month_branch = haap_po_xin(heavenly_month_stem,  earthly_month_stem, external_dir, JoinType.HAAP)
     haaped_day_stem, haaped_day_branch = haap_po_xin(heavenly_day_stem,  earthly_day_stem, self_dir, JoinType.HAAP)
     haaped_hour_stem, haaped_hour_branch = haap_po_xin(heavenly_hour_stem,  earthly_hour_stem, self_dir, JoinType.HAAP)
 
@@ -1072,8 +1072,8 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
     # haaped_dark_year_stem = calculate_dark_stem(haaped_year_stem, haaped_year_branch,external_dir )
 
     # Create the flipped pillars using the 'earthly_flip' function
-    hai_year_stem, hai_year_branch = haap_po_xin(heavenly_stem,  earthly_branch, self_dir, JoinType.HAI)
-    hai_month_stem, hai_month_branch = haap_po_xin(heavenly_month_stem,  earthly_month_stem, self_dir, JoinType.HAI)
+    hai_year_stem, hai_year_branch = haap_po_xin(heavenly_stem,  earthly_branch, external_dir, JoinType.HAI)
+    hai_month_stem, hai_month_branch = haap_po_xin(heavenly_month_stem,  earthly_month_stem, external_dir, JoinType.HAI)
     hai_day_stem, hai_day_branch =  haap_po_xin(heavenly_day_stem,  earthly_day_stem, self_dir, JoinType.HAI)
     hai_hour_stem, hai_hour_branch = haap_po_xin(heavenly_hour_stem,  earthly_hour_stem, self_dir, JoinType.HAI)
 
@@ -1091,8 +1091,8 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
 
 
     # Create the flipped pillars using the 'earthly_flip' function
-    po_year_stem, po_year_branch =haap_po_xin(heavenly_stem,  earthly_branch, self_dir, JoinType.PO)
-    po_month_stem, po_month_branch = haap_po_xin(heavenly_month_stem,  earthly_month_stem, self_dir, JoinType.PO)
+    po_year_stem, po_year_branch =haap_po_xin(heavenly_stem,  earthly_branch, external_dir, JoinType.PO)
+    po_month_stem, po_month_branch = haap_po_xin(heavenly_month_stem,  earthly_month_stem, external_dir, JoinType.PO)
     po_day_stem, po_day_branch = haap_po_xin(heavenly_day_stem,  earthly_day_stem, self_dir, JoinType.PO)
     po_hour_stem, po_hour_branch = haap_po_xin(heavenly_hour_stem,  earthly_hour_stem, self_dir, JoinType.PO)
 
