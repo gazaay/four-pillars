@@ -1550,7 +1550,7 @@ def haap_po_xin(heavenly_stem: HeavenlyStem,  earthly_branch: EarthlyBranch, dir
         case JoinType.PO:
             # Get the associated pair and step count for the given Earthly Branch
             paired_earthly_branch, steps_forward = earthly_branch_po_pairs.get(earthly_branch_enum, (None, 0))
-            logger.info(f"Earthly : {earthly_branch_enum}")
+            logger.debug(f"Earthly : {earthly_branch_enum}")
         case JoinType.HAI:
             # Get the associated pair and step count for the given Earthly Branch
             paired_earthly_branch, steps_forward = earthly_branch_hai_pairs.get(earthly_branch_enum, (None, 0))
@@ -1590,7 +1590,7 @@ def haap_po_xin(heavenly_stem: HeavenlyStem,  earthly_branch: EarthlyBranch, dir
     new_index = (current_index + step_count) % len(heavenly_stems)  # Calculate the new index with wrapping
     new_stem = heavenly_stems[new_index]  # Get the new Heavenly Stem
     old_stem = heavenly_stems[current_index]
-    logger.info(f"new steam : {new_stem, paired_earthly_branch}")
+    logger.debug(f"new steam : {new_stem, paired_earthly_branch}")
 
     # Return both the new Heavenly Stem and the paired Earthly Branch
     return new_stem, paired_earthly_branch

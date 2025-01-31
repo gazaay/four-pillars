@@ -4,7 +4,7 @@ from firebase_admin import initialize_app
 from fastapi import FastAPI, HTTPException
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import List, Optional, Dict
 from app import bazi
 import functions_framework
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,16 +42,23 @@ class PillarData(BaseModel):
     clashed: Optional[str] = None
     clashed_hidden: Optional[str] = None
 
+class DayunData(BaseModel):
+    stem: str
+    branch: str
+    chinese: str
+    starting_age: float
+
 class BaziResponse(BaseModel):
     year_pillar: PillarData
     month_pillar: PillarData
     day_pillar: PillarData
     hour_pillar: PillarData
     datetime: str
+    dayun: Optional[List[DayunData]] = None
 
 def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
     """Convert bazi data dictionary into a structured response."""
-    logger.debug(f"Formatting bazi data: {bazi_data}")
+    logger.info(f"Formatting bazi data: {bazi_data}")
 
     try:
         return {
@@ -96,7 +103,8 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
                 "harmed_hidden": bazi_data.get("-害時", ""),
                 "clashed": bazi_data.get("破時", ""),
                 "clashed_hidden": bazi_data.get("-破時", "")
-            }
+            },
+            "dayun": bazi_data.get("大運", [])  # Add the 大運 section directly
         }
     except Exception as e:
         logger.error(f"Error formatting bazi data: {e}")

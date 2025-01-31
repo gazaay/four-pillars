@@ -465,9 +465,11 @@ npm install
  pip install --upgrade pydantic
 
  rm -rf node_modules package-lock.json
+ rm -rf venv
  python3.12 -m venv venv
  source venv/bin/activate
  pip install -r requirements.txt
+ npm install
  cd ..
  firebase emulators:start
 
