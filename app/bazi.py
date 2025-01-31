@@ -8,6 +8,8 @@ import pandas as pd
 from pytz import timezone
 from datetime import datetime, timedelta
 from typing import Union, Tuple
+import pytz
+from typing import List
 
 __name__ = "bazi"
 
@@ -203,6 +205,44 @@ class HeavenlyStemYinYang(Enum):
 
         return (self_direction, external_direction)
 
+
+def calculate_dayun(gender, year_pillar, month_pillar):
+    """
+    Calculate 大運 sequence and starting ages
+    """
+    # Convert input pillars to enums
+    year_stem = cn_to_enum(year_pillar[0])
+    year_branch = cn_to_enum(year_pillar[1])
+    month_stem = cn_to_enum(month_pillar[0])
+    month_branch = cn_to_enum(month_pillar[1])
+
+    # Determine forward or backward counting based on gender and year stem
+    forward = (gender.lower() == 'male' and year_stem.value % 2 == 1) or \
+              (gender.lower() == 'female' and year_stem.value % 2 == 0)
+
+    # Calculate 大運 sequence
+    dayun_sequence = []
+    for i in range(8):  # Calculate 8 大運
+        if forward:
+            new_stem_value = ((month_stem.value + i) % 10) or 10
+            new_branch_value = ((month_branch.value + i) % 12) or 12
+        else:
+            new_stem_value = ((month_stem.value - i - 1) % 10) or 10
+            new_branch_value = ((month_branch.value - i - 1) % 12) or 12
+
+        new_stem = HeavenlyStem(new_stem_value)
+        new_branch = EarthlyBranch(new_branch_value)
+        dayun_sequence.append((new_stem, new_branch))
+
+    # Calculate starting ages
+    starting_ages = []
+    base_age = 0
+    for i in range(8):
+        starting_ages.append(base_age + (i+1) * 10)
+
+    return dayun_sequence, starting_ages
+
+
 solarterms = {
         "LiChun":1, "YuShui":2, "JingZhe":3, "ChunFen":4, "QingMing":5, "GuYu":6,
         "LiXia":7, "XiaoMan":8, "MangZhong":9, "XiaZhi":10, "XiaoShu":11, "DaShu":12,
@@ -302,6 +342,7 @@ def get_cheung_sheng(stem_branch):
     }
 
     return cheung_sheng_dict.get(stem_branch, "Unknown")
+
 class ChineseCalendarConverter:
     @staticmethod
     def chinese_to_enum(chinese_char: str) -> Union[HeavenlyStem, EarthlyBranch]:
@@ -350,6 +391,88 @@ class ChineseCalendarConverter:
 # Example usage:
 converter = ChineseCalendarConverter()
 
+
+def calculate_dayun(gender, year_pillar, month_pillar, days_to_next_solar_term):
+    """
+    Calculate 大運 sequence and starting ages
+    """
+    my_converter = ChineseCalendarConverter()
+    # Convert input pillars to enums
+    year_stem = my_converter.chinese_to_enum(year_pillar[0])
+    year_branch = my_converter.chinese_to_enum(year_pillar[1])
+    month_stem = my_converter.chinese_to_enum(month_pillar[0])
+    month_branch = my_converter.chinese_to_enum(month_pillar[1])
+
+    # Determine forward or backward counting based on gender and year stem
+    forward = (gender.lower() == 'male' and year_stem.value % 2 == 1) or \
+              (gender.lower() == 'female' and year_stem.value % 2 == 0)
+
+    # Calculate 大運 sequence
+    dayun_sequence = []
+    for i in range(8):  # Calculate 8 大運
+        if forward:
+            new_stem_value = ((month_stem.value + i) % 10) 
+            new_branch_value = ((month_branch.value + i) % 12)
+        else:
+            new_stem_value = ((month_stem.value - i - 1) % 10) 
+            new_branch_value = ((month_branch.value - i - 1) % 12) 
+
+        new_stem = HeavenlyStem(new_stem_value)
+        new_branch = EarthlyBranch(new_branch_value)
+        dayun_sequence.append((new_stem, new_branch))
+        
+    # Calculate the number of days to the next solar term
+    # next_solar_term_date = my_converter.get_next_solar_term(birth_date)
+    # days_to_next_solar_term = 8
+    # (next_solar_term_date - birth_date).days
+
+    # Calculate the starting age of the first 大運
+    starting_age_first_dayun = days_to_next_solar_term / 3.0  # 1 day = 3 months in BaZi
+    # Calculate starting ages
+    starting_ages = []
+    base_age = days_to_next_solar_term
+    for i in range(8):
+        starting_ages.append(base_age + (i) * 10)
+
+    return dayun_sequence, starting_ages
+
+def print_daiYun(gender: str, year_pillar: str, month_pillar: str, date_to_examine: datetime ):
+    gender = gender
+    year_pillar = year_pillar
+    month_pillar = month_pillar
+
+    solar_terms = get_solar_terms(date_to_examine.year)  # Your existing solar terms list
+    days, next_term, term_name = find_days_to_next_solar_term(date_to_examine, solar_terms)
+
+    # Calculate 大運
+    dayun_sequence, starting_ages = calculate_dayun( gender, year_pillar, month_pillar,days)
+
+    # Print results
+    print("\n大運 Calculation Results:")
+    print("-" * 40)
+    for i, ((stem, branch), age) in enumerate(zip(dayun_sequence, starting_ages)):
+        print(f"大運 {i+1}: {resolveHeavenlyStem(stem)}{resolveEarthlyBranch(branch)} "
+              f"({stem.name}-{branch.name}) Starting age: {age}")
+
+def json_daiYun(gender: str, year_pillar: str, month_pillar: str, date_to_examine: datetime):
+    solar_terms = get_solar_terms(date_to_examine.year)
+    days, next_term, term_name = find_days_to_next_solar_term(date_to_examine, solar_terms)
+
+    # Calculate 大運
+    dayun_sequence, starting_ages = calculate_dayun(gender, year_pillar, month_pillar, days)
+
+    # Create result list
+    result = []
+    for (stem, branch), age in zip(dayun_sequence, starting_ages):
+        result.append({
+            "stem": stem.name,
+            "branch": branch.name,
+            "chinese": f"{resolveHeavenlyStem(stem)}{resolveEarthlyBranch(branch)}",
+            "starting_age": round(age, 1)
+        })
+
+    return result
+
 def SixtyStem(index: int) :
 
     index = index %60
@@ -369,6 +492,72 @@ def SixtyStem(index: int) :
         logger.debug("Index not found.")
     
     return combination
+
+def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datetime]) -> tuple:
+    """
+    Find the next solar term and calculate days until it occurs.
+
+    Args:
+        current_time: The datetime to check from
+        solar_terms: List of solar terms datetimes
+
+    Returns:
+        tuple: (days_to_next, next_solar_term, next_solar_term_name)
+    """
+    # Ensure current_time is timezone-aware
+    if current_time.tzinfo is None:
+        current_time = pytz.timezone('Asia/Shanghai').localize(current_time)
+
+    # Solar term names in order
+    solar_term_names = [
+        "小寒 (Minor Cold)",        # 1月
+        "大寒 (Major Cold)",
+        "立春 (Start of Spring)",   # 2月
+        "雨水 (Rain Water)",
+        "驚蟄 (Awakening Insects)", # 3月
+        "春分 (Spring Equinox)",
+        "清明 (Pure Brightness)",   # 4月
+        "穀雨 (Grain Rain)",
+        "立夏 (Start of Summer)",   # 5月
+        "小滿 (Grain Full)",
+        "芒種 (Grain in Ear)",      # 6月
+        "夏至 (Summer Solstice)",
+        "小暑 (Minor Heat)",        # 7月
+        "大暑 (Major Heat)",
+        "立秋 (Start of Autumn)",   # 8月
+        "處暑 (End of Heat)",
+        "白露 (White Dew)",         # 9月
+        "秋分 (Autumn Equinox)",
+        "寒露 (Cold Dew)",          # 10月
+        "霜降 (Frost Descent)",
+        "立冬 (Start of Winter)",   # 11月
+        "小雪 (Minor Snow)",
+        "大雪 (Major Snow)",        # 12月
+        "冬至 (Winter Solstice)"
+    ]
+
+    # Find the next solar term
+    next_solar_term = None
+    next_term_index = 0
+
+    for idx, term in enumerate(solar_terms):
+        if current_time < term:
+            next_solar_term = term
+            next_term_index = idx
+            break
+
+    if next_solar_term is None:
+        raise ValueError("No future solar term found in the provided list")
+
+    # Calculate days difference
+    time_diff = next_solar_term - current_time
+    days_to_next = time_diff.total_seconds() / (24 * 3600)  # Convert to days
+
+    # Get the name of the next solar term
+    next_term_name = solar_term_names[next_term_index % 24]
+
+    return days_to_next, next_solar_term, next_term_name
+
 
 def getSixtyStemIndex(stem):
     return heavenly_earthly_dict[stem]
@@ -1034,7 +1223,7 @@ def get_ymdh_base(year: int, month: int, day: int, hour: int):
 def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int, day: int, hour: int,
     is_current: bool = False):
     # Calculate normal heavenly stems and earthly branches
-    
+    input_date =  datetime(year, month, day, hour)
     if (is_current):
         heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
         heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_with_half(year, month, day, hour, 15)
@@ -1105,6 +1294,11 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
     # po_dark_month_stem = calculate_dark_stem( po_month_stem,  po_month_branch, external_dir)
     # po_dark_year_stem = calculate_dark_stem( po_year_stem, po_year_branch,external_dir )
 
+    daiYun = json_daiYun("male", resolveHeavenlyStem(heavenly_stem) + resolveEarthlyBranch(earthly_branch),
+                         resolveHeavenlyStem(heavenly_month_stem) + resolveEarthlyBranch(earthly_month_stem), 
+                         input_date)
+
+
     # Return a dictionary with both original and flipped pillars
     return {
         "時": resolveHeavenlyStem(heavenly_hour_stem) + resolveEarthlyBranch(earthly_hour_stem),
@@ -1149,7 +1343,7 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
         "-破年": po_dark_year_stem, ##resolveHeavenlyStem(po_year_stem) + resolveEarthlyBranch(po_year_branch),
         "-破月": po_dark_month_stem, ##resolveHeavenlyStem(po_month_stem) + resolveEarthlyBranch(po_month_branch),
 # 刑,衝,破,害 
-
+        "大運": daiYun
 
 
 

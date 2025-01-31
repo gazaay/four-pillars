@@ -8,6 +8,8 @@ import concurrent.futures
 from tqdm import tqdm
 import random
 import pandas as pd
+import pytz
+from typing import List
 
 
 app = FastAPI()
@@ -520,8 +522,72 @@ def format_bazi_output_3(data_dict):
                 print(row)
             print()
 
+def get_pillar_from_dict(data_dict, pillar_type):
+    """
+    Extract year or month pillar from data_dict where values are strings
+    pillar_type should be '年' or '月'
+    """
+    if pillar_type in data_dict:
+        pillar = data_dict[pillar_type]
+        return pillar  # Already in the format '甲子'
+    return None
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
+def format_solar_terms_output(solar_terms_list):
+    """
+    Format solar terms list into a readable table with Chinese names
+
+    Args:
+        solar_terms_list: List of datetime objects from bazi.get_solar_terms()
+    """
+    # Ordered list of solar terms (節氣) - starting from 小寒
+    solar_term_names = [
+        "小寒 (Minor Cold)",        # 1月
+        "大寒 (Major Cold)",
+        "立春 (Start of Spring)",   # 2月
+        "雨水 (Rain Water)",
+        "驚蟄 (Awakening Insects)", # 3月
+        "春分 (Spring Equinox)",
+        "清明 (Pure Brightness)",   # 4月
+        "穀雨 (Grain Rain)",
+        "立夏 (Start of Summer)",   # 5月
+        "小滿 (Grain Full)",
+        "芒種 (Grain in Ear)",      # 6月
+        "夏至 (Summer Solstice)",
+        "小暑 (Minor Heat)",        # 7月
+        "大暑 (Major Heat)",
+        "立秋 (Start of Autumn)",   # 8月
+        "處暑 (End of Heat)",
+        "白露 (White Dew)",         # 9月
+        "秋分 (Autumn Equinox)",
+        "寒露 (Cold Dew)",          # 10月
+        "霜降 (Frost Descent)",
+        "立冬 (Start of Winter)",   # 11月
+        "小雪 (Minor Snow)",
+        "大雪 (Major Snow)",        # 12月
+        "冬至 (Winter Solstice)"
+    ]
+
+    print("\n節氣 Solar Terms Calendar")
+    print("=" * 75)
+    print(f"{'#':<3} {'Date':<12} {'Time':<10} {'Solar Term':<30} {'Timezone':<20}")
+    print("-" * 75)
+
+    # Process each solar term
+    for idx, dt in enumerate(solar_terms_list):
+        # Get the solar term name based on position in the year
+        term_idx = idx % 24  # 24 solar terms in total
+        term_name = solar_term_names[term_idx]
+
+        # Format the date, time and timezone
+        date_str = dt.strftime("%Y-%m-%d")
+        time_str = dt.strftime("%H:%M:%S")
+        tz_str = str(dt.tzinfo)
+
+        # Print the formatted line
+        print(f"{idx+1:<3} {date_str:<12} {time_str:<10} {term_name:<30} {tz_str:<20}")
 
 def generate_bazi_analysis(input_date: datetime):
     next_date = input_date
@@ -531,6 +597,17 @@ def generate_bazi_analysis(input_date: datetime):
     format_bazi_output_3(bazi_data) 
     bazi_data = bazi.get_ymdh_base(next_date.year, next_date.month, next_date.day, next_date.hour)
     format_bazi_output_3(bazi_data) 
+    year_pillar = get_pillar_from_dict(bazi_data, '年')
+    month_pillar = get_pillar_from_dict(bazi_data, '月')
+    
+    bazi.print_daiYun("male", year_pillar,month_pillar, input_date)
+
+def split_pillar(pillar_str):
+    """
+    Split a pillar string into heavenly stem and earthly branch
+    Example: '甲子' -> ('甲', '子')
+    """
+    return pillar_str[0], pillar_str[1]
 
 # Assuming current_date is initialized, e.g.,
 current_date = datetime(2025, 1, 7, 9)  # Example: January 1st, 2024 at 12:00
@@ -540,8 +617,8 @@ current_date = datetime(1989, 9, 28, 13)  # Example: January 1st, 2024 at 12:00
 # current_date = datetime(2022, 3, 16, 13)  # Example: January 1st, 2024 at 12:00
 current_date = datetime(1979, 4, 27, 13)  # Example: January 1st, 2024 at 12:00
 generate_bazi_analysis(current_date)
-current_date = datetime(2025, 1, 17, 9)  # Example: January 1st, 2024 at 12:00
-generate_bazi_analysis(current_date)
+# current_date = datetime(2025, 1, 17, 9)  # Example: January 1st, 2024 at 12:00
+# generate_bazi_analysis(current_date)
 
 
 next_date = current_date 
@@ -557,7 +634,22 @@ for i in range(0, 5):
     # generate_bazi_analysis(next_date)
     next_date = current_date + relativedelta(days=i)
     # next_date = current_date + relativedelta(hour=i)
-    
+    # 
+
+print(f"{format_solar_terms_output(bazi.get_solar_terms(1979))}") 
+
+
+
+# Example datetime
+current_time = datetime(1979, 4, 27, 13, 30, tzinfo=pytz.timezone('Asia/Shanghai'))
+solar_terms = bazi.get_solar_terms(1979)  # Your existing solar terms list
+
+days, next_term, term_name = bazi.find_days_to_next_solar_term(current_time, solar_terms)
+
+print(f"\nCurrent time: {current_time}")
+print(f"Next solar term: {next_term} - {term_name}")
+print(f"Days until next solar term: {days:.2f} days")
+
 # year = 2023
 # month = 11
 # day =7
