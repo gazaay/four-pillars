@@ -596,6 +596,7 @@ def generate_bazi_analysis(input_date: datetime):
     print(f"{bazi_data}")
     format_bazi_output_3(bazi_data) 
     bazi_data = bazi.get_ymdh_base(next_date.year, next_date.month, next_date.day, next_date.hour)
+    print(f"{bazi_data}")
     format_bazi_output_3(bazi_data) 
     year_pillar = get_pillar_from_dict(bazi_data, '年')
     month_pillar = get_pillar_from_dict(bazi_data, '月')

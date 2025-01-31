@@ -470,3 +470,5 @@ npm install
  pip install -r requirements.txt
  cd ..
  firebase emulators:start
+
+ firebase deploy --only functions
