@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from datetime import datetime
 from pydantic import BaseModel
 from typing import List, Optional, Dict
-from app import bazi
+import bazi
 import functions_framework
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -17,6 +17,8 @@ initialize_app()
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+# Log version when function starts
+logger.info(f"Bazi package version: {bazi.__version__}")
 
 app = FastAPI()
 
@@ -235,6 +237,7 @@ from fastapi.middleware.wsgi import WSGIMiddleware
 def api_handler(req: https_fn.Request) -> https_fn.Response:
     """Handle all API requests"""
     logger.debug(f"Received request: {req.path}")
+    logger.info(f"Successfully imported bazi version")
 
     try:
         # Route to FastAPI endpoints
@@ -266,6 +269,7 @@ def api_handler(req: https_fn.Request) -> https_fn.Response:
             month = int(req.args.get('month', 1))
             day = int(req.args.get('day', 1))
             hour = int(req.args.get('hour', 0))
+            logger.info(f"Calculating wuxi data for {year}-{month}-{day} {hour}")
             wuxi_response = get_wuxi_data(year, month, day, hour)
             response_data = wuxi_response
         else:

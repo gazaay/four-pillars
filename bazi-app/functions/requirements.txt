@@ -9,7 +9,7 @@
 # asgiref
 firebase_functions==0.1.0
 functions-framework==3.3.0
-# git+https://github.com/gazaay/four-pillars.git@main#egg=bazi
+git+https://github.com/gazaay/four-pillars.git@main#egg=bazi
 firebase-admin==6.0.1
 flask==2.3.2
 fastapi==0.100.0
