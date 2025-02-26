@@ -1,0 +1,3 @@
+# Create the basic library structure
+mkdir -p libs/bazi-lib/src/bazi_lib
+touch libs/bazi-lib/src/bazi_lib/__init__.py 

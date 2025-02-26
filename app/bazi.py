@@ -477,7 +477,7 @@ def SixtyStem(index: int) :
 
     index = index %60
 
-    if index is 0:
+    if index == 0:
         index = 60
 
     # Reverse the dictionary
@@ -1097,28 +1097,35 @@ def get_next_half_heavenly(heavenly_index):
 def get_next_half_earthly(earthly_index):
     return (earthly_index + 3) % 12
 
-# def get_Luna_Month_With_Season(target_date):
+
+def half_pillar(hour_stem: HeavenlyStem, hour_branch: EarthlyBranch) -> str:
+    """
+    Calculate the half pillar value by adding 15 to the combined value of heavenly stem and earthly branch.
+    If the result exceeds 60, it wraps around to the beginning.
     
-#     year, month, day = convert_Solar_to_Luna (target_date.year, target_date.month,
-#                                             target_date.day)
-#     with i_lock:
-#         solarterms_list = [
-#             solarterm.LiChun(year), solarterm.YuShui(year), solarterm.JingZhe(year), solarterm.ChunFen(year),
-#             solarterm.QingMing(year), solarterm.GuYu(year), solarterm.LiXia(year), solarterm.XiaoMan(year),
-#             solarterm.MangZhong(year), solarterm.XiaZhi(year), solarterm.XiaoShu(year), solarterm.DaShu(year),
-#             solarterm.LiQiu(year), solarterm.ChuShu(year), solarterm.BaiLu(year), solarterm.QiuFen(year),
-#             solarterm.HanLu(year), solarterm.ShuangJiang(year), solarterm.LiDong(year), solarterm.XiaoXue(year),
-#             solarterm.DaXue(year), solarterm.DongZhi(year), solarterm.XiaoHan(year), solarterm.DaHan(year)
-#         ]
-
-#     # Set the timezone of solarterms_list to be the same as target_date
-#     solarterms_list = [dt.replace(tzinfo=target_date.tzinfo) for dt in solarterms_list]
-
-#     # Use bisect to find the insertion point in the sorted list
-#     luna_month = bisect.bisect_left(solarterms_list, target_date)
+    Args:
+        hour_stem: HeavenlyStem enum value
+        hour_branch: EarthlyBranch enum value
+        
+    Returns:
+        int: The calculated half pillar value
+    """
+    # Get the Chinese characters for the stem and branch
+    stem_cn = HeavenlyStemCN[hour_stem.name].value
+    branch_cn = EarthlyBranchCN[hour_branch.name].value
     
-#     return 'XiaoXue', luna_month
-
+    # Combine them to get the key for heavenly_earthly_dict
+    combined = stem_cn + branch_cn
+    
+    # Get the base value from the dictionary
+    base_value = heavenly_earthly_dict[combined]
+    
+    # Add 15 and handle wrapping around
+    result = base_value + 15
+    if result > 60:
+        result = result - 60
+        
+    return SixtyStem(result)
 
 # bazi get the thousand year pillars for any given day
 def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int):
@@ -1718,3 +1725,395 @@ def get_directions(stem1: 'HeavenlyStemYinYang',
 #     Polarity.YIN
 # )
 # print(f"Result: {[d.value for d in result]}")
+
+
+
+def get_ymdh_base(year: int, month: int, day: int, hour: int) -> dict:
+    """
+    Calculate the basic four pillars (YMDH) for a given date and time.
+    Returns in Chinese characters format.
+    """
+    # Calculate pillars (using previous logic)
+    # year_stem = HeavenlyStem((year - 3) % 10)
+    # year_branch = EarthlyBranch((year - 3) % 12)
+    year_stem, year_branch = calculate_year_heavenly(year, month, day)
+
+    # month_stem = HeavenlyStem(((year % 10 + 2) * 2 + month) % 10)
+    # month_branch = EarthlyBranch((month + 2) % 12)
+    month_stem, month_branch = calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)
+    day_stem, day_branch = calculate_day_heavenly_base(year, month, day, hour, 15)
+    
+    hour_stem, hour_branch =   calculate_hour_heavenly(year, month, day, hour)
+    # Convert to Chinese characters
+    return {
+        "時": HeavenlyStemCN[hour_stem.name].value + EarthlyBranchCN[hour_branch.name].value,
+        "日": HeavenlyStemCN[day_stem.name].value + EarthlyBranchCN[day_branch.name].value,
+        "-時": half_pillar(hour_stem, hour_branch),
+        "-日": half_pillar(day_stem, day_branch),
+        "月": HeavenlyStemCN[month_stem.name].value + EarthlyBranchCN[month_branch.name].value,
+        "年": HeavenlyStemCN[year_stem.name].value + EarthlyBranchCN[year_branch.name].value,
+        "-年": half_pillar(year_stem, year_branch),
+        "-月": half_pillar(month_stem, month_branch),
+    }
+
+
+def get_stem_pairs(stem: HeavenlyStem, branch: EarthlyBranch) -> list:
+    """
+    Get the heavenly stem pairs in the correct order based on the element cycle,
+    with branches determined by the input branch and its +15 cycle.
+    
+    Args:
+        stem: HeavenlyStem enum value
+        branch: EarthlyBranch enum value
+        
+    Returns:
+        list: List of stem-branch pairs following the element cycle
+    """
+    # Determine starting element and element order
+    if stem in [HeavenlyStem.JIA]:
+        element_order = ["earth", "gold", "water", "wood", "fire"]
+        
+    elif stem in [HeavenlyStem.YI]:
+        element_order = ["gold", "water", "wood", "fire", "earth"]
+    elif stem in [HeavenlyStem.BING]:
+        element_order = ["water", "wood", "fire", "earth", "gold"]
+    elif stem in [ HeavenlyStem.DING]:
+        element_order = ["wood", "fire", "earth", "gold", "water"]
+    elif stem in [HeavenlyStem.WU]:
+        element_order = [ "fire", "earth", "gold", "water", "wood"]
+    elif stem in [HeavenlyStem.JI]:
+        element_order = ["earth", "gold", "water", "wood", "fire"]
+    elif stem in [HeavenlyStem.GENG]:
+        element_order = ["gold", "water", "wood", "fire", "earth"]
+    elif stem in [HeavenlyStem.XIN]:
+        element_order =  ["water", "wood", "fire", "earth", "gold"]
+    elif stem in [HeavenlyStem.REN]:
+        element_order = ["wood", "fire", "earth", "gold", "water"]
+    else:  # REN, GUI
+        element_order = [ "fire", "earth", "gold", "water", "wood"]
+
+    # Get the initial stem-branch combination
+    initial_stem_cn = resolveHeavenlyStem(stem)
+    initial_branch_cn = resolveEarthlyBranch(branch)
+    initial_combo = initial_stem_cn + initial_branch_cn
+    
+    # Get the base value from heavenly_earthly_dict
+    base_value = heavenly_earthly_dict[initial_combo]
+    
+    # Calculate the +15 value
+    plus_15_value = ((base_value + 15 - 1) % 60) + 1
+    
+    # Get the stem-branch combination for +15
+    plus_15_combo = SixtyStem(plus_15_value)
+    
+    # First 5 pairs use original branch
+    first_five_branches = []
+    current_branch_idx = branch.value
+    for i in range(5):
+        next_branch = EarthlyBranch((current_branch_idx) % 12)
+        first_five_branches.append(resolveEarthlyBranch(next_branch))
+    
+    # Second 5 pairs use +15 branch
+    second_five_branches = []
+    plus_15_branch_idx = earthly_branch_enum[plus_15_combo[1]]
+    for i in range(5):
+        next_branch = EarthlyBranch((plus_15_branch_idx) % 12)
+        second_five_branches.append(resolveEarthlyBranch(next_branch))
+    
+    # Define positive stems
+    positive_stems = [HeavenlyStem.JIA, HeavenlyStem.BING, HeavenlyStem.WU, 
+                     HeavenlyStem.GENG, HeavenlyStem.REN]
+    
+    # All possible stem pairs organized by elements
+    element_pairs = {
+        "fire": ("戊", "癸"),
+        "earth": ("甲", "己"),
+        "gold": ("庚", "乙"),
+        "water": ("丙", "辛"),
+        "wood": ("壬", "丁")
+    }
+    
+    # Get stems in correct order
+    ordered_pairs = [element_pairs[element] for element in element_order]
+    if stem not in positive_stems:
+        ordered_pairs = [(pair[1], pair[0]) for pair in ordered_pairs]
+    
+    # Combine stems with their respective branches
+    result = []
+    for i, pair in enumerate(ordered_pairs):
+        if i < 2:
+            result.extend([f"{pair[0]}{first_five_branches[i]}", 
+                         f"{pair[1]}{first_five_branches[i]}"])
+        elif i == 2:
+            result.extend([f"{pair[0]}{first_five_branches[i]}", 
+                         f"{pair[1]}{second_five_branches[i-5]}"])
+        else:
+            result.extend([f"{pair[0]}{second_five_branches[i-5]}", 
+                         f"{pair[1]}{second_five_branches[i-5]}"])
+    
+    return result
+
+def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch) -> dict:
+    """
+    Calculate the Wu Yun (五運) cycle for a given stem and branch.
+    """
+    elements = get_element_cycle(stem)
+    stems = get_stem_pairs(stem, branch)
+    
+    # Generate month ranges
+    base_ranges = ['4-6', '7-9', '10-12', '13-15', '16-18', '19-21', '22-24', '25-27', '28-30', '30-3']
+    month_ranges = []
+    for i in range(10):  # Need 10 ranges for 10 stems
+        month_ranges.append(base_ranges[i % 4])
+    
+    return {
+        "pillar": resolveHeavenlyStem(stem) + resolveEarthlyBranch(branch),
+        "elements": elements,
+        "heavenlyStems": stems,
+        "monthRanges": month_ranges
+    }
+
+
+def calculate_liu_qi(stem: HeavenlyStem, branch: EarthlyBranch) -> dict:
+    """
+    Calculate 六氣 (Liu Qi) based on a given stem and branch.
+    
+    Args:
+        stem: HeavenlyStem enum value
+        branch: EarthlyBranch enum value
+        
+    Returns:
+        dict: Structure containing all components of the Liu Qi cycle
+    """
+    # Convert stem and branch to Chinese characters
+    stem_cn = resolveHeavenlyStem(stem)
+    branch_cn = resolveEarthlyBranch(branch)
+    
+    # Calculate upper heavens (stem and stem + 5)
+    heavenly_stems = list(HeavenlyStemCN)
+    current_stem_idx = [s.value for s in HeavenlyStemCN].index(stem_cn)
+    upper_heaven_stems = [
+        HeavenlyStemCN[heavenly_stems[current_stem_idx].name].value,
+        HeavenlyStemCN[heavenly_stems[(current_stem_idx + 5) % 10].name].value  
+    ]
+    
+    # Calculate middle earths (branch -1 to +4)
+    earthly_branches = list(EarthlyBranchCN)
+    current_branch_idx = [b.value for b in EarthlyBranchCN].index(branch_cn)
+    middle_earths = [
+        EarthlyBranchCN[earthly_branches[(current_branch_idx + i) % 12].name].value
+        for i in range(-1, 5)  # -1, 0, 1, 2, 3, 4
+    ]
+    
+    # Generate lower earths (starting from 子)
+    zi_idx = [b.value for b in EarthlyBranchCN].index('子')
+    lower_earths = [
+        EarthlyBranchCN[earthly_branches[(zi_idx + i) % 12].name].value
+        for i in range(12)
+    ]
+    
+    # Chinese months (starting from 正)
+    chinese_months = ['十一', '十二', '正', '二', '三', '四', '五', '六', 
+                     '七', '八', '九', '十',  ]
+    
+    # Western months (starting from 11)
+    western_months = [(i % 12) + 1 for i in range(11, 23)]
+    
+    return {
+        "centerPillar": {
+            "heaven": stem_cn,
+            "earth": branch_cn
+        },
+        "upperHeavens": upper_heaven_stems,
+        "middleEarths": middle_earths,
+        "lowerEarths": lower_earths,
+        "chineseMonths": chinese_months,
+        "westernMonths": western_months
+    }
+
+def get_liu_xi_cycle(year: int, month: int, day: int, hour: int) -> dict:
+    """
+    Calculate the complete WuXi (五運六氣) cycles for a given date and time.
+    
+    Args:
+        year: Year
+        month: Month
+        day: Day
+        hour: Hour
+        
+    Returns:
+        dict: Complete WuXi cycles for year and day
+    """
+    # Get the year and day pillars
+    year_stem, year_branch = calculate_year_heavenly(year, month, day)
+    day_stem, day_branch = calculate_day_heavenly_base(year, month, day, hour, 15)
+    
+    # Calculate cycles for both year and day
+    year_cycle = calculate_liu_qi(year_stem, year_branch)
+    day_cycle = calculate_liu_qi(day_stem, day_branch)
+    
+    return {
+        "yearCycle": year_cycle,
+        "dayCycle": day_cycle
+    }
+
+
+def get_element_cycle(stem: HeavenlyStem) -> list:
+    """
+    Get the five elements cycle starting from the element associated with the stem.
+    """
+    # Define the base elements with their emojis
+    all_elements = [
+        {"name": "木", "emoji": "🌳"},
+        {"name": "火", "emoji": "🔥"},
+        {"name": "土", "emoji": "🌎"},
+        {"name": "金", "emoji": "🌟"},
+        {"name": "水", "emoji": "💧"}
+    ]
+    
+    # Determine starting index based on stem
+    if stem in [HeavenlyStem.DING, HeavenlyStem.REN]:
+        start_idx = 0  # Wood
+    elif stem in [HeavenlyStem.WU, HeavenlyStem.GUI]:
+        start_idx = 1  # Fire
+    elif stem in [HeavenlyStem.JIA, HeavenlyStem.JI]:
+        start_idx = 2  # Earth
+    elif stem in [HeavenlyStem.GENG, HeavenlyStem.YI]:
+        start_idx = 3  # Gold
+    else:  # REN, GUI
+        start_idx = 4  # Water
+    
+    # Rotate elements to start from the correct element
+    return all_elements[start_idx:] + all_elements[:start_idx]
+
+# def get_stem_pairs(stem: HeavenlyStem) -> list:
+#     """
+#     Get the heavenly stem pairs in the correct order based on the element cycle
+#     and whether the input stem is positive or negative.
+#     """
+#     # Define positive stems
+#     positive_stems = [HeavenlyStem.JIA, HeavenlyStem.BING, HeavenlyStem.WU, 
+#                      HeavenlyStem.GENG, HeavenlyStem.REN]
+    
+#     # All possible pairs organized by elements
+#     element_pairs = {
+#         "fire": ("戊", "癸"),
+#         "earth": ("甲", "己"),
+#         "gold": ("庚", "乙"),
+#         "water": ("丙", "辛"),
+#         "wood": ("壬", "丁")
+#     }
+    
+#     # Determine starting element based on stem
+#     if stem in [HeavenlyStem.JIA, HeavenlyStem.YI]:
+#         element_order = ["wood", "fire", "earth", "gold", "water"]
+#     elif stem in [HeavenlyStem.BING, HeavenlyStem.DING]:
+#         element_order = ["fire", "earth", "gold", "water", "wood"]
+#     elif stem in [HeavenlyStem.WU, HeavenlyStem.JI]:
+#         element_order = ["earth", "gold", "water", "wood", "fire"]
+#     elif stem in [HeavenlyStem.GENG, HeavenlyStem.XIN]:
+#         element_order = ["gold", "water", "wood", "fire", "earth"]
+#     else:  # REN, GUI
+#         element_order = ["water", "wood", "fire", "earth", "gold"]
+    
+#     # Get pairs in correct order
+#     ordered_pairs = [element_pairs[element] for element in element_order]
+    
+#     # Reverse pairs if stem is not positive
+#     if stem not in positive_stems:
+#         ordered_pairs = [(pair[1], pair[0]) for pair in ordered_pairs]
+    
+#     # Flatten the pairs into a single list
+#     return [stem for pair in ordered_pairs for stem in pair]
+
+# def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch) -> dict:
+#     """
+#     Calculate the Wu Yun (五運) cycle for a given stem and branch.
+#     """
+#     elements = get_element_cycle(stem)
+#     stems = get_stem_pairs(stem)
+    
+#     # Generate month ranges
+#     base_ranges = ['4-6', '7-9', '10-12', '13-15', '15-17', '18-20', '21-23', '24-26', '27-29', '30-1']
+#     month_ranges = []
+#     for i in range(10):  # Need 10 ranges for 10 stems
+#         month_ranges.append(base_ranges[i % 10])
+    
+#     return {
+#         "pillar": resolveHeavenlyStem(stem) + resolveEarthlyBranch(branch),
+#         "elements": elements,
+#         "heavenlyStems": stems,
+#         "monthRanges": month_ranges
+#     }
+
+def get_wu_yun_cycle(year: int, month: int, day: int, hour: int) -> dict:
+    """
+    Calculate the Wu Yun (五運) cycles for month and hour pillars.
+    
+    Args:
+        year: Year
+        month: Month
+        day: Day
+        hour: Hour
+        
+    Returns:
+        dict: Complete Wu Yun cycles for month and hour
+    """
+    # Get the month and hour pillars
+    month_stem, month_branch = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+    hour_stem, hour_branch = calculate_hour_heavenly(year, month, day, hour)
+    
+    # Calculate cycles for both month and hour
+    month_cycle = calculate_wu_yun(month_stem, month_branch)
+    hour_cycle = calculate_wu_yun(hour_stem, hour_branch)
+    
+    return {
+        "monthCycle": month_cycle,
+        "hourCycle": hour_cycle
+    }
+
+def get_complete_wuxi_data(year: int, month: int, day: int, hour: int) -> dict:
+    """
+    Combine LiuXi (六氣), base Bazi, and WuYun (五運) calculations into a complete dataset.
+    
+    Args:
+        year: Year
+        month: Month
+        day: Day
+        hour: Hour
+        
+    Returns:
+        dict: Complete WuXi data structure
+    """
+    # Get base Bazi data
+    bazi_data = get_ymdh_base(year, month, day, hour)
+    
+    # Create topGrid from Bazi data
+    top_grid = {
+        "time": bazi_data['時'],
+        "day": bazi_data['日'],
+        "dayHidden": bazi_data['-日'],
+        "timeHidden": bazi_data['-時'],
+        "month": bazi_data['月'],
+        "year": bazi_data['年'],
+        "yearHidden": bazi_data['-年'],
+        "monthHidden": bazi_data['-月']
+    }
+    
+    # Get LiuXi cycles
+    liu_xi_data = get_liu_xi_cycle(year, month, day, hour)
+    year_cycle = liu_xi_data['yearCycle']
+    day_cycle = liu_xi_data['dayCycle']
+    
+    # Get WuYun cycles
+    wu_yun_data = get_wu_yun_cycle(year, month, day, hour)
+    month_cycle = wu_yun_data['monthCycle']
+    hour_cycle = wu_yun_data['hourCycle']
+    
+    return {
+        "topGrid": top_grid,
+        "yearCycle": year_cycle,
+        "monthCycle": month_cycle,
+        "dayCycle": day_cycle,
+        "hourCycle": hour_cycle
+    }

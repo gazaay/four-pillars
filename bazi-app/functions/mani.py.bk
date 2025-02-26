@@ -110,7 +110,7 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
         logger.error(f"Error formatting bazi data: {e}")
         raise ValueError(f"Error formatting bazi data: {e}")
 
-# @app.get("/api/bazi/current")
+@app.get("/api/bazi/current")
 def get_current_bazi(
     year: int,
     month: int,
@@ -150,7 +150,7 @@ def get_current_bazi(
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail=f"Error calculating Bazi: {str(e)}")
 
-# @app.get("/api/bazi/base")
+@app.get("/api/bazi/base")
 def get_base_bazi(
     year: int,
     month: int,
@@ -189,7 +189,7 @@ def get_base_bazi(
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail=f"Error calculating Bazi: {str(e)}")
 
-# @app.get("/api/bazi/wuxi")
+@app.get("/api/bazi/wuxi")
 def get_wuxi_data(
     year: int,
     month: int,
@@ -261,13 +261,13 @@ def api_handler(req: https_fn.Request) -> https_fn.Response:
             hour = int(req.args.get('hour', 0))
             bazi_response = get_current_bazi(year, month, day, hour)
             response_data = bazi_response
-        elif "/api/bazi/wuxi" in req.path:
-            year = int(req.args.get('year', 2023))
-            month = int(req.args.get('month', 1))
-            day = int(req.args.get('day', 1))
-            hour = int(req.args.get('hour', 0))
-            wuxi_response = get_wuxi_data(year, month, day, hour)
-            response_data = wuxi_response
+        # elif "/api/bazi/wuxi" in req.path:
+        #     year = int(req.args.get('year', 2023))
+        #     month = int(req.args.get('month', 1))
+        #     day = int(req.args.get('day', 1))
+        #     hour = int(req.args.get('hour', 0))
+        #     wuxi_response = get_wuxi_data(year, month, day, hour)
+        #     response_data = wuxi_response
         else:
             response_data = {"error": "Not found"}
             return https_fn.Response(
