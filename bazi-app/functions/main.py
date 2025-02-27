@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from datetime import datetime
 from pydantic import BaseModel
 from typing import List, Optional, Dict
-import bazi
+from bazi import bazi
 import functions_framework
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -18,7 +18,7 @@ initialize_app()
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 # Log version when function starts
-logger.info(f"Bazi package version: {bazi.__version__}")
+# logger.info(f"Bazi package version: {__version__}")
 
 app = FastAPI()
 

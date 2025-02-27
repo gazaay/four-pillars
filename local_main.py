@@ -246,6 +246,9 @@ def main():
     # Call get_ymdh_base
     bazi_data = bazi.get_ymdh_base(year, month, day, hour)
     
+
+    print("========This is the base bazi=========")
+    
     # Print the results
     print(f"\nBazi calculation for {year}-{month:02d}-{day:02d} {hour:02d}:00")
 

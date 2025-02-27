@@ -2,7 +2,7 @@
 import logging
 
 logging.basicConfig(level=logging.INFO)
-__version__ = "1.3.2"  # Make sure this matches your setup.py version
+__version__ = "1.3.3"  # Make sure this matches your setup.py version
 
 import os
 import sys

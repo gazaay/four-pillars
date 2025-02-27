@@ -466,7 +466,7 @@ npm install
 
  rm -rf node_modules package-lock.json
  rm -rf venv
- python3.12 -m venv venv
+ python3.11 -m venv venv
  source venv/bin/activate
  pip install -r requirements.txt
  npm install
@@ -474,3 +474,10 @@ npm install
  firebase emulators:start
 
  firebase deploy --only functions
+
+ pip install -e /Users/garylam/Documents/development/four-pillars
+
+python -c "import bazi; print(f'Bazi version: {bazi.__version__}');"                                   
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+AttributeError: module 'bazi' has no attribute '__version__'

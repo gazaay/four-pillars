@@ -1225,24 +1225,29 @@ def get_ymdh_current(year: int, month: int, day: int, hour: int):
     return get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year, month, day, hour, True)
     
 def get_ymdh_base(year: int, month: int, day: int, hour: int): 
-    return get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year, month, day, hour)
+    print("===============base===============")
+    return get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year, month, day, hour, False)
 
 def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int, day: int, hour: int,
     is_current: bool = False):
     # Calculate normal heavenly stems and earthly branches
     input_date =  datetime(year, month, day, hour)
+
     if (is_current):
         heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
         heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_with_half(year, month, day, hour, 15)
-        heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
+        # heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
         heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time(year, month, day)
     else:
+        print("get month pillar")
         heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)
+        print("get day pillar")
         heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_base(year, month, day, hour, 15)
+        print("get year pillar")
         heavenly_stem, earthly_branch = calculate_year_heavenly(year, month, day)
-        print("We are doing base pillar")
+    print("done getting pillars")
         
-  
+
     heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
 
     self_dir, external_dir = HeavenlyStemYinYang.get_directions(heavenly_day_stem, heavenly_stem, Polarity.YANG)
@@ -1728,7 +1733,7 @@ def get_directions(stem1: 'HeavenlyStemYinYang',
 
 
 
-def get_ymdh_base(year: int, month: int, day: int, hour: int) -> dict:
+def get_wuxi_ymdh_base(year: int, month: int, day: int, hour: int) -> dict:
     """
     Calculate the basic four pillars (YMDH) for a given date and time.
     Returns in Chinese characters format.
@@ -2086,7 +2091,7 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int) -> dict:
         dict: Complete WuXi data structure
     """
     # Get base Bazi data
-    bazi_data = get_ymdh_base(year, month, day, hour)
+    bazi_data = get_wuxi_ymdh_base(year, month, day, hour)
     
     # Create topGrid from Bazi data
     top_grid = {
