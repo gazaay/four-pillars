@@ -481,3 +481,5 @@ python -c "import bazi; print(f'Bazi version: {bazi.__version__}');"
 Traceback (most recent call last):
   File "<string>", line 1, in <module>
 AttributeError: module 'bazi' has no attribute '__version__'
+
+
