@@ -537,26 +537,26 @@ def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datet
     ]
 
     # Find the next solar term
-    next_solar_term = None
+    next_solar_term_date_time = None
     next_term_index = 0
 
     for idx, term in enumerate(solar_terms):
         if current_time < term:
-            next_solar_term = term
-            next_term_index = idx
+            next_solar_term_date_time = term
+            next_term_index = idx -1 
             break
 
-    if next_solar_term is None:
+    if next_solar_term_date_time is None:
         raise ValueError("No future solar term found in the provided list")
 
     # Calculate days difference
-    time_diff = next_solar_term - current_time
+    time_diff = next_solar_term_date_time - current_time
     days_to_next = time_diff.total_seconds() / (24 * 3600)  # Convert to days
 
     # Get the name of the next solar term
     next_term_name = solar_term_names[next_term_index % 24]
 
-    return days_to_next, next_solar_term, next_term_name
+    return days_to_next, next_solar_term_date_time, next_term_name
 
 
 def getSixtyStemIndex(stem):
@@ -1037,11 +1037,11 @@ def get_Luna_Month_With_Season(target_date):
     date_list = get_solar_terms(target_date.year)
 
     # Original lists
-    solarterms = [ "DongZhi", "XiaoHan", "DaHan",
-        "LiChun", "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
+    solarterms = [ "XiaoHan", "DaHan", "LiChun",
+        "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
         "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
         "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
-        "LiDong", "XiaoXue", "DaXue", "DongZhi", "XiaoHan", "DaHan","LiChun",
+        "LiDong", "XiaoXue", "DaXue", "DongZhi"
     ]
     # date_list = date_list[:-1]
     # Merge the three lists into a DataFrame
@@ -1239,13 +1239,9 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
         # heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time_Option_2(year, month, day)
         heavenly_stem, earthly_branch = calculate_year_heavenly_for_current_time(year, month, day)
     else:
-        print("get month pillar")
         heavenly_month_stem, earthly_month_stem = calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)
-        print("get day pillar")
         heavenly_day_stem, earthly_day_stem = calculate_day_heavenly_base(year, month, day, hour, 15)
-        print("get year pillar")
         heavenly_stem, earthly_branch = calculate_year_heavenly(year, month, day)
-    print("done getting pillars")
         
 
     heavenly_hour_stem, earthly_hour_stem = calculate_hour_heavenly(year, month, day, hour)
@@ -1858,37 +1854,54 @@ def get_stem_pairs(stem: HeavenlyStem, branch: EarthlyBranch) -> list:
     
     return result
 
-def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch) -> dict:
+def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: datetime) -> dict:
     """
     Calculate the Wu Yun (五運) cycle for a given stem and branch.
+    
+    Args:
+        stem: HeavenlyStem enum value
+        branch: EarthlyBranch enum value
+        current_date: Current datetime to calculate ranges from
+        
+    Returns:
+        dict: Structure containing all components of the Wu Yun cycle
     """
     elements = get_element_cycle(stem)
     stems = get_stem_pairs(stem, branch)
     
-    # Generate month ranges - all 10 unique ranges
-    base_ranges = [
-        '4-6',   # 1
-        '7-9',   # 2
-        '10-12', # 3
-        '13-15', # 4
-        '16-18', # 5
-        '19-21', # 6
-        '22-24', # 7
-        '25-27', # 8
-        '28-30', # 9
-        '30-3'   # 10
-    ]
+    # Get current solar term and its start date
+    solar_terms = get_solar_terms(current_date.year)
+    current_term, next_term, term_name = find_days_to_next_solar_term(current_date, solar_terms)
     
-    # Use all 10 ranges without repeating
-    month_ranges = base_ranges
+    # Generate month ranges based on solar terms
+    month_ranges = []
+    if isinstance(current_term, datetime):
+        start_date = current_term
+    else:
+        # If current_term is not a datetime, use the current date
+        start_date = current_date
+        
+    # Generate 10 ranges, each spanning 3 days
+    for i in range(10):
+        range_start = start_date + timedelta(days=i*3)
+        range_end = range_start + timedelta(days=3)
+        month_ranges.append(f"{range_start.strftime('%m/%d')}-{range_end.strftime('%m/%d')}")
+    
+    # Get Chinese characters for the pillar
+    stem_cn = HeavenlyStemCN[stem.name].value
+    branch_cn = EarthlyBranchCN[branch.name].value
     
     return {
-        "pillar": resolveHeavenlyStem(stem) + resolveEarthlyBranch(branch),
+        "pillar": f"{stem_cn}{branch_cn}",
         "elements": elements,
         "heavenlyStems": stems,
-        "monthRanges": month_ranges
+        "monthRanges": month_ranges,
+        "solarTerm": {
+            "name": term_name,
+            "startDate": current_term if isinstance(current_term, datetime) else current_date,
+            "daysToNext": next_term
+        }
     }
-
 
 def calculate_liu_qi(stem: HeavenlyStem, branch: EarthlyBranch) -> dict:
     """
@@ -2075,13 +2088,15 @@ def get_wu_yun_cycle(year: int, month: int, day: int, hour: int) -> dict:
     Returns:
         dict: Complete Wu Yun cycles for month and hour
     """
+    current_date = datetime(year, month, day, hour)
+    
     # Get the month and hour pillars
-    month_stem, month_branch = calculate_month_heavenly_withSeason_for_current_time(year, month, day, hour)
+    month_stem, month_branch = calculate_month_heavenly_withSeason_for_baselife_time(year, month, day, hour)
     hour_stem, hour_branch = calculate_hour_heavenly(year, month, day, hour)
     
     # Calculate cycles for both month and hour
-    month_cycle = calculate_wu_yun(month_stem, month_branch)
-    hour_cycle = calculate_wu_yun(hour_stem, hour_branch)
+    month_cycle = calculate_wu_yun(month_stem, month_branch, current_date)
+    hour_cycle = calculate_wu_yun(hour_stem, hour_branch, current_date)
     
     return {
         "monthCycle": month_cycle,
@@ -2101,6 +2116,8 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int) -> dict:
     Returns:
         dict: Complete WuXi data structure
     """
+    current_date = datetime(year, month, day, hour)
+    
     # Get base Bazi data
     bazi_data = get_wuxi_ymdh_base(year, month, day, hour)
     
@@ -2116,6 +2133,11 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int) -> dict:
         "monthHidden": bazi_data['-月']
     }
     
+    # Get current solar term info
+    current_term_name, current_term_start, days_since_start = get_current_solar_term(current_date)
+    solar_terms = get_solar_terms(year)
+    days_to_next, next_solar_term_date_time, next_term_name = find_days_to_next_solar_term(current_date, solar_terms)
+    
     # Get LiuXi cycles
     liu_xi_data = get_liu_xi_cycle(year, month, day, hour)
     year_cycle = liu_xi_data['yearCycle']
@@ -2126,10 +2148,73 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int) -> dict:
     month_cycle = wu_yun_data['monthCycle']
     hour_cycle = wu_yun_data['hourCycle']
     
+    # Add solar term info
+    solar_term_info = {
+        "current": {
+            "name": current_term_name,
+            "date": current_term_start.strftime("%Y-%m-%d"),
+            "daysSinceStart": round(days_since_start, 2),
+            "daysToNext": round(days_to_next, 2)
+        },
+        "next": {
+            "name": next_term_name if next_solar_term_date_time else None,
+            "date": next_solar_term_date_time.strftime("%Y-%m-%d") if next_solar_term_date_time else None
+        }
+    }
+    
     return {
         "topGrid": top_grid,
         "yearCycle": year_cycle,
         "monthCycle": month_cycle,
         "dayCycle": day_cycle,
-        "hourCycle": hour_cycle
+        "hourCycle": hour_cycle,
+        "solarTerm": solar_term_info
     }
+
+def get_current_solar_term(target_date: datetime) -> tuple[str, datetime, float]:
+    """
+    Get the current solar term information based on the target date.
+    
+    Args:
+        target_date (datetime): The target date to check
+        
+    Returns:
+        tuple: (current_term_name, current_term_start_date, days_since_start)
+            - current_term_name (str): Name of the current solar term
+            - current_term_start_date (datetime): Start date of the current term
+            - days_since_start (float): Number of days since the start of current term
+    """
+    solar_terms = get_solar_terms(target_date.year)
+    
+    # Convert target_date to naive datetime if it has timezone
+    if target_date.tzinfo:
+        target_date = target_date.replace(tzinfo=None)
+    
+    # Find the current term by checking which period we're in
+    current_term_start = None
+    current_term_name = None
+    
+    for i, term_date in enumerate(solar_terms):
+        # Convert term_date to naive datetime for comparison
+        naive_term_date = term_date.replace(tzinfo=None)
+        if naive_term_date > target_date:
+            if i > 0:
+                current_term_start = solar_terms[i-1]
+                # Get the term name using the start date
+                adjusted_date = current_term_start.replace(tzinfo=None) - timedelta(days=1)
+                current_term_name, _ = get_Luna_Month_With_Season(adjusted_date)
+            break
+    
+    # If we haven't found a term, we might be in the last term of the previous year
+    if not current_term_start:
+        prev_year_terms = get_solar_terms(target_date.year - 1)
+        current_term_start = prev_year_terms[-1]
+        adjusted_date = current_term_start.replace(tzinfo=None) - timedelta(days=1)
+        current_term_name, _ = get_Luna_Month_With_Season(adjusted_date)
+    
+    # Calculate days since the start of the current term
+    # Convert both dates to naive for timedelta calculation
+    naive_current_term_start = current_term_start.replace(tzinfo=None)
+    days_since_start = (target_date - naive_current_term_start).total_seconds() / (24 * 3600)
+    
+    return current_term_name, current_term_start, days_since_start

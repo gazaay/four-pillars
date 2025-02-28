@@ -203,6 +203,18 @@ def print_complete_wuxi_data(wuxi_data):
     """
     Print the complete WuXi data in a formatted layout.
     """
+    # Print solar term information
+    print("Solar Term Information (節氣):")
+    print("=" * 50)
+    solar_term = wuxi_data["solarTerm"]
+    print(f"Current Term: {solar_term['current']['name']}")
+    print(f"Start Date: {solar_term['current']['date']}")
+    print(f"Days Since Start: {solar_term['current']['daysSinceStart']}")
+    print(f"Days to Next Term: {solar_term['current']['daysToNext']}")
+    if solar_term['next']['name']:
+        print(f"Next Term: {solar_term['next']['name']} ({solar_term['next']['date']})")
+    print()
+    
     # Print top grid
     print("Top Grid (八字):")
     print("=" * 50)
@@ -219,8 +231,27 @@ def print_complete_wuxi_data(wuxi_data):
 # wuxi_data = get_complete_wuxi_data(2024, 1, 1, 12)
 # print_complete_wuxi_data(wuxi_data)
 
+def print_all_solar_terms(year: int):
+    """
+    Print all solar terms for a given year.
+    """
+    print(f"\nSolar Terms for {year}:")
+    print("=" * 50)
+    solar_terms = bazi.get_solar_terms(year)
+    
+    for i, term_date in enumerate(solar_terms):
+        # Convert to naive datetime before passing to get_Luna_Month_With_Season
+        naive_date = datetime(term_date.year, term_date.month, term_date.day, 
+                            term_date.hour, term_date.minute, term_date.second)
+        # Adjust the date by adding one day to get the correct term
+        adjusted_date = naive_date - timedelta(days=1)
+        term_name, _ = bazi.get_Luna_Month_With_Season(adjusted_date)
+        print(f"{term_name}: {term_date.strftime('%Y-%m-%d %H:%M:%S')}")
 
 def main():
+    # Print all solar terms for 2025
+    print_all_solar_terms(2025)
+    
     # Example birth date
     birth_date = datetime(1979, 4, 27, 13, tzinfo=pytz.timezone('Asia/Shanghai'))
     
@@ -238,9 +269,9 @@ def main():
     print(f"Days until next solar term: {days:.2f} days")
 
     # Example: Calculate bazi for a specific date and time
-    year = 2024
-    month = 7
-    day = 14
+    year = 2025
+    month = 2
+    day = 22
     hour = 6
 
     # Call get_ymdh_base
@@ -262,5 +293,7 @@ def main():
     print_complete_wuxi_data(wuxi_data)
 
     print(wuxi_data)
+
+
 if __name__ == "__main__":
     main()

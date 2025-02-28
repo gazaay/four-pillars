@@ -271,6 +271,12 @@ def api_handler(req: https_fn.Request) -> https_fn.Response:
             logger.info(f"Calculating wuxi data for {year}-{month}-{day} {hour}")
             wuxi_response = get_wuxi_data(year, month, day, hour)
             response_data = wuxi_response
+        elif "/api/version" in req.path:
+            response_data = {
+                "version": VERSION,
+                "timestamp": datetime.now().isoformat(),
+                "environment": "production"
+            }
         else:
             response_data = {"error": "Not found"}
             return https_fn.Response(

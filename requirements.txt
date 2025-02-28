@@ -18,3 +18,4 @@ ib_insync
 google-cloud-secret-manager
 functions-framework
 numba
+git+https://github.com/gazaay/four-pillars.git@v2.0.1#egg=bazi
