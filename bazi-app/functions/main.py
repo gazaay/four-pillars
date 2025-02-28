@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # logger.info(f"Bazi package version: {__version__}")
 
 app = FastAPI()
-
+ 
 
 # Add CORS middleware
 app.add_middleware(
