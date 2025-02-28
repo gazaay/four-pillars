@@ -1865,11 +1865,22 @@ def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch) -> dict:
     elements = get_element_cycle(stem)
     stems = get_stem_pairs(stem, branch)
     
-    # Generate month ranges
-    base_ranges = ['4-6', '7-9', '10-12', '13-15', '16-18', '19-21', '22-24', '25-27', '28-30', '30-3']
-    month_ranges = []
-    for i in range(10):  # Need 10 ranges for 10 stems
-        month_ranges.append(base_ranges[i % 4])
+    # Generate month ranges - all 10 unique ranges
+    base_ranges = [
+        '4-6',   # 1
+        '7-9',   # 2
+        '10-12', # 3
+        '13-15', # 4
+        '16-18', # 5
+        '19-21', # 6
+        '22-24', # 7
+        '25-27', # 8
+        '28-30', # 9
+        '30-3'   # 10
+    ]
+    
+    # Use all 10 ranges without repeating
+    month_ranges = base_ranges
     
     return {
         "pillar": resolveHeavenlyStem(stem) + resolveEarthlyBranch(branch),
