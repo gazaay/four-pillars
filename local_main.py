@@ -308,9 +308,9 @@ def main():
 
     # Example: Calculate bazi for a specific date and time
     year = 2025
-    month = 3
-    day = 1
-    hour = 6
+    month = 2
+    day = 26
+    hour = 10
 
     # Call get_ymdh_base
     # bazi_data = bazi.get_ymdh_base(year, month, day, hour)
