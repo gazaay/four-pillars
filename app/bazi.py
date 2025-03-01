@@ -1856,15 +1856,18 @@ def get_stem_pairs(stem: HeavenlyStem, branch: EarthlyBranch) -> list:
 
 def generate_hour_ranges(start_date: datetime) -> list:
     """
-    Generate 10 time ranges for the 24-hour period starting from 00:00
-    Each range is 24/10 = 2.4 hours (144 minutes)
+    Generate 10 time ranges within the hour, each spanning 6 minutes
+    Each range is 60/10 = 6 minutes
     """
     ranges = []
-    minutes_per_segment = (24 * 60) / 10  # 144 minutes per segment
+    minutes_per_segment = 60 / 10  # 6 minutes per segment
+    
+    # Keep the hour fixed and only adjust minutes
+    base_hour = start_date.replace(minute=0, second=0, microsecond=0)
     
     for i in range(10):
-        range_start = start_date + timedelta(minutes=i * minutes_per_segment)
-        range_end = start_date + timedelta(minutes=(i + 1) * minutes_per_segment)
+        range_start = base_hour + timedelta(minutes=i * minutes_per_segment)
+        range_end = base_hour + timedelta(minutes=(i + 1) * minutes_per_segment)
         ranges.append(f"{range_start.strftime('%H:%M')}-{range_end.strftime('%H:%M')}")
     
     return ranges
