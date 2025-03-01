@@ -1854,7 +1854,22 @@ def get_stem_pairs(stem: HeavenlyStem, branch: EarthlyBranch) -> list:
     
     return result
 
-def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: datetime) -> dict:
+def generate_hour_ranges(start_date: datetime) -> list:
+    """
+    Generate 10 time ranges for the 24-hour period starting from 00:00
+    Each range is 24/10 = 2.4 hours (144 minutes)
+    """
+    ranges = []
+    minutes_per_segment = (24 * 60) / 10  # 144 minutes per segment
+    
+    for i in range(10):
+        range_start = start_date + timedelta(minutes=i * minutes_per_segment)
+        range_end = start_date + timedelta(minutes=(i + 1) * minutes_per_segment)
+        ranges.append(f"{range_start.strftime('%H:%M')}-{range_end.strftime('%H:%M')}")
+    
+    return ranges
+
+def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: datetime, is_hour_cycle: bool = False) -> dict:
     """
     Calculate the Wu Yun (五運) cycle for a given stem and branch.
     
@@ -1862,6 +1877,7 @@ def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: da
         stem: HeavenlyStem enum value
         branch: EarthlyBranch enum value
         current_date: Current datetime to calculate ranges from
+        is_hour_cycle: If True, calculate ranges for hour cycle (時運) instead of month cycle (月運)
         
     Returns:
         dict: Structure containing all components of the Wu Yun cycle
@@ -1892,10 +1908,16 @@ def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: da
     
     # Generate month ranges based on start date
     month_ranges = []
-    for i in range(10):
-        range_start = start_date + timedelta(days=i*3)
-        range_end = range_start + timedelta(days=3)
-        month_ranges.append(f"{range_start.strftime('%m/%d')}-{range_end.strftime('%m/%d')}")
+
+    if is_hour_cycle:
+        # For hour cycle, start from 00:00 of the current day
+        day_start = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        month_ranges = generate_hour_ranges(day_start)
+    else:
+        for i in range(10):
+            range_start = start_date + timedelta(days=i*3)
+            range_end = range_start + timedelta(days=3)
+            month_ranges.append(f"{range_start.strftime('%m/%d')}-{range_end.strftime('%m/%d')}")
     
     # Get Chinese characters for the pillar
     stem_cn = HeavenlyStemCN[stem.name].value
@@ -2117,7 +2139,7 @@ def get_wu_yun_cycle(year: int, month: int, day: int, hour: int) -> dict:
     
     # Calculate cycles for both month and hour
     month_cycle = calculate_wu_yun(month_stem, month_branch, current_date)
-    hour_cycle = calculate_wu_yun(hour_stem, hour_branch, current_date)
+    hour_cycle = calculate_wu_yun(hour_stem, hour_branch, current_date, True)
     
     return {
         "monthCycle": month_cycle,
