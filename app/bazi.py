@@ -1869,19 +1869,29 @@ def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: da
     elements = get_element_cycle(stem)
     stems = get_stem_pairs(stem, branch)
     
-    # Get current solar term and its start date
+    # Get current solar term information
+    current_term_name, current_term_start, days_since_start = get_current_solar_term(current_date)
+    
+    # Get next solar term information
     solar_terms = get_solar_terms(current_date.year)
     days_to_next, next_solar_term_date_time, next_term_name = find_days_to_next_solar_term(current_date, solar_terms)
     
-    # Generate month ranges based on solar terms
+    # Find the index of current term in solar terms list
+    current_term_index = None
+    for i, term_date in enumerate(solar_terms):
+        if term_date == current_term_start:
+            current_term_index = i
+            break
+    
+    # Check if previous term exists and is in the same month
+    start_date = current_term_start
+    if current_term_index is not None and current_term_index > 0:
+        prev_term_date = solar_terms[current_term_index - 1]
+        if prev_term_date.month == current_term_start.month:
+            start_date = prev_term_date
+    
+    # Generate month ranges based on start date
     month_ranges = []
-    if isinstance(days_to_next, datetime):
-        start_date = days_to_next
-    else:
-        # If current_term is not a datetime, use the current date
-        start_date = current_date
-        
-    # Generate 10 ranges, each spanning 3 days
     for i in range(10):
         range_start = start_date + timedelta(days=i*3)
         range_end = range_start + timedelta(days=3)
@@ -1891,8 +1901,9 @@ def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: da
     stem_cn = HeavenlyStemCN[stem.name].value
     branch_cn = EarthlyBranchCN[branch.name].value
     
-    # Format the start date as a string
-    start_date_str = next_solar_term_date_time.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_solar_term_date_time, datetime) else current_date.strftime('%Y-%m-%d %H:%M:%S')
+    # Format dates as strings
+    current_term_start_str = current_term_start.strftime('%Y-%m-%d %H:%M:%S')
+    next_term_date_str = next_solar_term_date_time.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_solar_term_date_time, datetime) else None
     
     return {
         "pillar": f"{stem_cn}{branch_cn}",
@@ -1900,9 +1911,16 @@ def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: da
         "heavenlyStems": stems,
         "monthRanges": month_ranges,
         "solarTerm": {
-            "name": next_term_name,
-            "startDate": start_date_str,
-            "daysToNext": days_to_next
+            "current": {
+                "name": current_term_name,
+                "startDate": current_term_start_str,
+                "daysSinceStart": days_since_start
+            },
+            "next": {
+                "name": next_term_name,
+                "startDate": next_term_date_str,
+                "daysToNext": days_to_next
+            }
         }
     }
 
