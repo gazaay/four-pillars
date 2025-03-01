@@ -1860,7 +1860,7 @@ def generate_hour_ranges(start_date: datetime) -> list:
     Each range is 60/10 = 6 minutes
     """
     ranges = []
-    minutes_per_segment = 60 / 10  # 6 minutes per segment
+    minutes_per_segment = 120 / 10  # 6 minutes per segment
     
     # Keep the hour fixed and only adjust minutes
     base_hour = start_date.replace(minute=0, second=0, microsecond=0)
