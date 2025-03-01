@@ -1037,7 +1037,7 @@ def get_Luna_Month_With_Season(target_date):
     date_list = get_solar_terms(target_date.year)
 
     # Original lists
-    solarterms = [ "XiaoHan", "DaHan", "LiChun",
+    solarterms = [ "DongZhi", "XiaoHan", "DaHan", "LiChun",
         "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
         "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
         "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
@@ -1871,12 +1871,12 @@ def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: da
     
     # Get current solar term and its start date
     solar_terms = get_solar_terms(current_date.year)
-    current_term, next_term, term_name = find_days_to_next_solar_term(current_date, solar_terms)
+    days_to_next, next_solar_term_date_time, next_term_name = find_days_to_next_solar_term(current_date, solar_terms)
     
     # Generate month ranges based on solar terms
     month_ranges = []
-    if isinstance(current_term, datetime):
-        start_date = current_term
+    if isinstance(days_to_next, datetime):
+        start_date = days_to_next
     else:
         # If current_term is not a datetime, use the current date
         start_date = current_date
@@ -1891,15 +1891,18 @@ def calculate_wu_yun(stem: HeavenlyStem, branch: EarthlyBranch, current_date: da
     stem_cn = HeavenlyStemCN[stem.name].value
     branch_cn = EarthlyBranchCN[branch.name].value
     
+    # Format the start date as a string
+    start_date_str = next_solar_term_date_time.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_solar_term_date_time, datetime) else current_date.strftime('%Y-%m-%d %H:%M:%S')
+    
     return {
         "pillar": f"{stem_cn}{branch_cn}",
         "elements": elements,
         "heavenlyStems": stems,
         "monthRanges": month_ranges,
         "solarTerm": {
-            "name": term_name,
-            "startDate": current_term if isinstance(current_term, datetime) else current_date,
-            "daysToNext": next_term
+            "name": next_term_name,
+            "startDate": start_date_str,
+            "daysToNext": days_to_next
         }
     }
 
@@ -2148,17 +2151,17 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int) -> dict:
     month_cycle = wu_yun_data['monthCycle']
     hour_cycle = wu_yun_data['hourCycle']
     
-    # Add solar term info
+    # Add solar term info with datetime objects converted to strings
     solar_term_info = {
         "current": {
             "name": current_term_name,
-            "date": current_term_start.strftime("%Y-%m-%d"),
+            "date": current_term_start.strftime("%Y-%m-%d %H:%M:%S") if current_term_start else None,
             "daysSinceStart": round(days_since_start, 2),
             "daysToNext": round(days_to_next, 2)
         },
         "next": {
             "name": next_term_name if next_solar_term_date_time else None,
-            "date": next_solar_term_date_time.strftime("%Y-%m-%d") if next_solar_term_date_time else None
+            "date": next_solar_term_date_time.strftime("%Y-%m-%d %H:%M:%S") if next_solar_term_date_time else None
         }
     }
     

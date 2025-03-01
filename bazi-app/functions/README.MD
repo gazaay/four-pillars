@@ -483,3 +483,7 @@ Traceback (most recent call last):
 AttributeError: module 'bazi' has no attribute '__version__'
 
 
+curl -v "http://127.0.0.1:5001/gf8wservice/us-central1/api_handler/api/bazi/base?year=1979&month=04&day=27&hour=13"
+
+curl -v "http://127.0.0.1:5001/gf8wservice/us-central1/api_handler/api/bazi/wuxi?year=1979&month=04&day=27&hour=13"
+

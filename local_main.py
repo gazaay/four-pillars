@@ -163,28 +163,40 @@ def print_complete_wu_yun_cycles(wu_yun_data):
     print_wu_yun_cycle(wu_yun_data["hourCycle"])
 
 def format_bazi_output_fourpillars(data_dict):
-    # Define the groups - now including negative entries
-    basic_keys = ['時', '日', '-日', '-時', '月', '年', '-年', '-月']
+    # Define the groups with English keys
+    basic_keys = ['time', 'day', 'dayHidden', 'timeHidden', 'month', 'year', 'yearHidden', 'monthHidden']
+    
+    # Map for converting English keys to Chinese display
+    key_display = {
+        'time': '時',
+        'day': '日',
+        'month': '月',
+        'year': '年',
+        'dayHidden': '  ',
+        'timeHidden': '  ',
+        'yearHidden': '  ',
+        'monthHidden': '  '
+    }
     
     def format_group(keys, values):
         first_row = []
         second_row = []
         for key in keys:
             if key in values:
-                if len(key) == 1:  # Regular pillar
-                    first_row.append(key)
-                    second_row.append(" ")
-                else:
-                    first_row.append("  ")
-                    second_row.append(" ")
+                first_row.append(key_display[key])
+                second_row.append(" ")
 
         third_row = []
         fourth_row = []
         for key in keys:
             if key in values:
                 value = values[key]
-                third_row.append(value[0])
-                fourth_row.append(value[1])
+                if isinstance(value, str):
+                    third_row.append(value[0])
+                    fourth_row.append(value[1])
+                else:
+                    third_row.append(str(value[0]))
+                    fourth_row.append(str(value[1]))
 
         return [
             "".join(first_row),
@@ -248,7 +260,33 @@ def print_all_solar_terms(year: int):
         term_name, _ = bazi.get_Luna_Month_With_Season(adjusted_date)
         print(f"{term_name}: {term_date.strftime('%Y-%m-%d %H:%M:%S')}")
 
+def test_get_Luna_Month_With_Season():
+    """
+    Test function to check get_Luna_Month_With_Season output for different dates
+    """
+    print("\nTesting get_Luna_Month_With_Season:")
+    print("=" * 50)
+    
+    # Test dates
+    test_dates = [
+        datetime(2025, 1, 1, 12),  # Start of year
+        datetime(2025, 2, 4, 12),  # Around LiChun
+        datetime(2025, 3, 21, 12), # Around ChunFen
+        datetime(2025, 6, 21, 12), # Around XiaZhi
+        datetime(2025, 9, 23, 12), # Around QiuFen
+        datetime(2025, 12, 22, 12) # Around DongZhi
+    ]
+    
+    for date in test_dates:
+        term_name, index = bazi.get_Luna_Month_With_Season(date)
+        print(f"\nDate: {date.strftime('%Y-%m-%d %H:%M')}")
+        print(f"Solar Term: {term_name}")
+        print(f"Index: {index}")
+
 def main():
+    # Add test function call
+    test_get_Luna_Month_With_Season()
+    
     # Print all solar terms for 2025
     print_all_solar_terms(2025)
     
@@ -260,22 +298,22 @@ def main():
     
     # Get and display solar terms for the birth year
     print("\nSolar Terms for birth year:")
-    solar_terms = bazi.get_solar_terms(birth_date.year)
+    # solar_terms = bazi.get_solar_terms(birth_date.year)
     
-    # Find days to next solar term
-    days, next_term, term_name = bazi.find_days_to_next_solar_term(birth_date, solar_terms)
-    print(f"\nCurrent time: {birth_date}")
-    print(f"Next solar term: {next_term} - {term_name}")
-    print(f"Days until next solar term: {days:.2f} days")
+    # # Find days to next solar term
+    # days, next_term, term_name = bazi.find_days_to_next_solar_term(birth_date, solar_terms)
+    # print(f"\nCurrent time: {birth_date}")
+    # print(f"Next solar term: {next_term} - {term_name}")
+    # print(f"Days until next solar term: {days:.2f} days")
 
     # Example: Calculate bazi for a specific date and time
     year = 2025
-    month = 2
-    day = 22
+    month = 3
+    day = 1
     hour = 6
 
     # Call get_ymdh_base
-    bazi_data = bazi.get_ymdh_base(year, month, day, hour)
+    # bazi_data = bazi.get_ymdh_base(year, month, day, hour)
     
 
     print("========This is the base bazi=========")
@@ -283,11 +321,11 @@ def main():
     # Print the results
     print(f"\nBazi calculation for {year}-{month:02d}-{day:02d} {hour:02d}:00")
 
-    format_bazi_output_fourpillars(bazi.get_ymdh_base(year, month, day, hour))
+    # format_bazi_output_fourpillars(bazi.get_ymdh_base(year, month, day, hour))
 
-    print_liu_xi_cycle(bazi.get_liu_xi_cycle(year, month, day, hour))
+    # print_liu_xi_cycle(bazi.get_liu_xi_cycle(year, month, day, hour))
 
-    print_complete_wu_yun_cycles(bazi.get_wu_yun_cycle(year, month, day, hour))
+    # print_complete_wu_yun_cycles(bazi.get_wu_yun_cycle(year, month, day, hour))
 
     wuxi_data = bazi.get_complete_wuxi_data(year, month, day, hour)
     print_complete_wuxi_data(wuxi_data)
