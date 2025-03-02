@@ -1127,6 +1127,42 @@ def half_pillar(hour_stem: HeavenlyStem, hour_branch: EarthlyBranch) -> str:
         
     return SixtyStem(result)
 
+def hidden_pillar(hour_stem: HeavenlyStem, hour_branch: EarthlyBranch, direction: Direction = Direction.CLOCKWISE) -> str:
+    """
+    Calculate the hidden pillar value by moving 5 positions forward or backward.
+    
+    Args:
+        hour_stem: HeavenlyStem enum value
+        hour_branch: EarthlyBranch enum value
+        direction: Direction enum value (CLOCKWISE for forward, ANTICLOCKWISE for backward)
+        
+    Returns:
+        str: The calculated hidden pillar value
+    """
+    # Get the Chinese characters for the stem and branch
+    stem_cn = HeavenlyStemCN[hour_stem.name].value
+    branch_cn = EarthlyBranchCN[hour_branch.name].value
+    
+    # Combine them to get the key for heavenly_earthly_dict
+    combined = stem_cn + branch_cn
+    
+    # Get the base value from the dictionary
+    base_value = heavenly_earthly_dict[combined]
+    
+    # Add or subtract 5 based on direction
+    if direction == Direction.CLOCKWISE:
+        result = base_value + 5
+    else:
+        result = base_value - 5
+    
+    # Handle wrapping around (both forward and backward)
+    if result > 60:
+        result = result - 60
+    elif result <= 0:
+        result = result + 60
+        
+    return SixtyStem(result)
+
 # bazi get the thousand year pillars for any given day
 def get_heavenly_branch_ymdh_pillars(year: int, month: int, day: int, hour: int):
 
@@ -1749,12 +1785,12 @@ def get_wuxi_ymdh_base(year: int, month: int, day: int, hour: int) -> dict:
     return {
         "時": HeavenlyStemCN[hour_stem.name].value + EarthlyBranchCN[hour_branch.name].value,
         "日": HeavenlyStemCN[day_stem.name].value + EarthlyBranchCN[day_branch.name].value,
-        "-時": half_pillar(hour_stem, hour_branch),
-        "-日": half_pillar(day_stem, day_branch),
+        "-時": hidden_pillar(hour_stem, hour_branch, Direction.CLOCKWISE),
+        "-日": hidden_pillar(day_stem, day_branch, Direction.CLOCKWISE),
         "月": HeavenlyStemCN[month_stem.name].value + EarthlyBranchCN[month_branch.name].value,
         "年": HeavenlyStemCN[year_stem.name].value + EarthlyBranchCN[year_branch.name].value,
-        "-年": half_pillar(year_stem, year_branch),
-        "-月": half_pillar(month_stem, month_branch),
+        "-年": hidden_pillar(year_stem, year_branch, Direction.CLOCKWISE),
+        "-月": hidden_pillar(month_stem, month_branch, Direction.CLOCKWISE),
     }
 
 
