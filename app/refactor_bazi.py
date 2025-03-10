@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import Union, Tuple
 import pytz
 from typing import List
+from dataclasses import dataclass
 
 __name__ = "bazi"
 
@@ -56,7 +57,7 @@ class EarthlyBranch(Enum):
     XU = 11 # 戌
     HAI = 0 # 亥
 
-# # Coefficients for the earthly branches
+# Coefficients for the earthly branches
 earthly_branch_enum = {
     "丑": 2,
     "寅": 3,
@@ -85,8 +86,6 @@ heavenly_stem_enum = {
     "癸": 0,
     "甲": 1
 }
-
-
 class HeavenlyStemCN(Enum):
     JIA = '甲'
     YI = '乙'
@@ -2235,7 +2234,7 @@ def get_wu_yun_cycle(year: int, month: int, day: int, hour: int) -> dict:
         "hourCycle": hour_cycle
     }
 
-def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: int = 0) -> dict:
+def get_complete_wuxi_data(year: int, month: int, day: int, hour: int) -> dict:
     """
     Combine LiuXi (六氣), base Bazi, and WuYun (五運) calculations into a complete dataset.
     
@@ -2273,137 +2272,12 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
     # Get LiuXi cycles
     liu_xi_data = get_liu_xi_cycle(year, month, day, hour)
     year_cycle = liu_xi_data['yearCycle']
-    
-    # Determine lower earth based on 6 parts of year
-    month_num = month
-    if month_num == 11 or month_num == 12:
-        lower_earth_index = 0  # First part (Nov-Dec)
-    elif month_num == 1 or month_num == 2:
-        lower_earth_index = 1  # Second part (Jan-Feb) 
-    elif month_num == 3 or month_num == 4:
-        lower_earth_index = 2  # Third part (Mar-Apr)
-    elif month_num == 5 or month_num == 6:
-        lower_earth_index = 3  # Fourth part (May-Jun)
-    elif month_num == 7 or month_num == 8:
-        lower_earth_index = 4  # Fifth part (Jul-Aug)
-    else:
-        lower_earth_index = 5  # Sixth part (Sep-Oct)
-        
-    # Determine upper heaven based on 2 parts of year
-    is_first_half = month_num <= 6
-    centerPillar = year_cycle['centerPillar']
-    upper_heaven = year_cycle['upperHeavens'][0] if is_first_half else year_cycle['upperHeavens'][1]
-    # Combine into year pillar
-    year_pillar = upper_heaven + year_cycle['middleEarths'][lower_earth_index]
-
-
-    # Get day cycle data
     day_cycle = liu_xi_data['dayCycle']
-    
-    # Determine lower earth based on 6 parts of day (4 hour blocks)
-    if hour >= 23 or hour < 3:
-        lower_earth_index = 0  # 23:00-03:00
-    elif hour >= 3 and hour < 7:
-        lower_earth_index = 1  # 03:00-07:00
-    elif hour >= 7 and hour < 11:
-        lower_earth_index = 2  # 07:00-11:00
-    elif hour >= 11 and hour < 15:
-        lower_earth_index = 3  # 11:00-15:00
-    elif hour >= 15 and hour < 19:
-        lower_earth_index = 4  # 15:00-19:00
-    else:
-        lower_earth_index = 5  # 19:00-23:00
-        
-    # # Determine upper heaven based on 2 parts of day (12 hour blocks)
-    is_first_half = hour < 12
-    upper_heaven = day_cycle['upperHeavens'][0] if is_first_half else day_cycle['upperHeavens'][1]
-    # Combine into day pillar
-    day_pillar = upper_heaven + day_cycle['middleEarths'][lower_earth_index]
     
     # Get WuYun cycles
     wu_yun_data = get_wu_yun_cycle(year, month, day, hour)
-    # Get major solar terms for month cycle calculation
-    solar_terms = get_solar_terms(year)
-    major_terms = solar_terms[1::2]  # Get every other term starting at index 1
-    
-    # Create datetime object from input parameters and make it timezone naive
-    target_date = datetime(year, month, day, hour)
-    if target_date.tzinfo:
-        target_date = target_date.replace(tzinfo=None)
-    
-    # Convert major terms to naive datetimes for comparison
-    major_terms = [term.replace(tzinfo=None) for term in major_terms]
-    
-    # Find the previous and current major term period
-    previous_term_start = None
-    current_term_start = None
-    
-    # First check if we're between two terms
-    for i in range(len(major_terms)-1):
-        if major_terms[i] <= target_date < major_terms[i+1]:
-            # Check which term is closer
-            days_to_prev = (target_date - major_terms[i]).total_seconds() / (24 * 3600)
-            days_to_next = (major_terms[i+1] - target_date).total_seconds() / (24 * 3600)
-            
-            if days_to_prev <= days_to_next:
-                previous_term_start = major_terms[i-1] if i > 0 else major_terms[-1]
-                current_term_start = major_terms[i]
-                logger.info(f"Previous term starts at: {previous_term_start}")
-                logger.info(f"Current term starts at: {current_term_start}")
-            else:
-                previous_term_start = major_terms[i]
-                current_term_start = major_terms[i+1]
-                logger.info(f"Previous term starts at: {previous_term_start}")
-                logger.info(f"Current term starts at: {current_term_start}")
-            break
-            
-    # Handle edge case at end of year
-    if not current_term_start:
-        if target_date >= major_terms[-1]:
-            previous_term_start = major_terms[-2]
-            current_term_start = major_terms[-1]
-            logger.info(f"Previous term starts at: {previous_term_start}")
-            logger.info(f"Current term (year end) starts at: {current_term_start}")
-        else:
-            previous_term_start = major_terms[-1]
-            current_term_start = major_terms[0]
-            logger.info(f"Previous term (last year) starts at: {previous_term_start}")
-            logger.info(f"Current term (year start) starts at: {current_term_start}")
-            
-    # Calculate days since start of current term
-    days_elapsed = (target_date - previous_term_start).total_seconds() / (24 * 3600)
-    
-    # Calculate total days in this term period
-    total_days = (current_term_start - previous_term_start).total_seconds() / (24 * 3600)
-    logger.info(f"Total days in term period: {total_days}")
-    # Calculate month pillar index based on days elapsed
-    # Each month cycle is approximately 30.44 days (365.25/12)
-    days_per_month = total_days/10 # Divide term into 12 parts for months
-    month_cycle_index = int(days_elapsed / days_per_month)
-    logger.info(f"Days per month: {days_per_month}")
-    logger.info(f"Initial month cycle index: {month_cycle_index}")
-    
-    # Get month cycle data and select pillar based on index
     month_cycle = wu_yun_data['monthCycle']
-    logger.info(f"Days elapsed: {days_elapsed}")
-    logger.info(f"Month cycle data: {month_cycle}")
-    logger.info(f"Month cycle index before mod: {month_cycle_index}")
-    
-    # Ensure index is within bounds of heavenly stems array (0-9)
-    month_cycle_index = month_cycle_index % len(month_cycle['heavenlyStems'])
-    logger.info(f"Final month cycle index: {month_cycle_index}")
-    
-    month_pillar = month_cycle['heavenlyStems'][month_cycle_index]
-    logger.info(f"Selected month pillar: {month_pillar}")
-
-
-    # Calculate hour pillar based on dividing hour into 10 parts
-    hour_parts = 24 / 10  # Each part is 2.4 hours
-    hour_cycle_index = int(hour / hour_parts)
-    
-    # Get hour cycle data and select pillar based on index
     hour_cycle = wu_yun_data['hourCycle']
-    hour_pillar = hour_cycle['heavenlyStems'][hour_cycle_index]
     
     # Add solar term info with datetime objects converted to strings
     solar_term_info = {
@@ -2421,27 +2295,11 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
     
     return {
         "topGrid": top_grid,
-        "wuxipillar": {
-            "year": {
-                "pillar": year_pillar
-            },
-            "month": {
-                "pillar": month_pillar
-            },
-            "day": {
-                "pillar": day_pillar
-            },
-            "hour": {
-                "pillar": hour_pillar
-            }
-        },
         "yearCycle": year_cycle,
         "monthCycle": month_cycle,
         "dayCycle": day_cycle,
         "hourCycle": hour_cycle,
         "solarTerm": solar_term_info
-    ,
-
     }
 
 def get_current_solar_term(target_date: datetime) -> tuple[str, datetime, float]:
@@ -2894,3 +2752,210 @@ def json_siyun(gender: str, hour_pillar: str, year_stem: str, date_to_examine: d
         })
     
     return result
+
+class Gender(Enum):
+    MALE = "male"
+    FEMALE = "female"
+
+class HeavenlyStem(Enum):
+    JIA = 1   # 甲
+    YI = 2    # 乙
+    BING = 3  # 丙
+    DING = 4  # 丁
+    WU = 5    # 戊
+    JI = 6    # 己
+    GENG = 7  # 庚
+    XIN = 8   # 辛
+    REN = 9   # 壬
+    GUI = 0   # 癸
+
+class EarthlyBranch(Enum):
+    ZI = 1    # 子
+    CHOU = 2  # 丑
+    YIN = 3   # 寅
+    MAO = 4   # 卯
+    CHEN = 5  # 辰
+    SI = 6    # 巳
+    WU = 7    # 午
+    WEI = 8   # 未
+    SHEN = 9  # 申
+    YOU = 10  # 酉
+    XU = 11   # 戌
+    HAI = 0   # 亥
+
+class Direction(Enum):
+    CLOCKWISE = "Clockwise"
+    ANTICLOCKWISE = "AntiClockwise"
+
+class Polarity(Enum):
+    YIN = "Yin"
+    YANG = "Yang"
+
+@dataclass
+class SolarTerm:
+    name: str
+    date: datetime
+    days_since_start: float = 0
+    days_to_next: float = 0
+
+@dataclass
+class Pillar:
+    heavenly_stem: HeavenlyStem
+    earthly_branch: EarthlyBranch
+    
+    def __str__(self) -> str:
+        return f"{self.heavenly_stem.name}{self.earthly_branch.name}"
+    
+    def to_chinese(self) -> str:
+        return f"{HeavenlyStemCN[self.heavenly_stem.name].value}{EarthlyBranchCN[self.earthly_branch.name].value}"
+
+class BaziChart:
+    def __init__(self, birth_time: datetime, name: str, gender: Union[str, Gender], timezone: str = 'Asia/Shanghai'):
+        """
+        Initialize a BaziChart for a person.
+        
+        Args:
+            birth_time: Birth date and time
+            name: Person's name
+            gender: 'male'/'female' or Gender enum
+            timezone: Timezone string (default: 'Asia/Shanghai')
+        """
+        self.name = name
+        self.gender = Gender(gender) if isinstance(gender, str) else gender
+        
+        # Ensure birth_time is timezone-aware
+        if birth_time.tzinfo is None:
+            self.birth_time = pytz.timezone(timezone).localize(birth_time)
+        else:
+            self.birth_time = birth_time
+            
+        # Initialize base components
+        self._init_solar_terms()
+        self._init_pillars()
+        
+    def _init_solar_terms(self):
+        """Initialize solar term information."""
+        self.solar_terms = self._get_solar_terms(self.birth_time.year)
+        self.current_term, self.next_term = self._get_current_solar_term()
+        
+    def _init_pillars(self):
+        """Initialize the four pillars (year, month, day, hour)."""
+        self.year_pillar = self._calculate_year_pillar()
+        self.month_pillar = self._calculate_month_pillar()
+        self.day_pillar = self._calculate_day_pillar()
+        self.hour_pillar = self._calculate_hour_pillar()
+        
+    def _get_solar_terms(self, year: int) -> List[datetime]:
+        """Get solar terms for the given year."""
+        # TODO: Implement solar term calculation
+        pass
+        
+    def _get_current_solar_term(self) -> Tuple[SolarTerm, SolarTerm]:
+        """Get current and next solar terms."""
+        # TODO: Implement current solar term lookup
+        pass
+        
+    def _calculate_year_pillar(self) -> Pillar:
+        """Calculate year pillar."""
+        # TODO: Implement year pillar calculation
+        pass
+        
+    def _calculate_month_pillar(self) -> Pillar:
+        """Calculate month pillar."""
+        # TODO: Implement month pillar calculation
+        pass
+        
+    def _calculate_day_pillar(self) -> Pillar:
+        """Calculate day pillar."""
+        # TODO: Implement day pillar calculation
+        pass
+        
+    def _calculate_hour_pillar(self) -> Pillar:
+        """Calculate hour pillar."""
+        # TODO: Implement hour pillar calculation
+        pass
+        
+    def calculate_dayun(self) -> List[Tuple[Pillar, int]]:
+        """Calculate DaYun sequence and starting ages."""
+        # TODO: Implement DaYun calculation
+        pass
+        
+    def calculate_siyun(self) -> List[Tuple[Pillar, int]]:
+        """Calculate SiYun sequence and starting ages."""
+        # TODO: Implement SiYun calculation
+        pass
+        
+    def calculate_luck_pillars(self, current_date: datetime = None) -> Dict[str, Pillar]:
+        """Calculate luck pillars for a given date."""
+        # TODO: Implement luck pillar calculation
+        pass
+        
+    def to_dict(self) -> Dict:
+        """Convert chart to dictionary format."""
+        return {
+            'name': self.name,
+            'gender': self.gender.value,
+            'birth_time': self.birth_time.isoformat(),
+            'solar_term': {
+                'current': {
+                    'name': self.current_term.name,
+                    'date': self.current_term.date.isoformat(),
+                    'days_since_start': self.current_term.days_since_start,
+                    'days_to_next': self.current_term.days_to_next
+                },
+                'next': {
+                    'name': self.next_term.name,
+                    'date': self.next_term.date.isoformat()
+                }
+            },
+            'pillars': {
+                'year': self.year_pillar.to_chinese(),
+                'month': self.month_pillar.to_chinese(),
+                'day': self.day_pillar.to_chinese(),
+                'hour': self.hour_pillar.to_chinese()
+            }
+        }
+
+# Helper classes for calculations
+class SolarTermCalculator:
+    """Helper class for solar term calculations."""
+    pass
+
+class PillarCalculator:
+    """Helper class for pillar calculations."""
+    pass
+
+class LuckPillarCalculator:
+    """Helper class for luck pillar calculations."""
+    pass
+
+# Constants and lookup tables
+HEAVENLY_EARTHLY_DICT = {
+    # TODO: Add the 60 stem-branch combinations
+}
+
+class HeavenlyStemCN(Enum):
+    JIA = '甲'
+    YI = '乙'
+    BING = '丙'
+    DING = '丁'
+    WU = '戊'
+    JI = '己'
+    GENG = '庚'
+    XIN = '辛'
+    REN = '壬'
+    GUI = '癸'
+
+class EarthlyBranchCN(Enum):
+    ZI = '子'
+    CHOU = '丑'
+    YIN = '寅'
+    MAO = '卯'
+    CHEN = '辰'
+    SI = '巳'
+    WU = '午'
+    WEI = '未'
+    SHEN = '申'
+    YOU = '酉'
+    XU = '戌'
+    HAI = '亥'
