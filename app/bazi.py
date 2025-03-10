@@ -2422,18 +2422,10 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
     return {
         "topGrid": top_grid,
         "wuxipillar": {
-            "year": {
-                "pillar": year_pillar
-            },
-            "month": {
-                "pillar": month_pillar
-            },
-            "day": {
-                "pillar": day_pillar
-            },
-            "hour": {
-                "pillar": hour_pillar
-            }
+            "year":  year_pillar,
+            "month": month_pillar,
+            "day": day_pillar,
+            "hour": hour_pillar
         },
         "yearCycle": year_cycle,
         "monthCycle": month_cycle,
