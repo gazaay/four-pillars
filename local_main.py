@@ -556,22 +556,56 @@ def test_solar_to_lunar():
         print(f"Solar Date: {date.strftime('%Y-%m-%d')}")
         print(f"Lunar Date: Year {lunar_year}, Month {lunar_month}, Day {lunar_day}")
 
+def test_fan_pillars():
+    """
+    Test the Fan (反) pillar calculations for a specific date
+    """
+    print("\nTesting Fan (反) Pillars:")
+    print("=" * 50)
+    
+    # Test case for 1957/3/4 21:30
+    birth_date = datetime(1957, 3, 4, 21, 30)
+    print(f"Date: {birth_date.strftime('%Y-%m-%d %H:%M')}")
+    print("-" * 30)
+    
+    # Get the base pillars data
+    wuxi_data = bazi.get_ymdh_base(
+        birth_date.year,
+        birth_date.month,
+        birth_date.day,
+        birth_date.hour
+    )
+    # Extract and print Fan pillars
+    print("\nFan (反) Pillars:")
+    fan_keys = ['反時', '反日', '-反日', '-反時', '反月', '反年', '-反年', '-反月']
+    
+    # First row: Main labels
+    print("".join(f"{key[0] if len(key) == 2 else ' ':<2}" for key in fan_keys))
+    # Second row: Hidden labels
+    print("".join(f"{key[1] if len(key) == 2 else key[-1]:<2}" for key in fan_keys))
+    
+    # Third row: First characters
+    print("".join(f"{wuxi_data[key][0]:<2}" for key in fan_keys))
+    # Fourth row: Second characters  
+    print("".join(f"{wuxi_data[key][1]:<2}" for key in fan_keys))
+
 def main():
-    # Add test_solar_to_lunar to the test sequence
-    test_solar_to_lunar()
+    # Add test_fan_pillars to the test sequence
+    test_fan_pillars()
     
     # Existing test functions
+    test_solar_to_lunar()
     test_siyun()
     test_flip_pillars()
     
     # Print all solar terms for 2025
-    print_all_solar_terms(2025)
+    # print_all_solar_terms(2025)
     
     # Example birth date
-    birth_date = datetime(1979, 4, 27, 13, tzinfo=pytz.timezone('Asia/Shanghai'))
+    # birth_date = datetime(1979, 4, 27, 13, tzinfo=pytz.timezone('Asia/Shanghai'))
     
     # Generate bazi analysis for birth date
-    generate_bazi_analysis(birth_date)
+    # generate_bazi_analysis(birth_date)
     
     # Get and display solar terms for the birth year
     print("\nSolar Terms for birth year:")
@@ -593,10 +627,10 @@ def main():
     # bazi_data = bazi.get_ymdh_base(year, month, day, hour)
     
 
-    print("========This is the base bazi=========")
+    # print("========This is the base bazi=========")
     
     # Print the results
-    print(f"\nBazi calculation for {year}-{month:02d}-{day:02d} {hour:02d}:00")
+    # print(f"\nBazi calculation for {year}-{month:02d}-{day:02d} {hour:02d}:00")
 
     # format_bazi_output_fourpillars(bazi.get_ymdh_base(year, month, day, hour))
 
@@ -604,16 +638,16 @@ def main():
 
     # print_complete_wu_yun_cycles(bazi.get_wu_yun_cycle(year, month, day, hour))
 
-    wuxi_data = bazi.get_complete_wuxi_data(year, month, day, hour)
-    print_complete_wuxi_data(wuxi_data)
+    # wuxi_data = bazi.get_complete_wuxi_data(year, month, day, hour)
+    # print_complete_wuxi_data(wuxi_data)
 
-    print(wuxi_data)
+    # print(wuxi_data)
 
     solar_terms = bazi.get_solar_terms(1979)  # Your existing solar terms list
     date = datetime(1979, 4, 27, 13, 30, tzinfo=pytz.timezone('Asia/Shanghai'))
     days, next_term, term_name = bazi.find_days_to_next_solar_term(date, solar_terms)
 
-    print(f"Days: {days}, Next Term: {next_term}, Term Name: {term_name}")
+    # print(f"Days: {days}, Next Term: {next_term}, Term Name: {term_name}")
 
 
 if __name__ == "__main__":

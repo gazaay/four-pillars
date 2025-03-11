@@ -1389,7 +1389,7 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
         base_hour=hour,
         gender="male",
         current_date=datetime.now(),
-        is_current=True
+        is_current=False
     )
 
     # Return a dictionary with both original 
