@@ -2277,24 +2277,24 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
     # Determine lower earth based on 6 parts of year
     month_num = month
     if month_num == 11 or month_num == 12:
-        lower_earth_index = 0  # First part (Nov-Dec)
+        year_lower_earth_index = 0  # First part (Nov-Dec)
     elif month_num == 1 or month_num == 2:
-        lower_earth_index = 1  # Second part (Jan-Feb) 
+        year_lower_earth_index = 1  # Second part (Jan-Feb) 
     elif month_num == 3 or month_num == 4:
-        lower_earth_index = 2  # Third part (Mar-Apr)
+        year_lower_earth_index = 2  # Third part (Mar-Apr)
     elif month_num == 5 or month_num == 6:
-        lower_earth_index = 3  # Fourth part (May-Jun)
+        year_lower_earth_index = 3  # Fourth part (May-Jun)
     elif month_num == 7 or month_num == 8:
-        lower_earth_index = 4  # Fifth part (Jul-Aug)
+        year_lower_earth_index = 4  # Fifth part (Jul-Aug)
     else:
-        lower_earth_index = 5  # Sixth part (Sep-Oct)
+        year_lower_earth_index = 5  # Sixth part (Sep-Oct)
         
     # Determine upper heaven based on 2 parts of year
     is_first_half = month_num <= 6
     centerPillar = year_cycle['centerPillar']
     upper_heaven = year_cycle['upperHeavens'][0] if is_first_half else year_cycle['upperHeavens'][1]
     # Combine into year pillar
-    year_pillar = upper_heaven + year_cycle['middleEarths'][lower_earth_index]
+    year_pillar = upper_heaven + year_cycle['middleEarths'][year_lower_earth_index]
 
 
     # Get day cycle data
@@ -2302,23 +2302,23 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
     
     # Determine lower earth based on 6 parts of day (4 hour blocks)
     if hour >= 23 or hour < 3:
-        lower_earth_index = 0  # 23:00-03:00
+        day_lower_earth_index = 0  # 23:00-03:00
     elif hour >= 3 and hour < 7:
-        lower_earth_index = 1  # 03:00-07:00
+        day_lower_earth_index = 1  # 03:00-07:00
     elif hour >= 7 and hour < 11:
-        lower_earth_index = 2  # 07:00-11:00
+        day_lower_earth_index = 2  # 07:00-11:00
     elif hour >= 11 and hour < 15:
-        lower_earth_index = 3  # 11:00-15:00
+        day_lower_earth_index = 3  # 11:00-15:00
     elif hour >= 15 and hour < 19:
-        lower_earth_index = 4  # 15:00-19:00
+        day_lower_earth_index = 4  # 15:00-19:00
     else:
-        lower_earth_index = 5  # 19:00-23:00
+        day_lower_earth_index = 5  # 19:00-23:00
         
     # # Determine upper heaven based on 2 parts of day (12 hour blocks)
     is_first_half = hour < 12
     upper_heaven = day_cycle['upperHeavens'][0] if is_first_half else day_cycle['upperHeavens'][1]
     # Combine into day pillar
-    day_pillar = upper_heaven + day_cycle['middleEarths'][lower_earth_index]
+    day_pillar = upper_heaven + day_cycle['middleEarths'][day_lower_earth_index]
     
     # Get WuYun cycles
     wu_yun_data = get_wu_yun_cycle(year, month, day, hour)
@@ -2418,15 +2418,21 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
             "date": next_solar_term_date_time.strftime("%Y-%m-%d %H:%M:%S") if next_solar_term_date_time else None
         }
     }
-    
+    # Calculate indices for each cycle based on the pillars
+    # Add indices to the cycles using the previously calculated indices
+    year_cycle['index'] = year_lower_earth_index
+    month_cycle['index'] = month_cycle_index
+    day_cycle['index'] = day_lower_earth_index
+    hour_cycle['index'] = hour_cycle_index
+    top_grid['wuxipillar'] = {
+        "year":  year_pillar,
+        "month": month_pillar,
+        "day": day_pillar,
+        "hour": hour_pillar
+    }
+
     return {
         "topGrid": top_grid,
-        "wuxipillar": {
-            "year":  year_pillar,
-            "month": month_pillar,
-            "day": day_pillar,
-            "hour": hour_pillar
-        },
         "yearCycle": year_cycle,
         "monthCycle": month_cycle,
         "dayCycle": day_cycle,
