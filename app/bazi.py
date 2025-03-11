@@ -1381,6 +1381,16 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
                          resolveHeavenlyStem(heavenly_month_stem) + resolveEarthlyBranch(earthly_month_stem), 
                          input_date)
 
+    # Calculate flip pillars
+    flip_pillars = calculate_flip_pillars(
+        base_year=year,
+        base_month=month,
+        base_day=day,
+        base_hour=hour,
+        gender="male",
+        current_date=datetime.now(),
+        is_current=True
+    )
 
     # Return a dictionary with both original 
     return {
@@ -1426,9 +1436,17 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
         "-破年": po_dark_year_stem, ##resolveHeavenlyStem(po_year_stem) + resolveEarthlyBranch(po_year_branch),
         "-破月": po_dark_month_stem, ##resolveHeavenlyStem(po_month_stem) + resolveEarthlyBranch(po_month_branch),
 # 刑,衝,破,害 
-        "大運": daiYun
+        "大運": daiYun,
 
-
+        # Add flip pillars with Chinese word "fan"
+        "反時": flip_pillars["時"],
+        "反日": flip_pillars["日"], 
+        "-反日": flip_pillars["-日"],
+        "-反時": flip_pillars["-時"],
+        "反月": flip_pillars["月"],
+        "反年": flip_pillars["年"],
+        "-反年": flip_pillars["-年"],
+        "-反月": flip_pillars["-月"], 
 
     }
 
