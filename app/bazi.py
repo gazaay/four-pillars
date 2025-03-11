@@ -2235,7 +2235,14 @@ def get_wu_yun_cycle(year: int, month: int, day: int, hour: int) -> dict:
         "hourCycle": hour_cycle
     }
 
-def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: int = 0) -> dict:
+def get_complete_wuxi_data(year: int = None, month: int = None, day: int = None, hour: int = None, minutes: int = 0) -> dict:
+    # Set current_date to today if no date provided
+    current_timeline_date = datetime.now()
+    if all(x is None for x in [year, month, day, hour]):
+        year = current_date.year
+        month = current_date.month
+        day = current_date.day
+        hour = current_date.hour
     """
     Combine LiuXi (六氣), base Bazi, and WuYun (五運) calculations into a complete dataset.
     
@@ -2484,6 +2491,16 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
         "day": day_pillar,
         "hour": hour_pillar
     }
+    # Calculate flip pillars using the dedicated method with male gender
+    flip_pillars = calculate_flip_pillars(
+        base_year=current_date.year,
+        base_month=current_date.month, 
+        base_day=current_date.day,
+        base_hour=current_date.hour,
+        gender="male",
+        current_date=current_timeline_date,
+        is_current=True
+    )
 
     return {
         "topGrid": top_grid,
@@ -2491,9 +2508,8 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
         "monthCycle": month_cycle,
         "dayCycle": day_cycle,
         "hourCycle": hour_cycle,
-        "solarTerm": solar_term_info
-    ,
-
+        "solarTerm": solar_term_info,
+        "flipPillars": flip_pillars
     }
 
 def get_current_solar_term(target_date: datetime) -> tuple[str, datetime, float]:

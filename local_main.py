@@ -458,8 +458,109 @@ def test_siyun():
             case['birth_date']  # Current date for age calculation
         )
 
+def test_bazi_chart():
+    """
+    Test the new BaziChart class with various scenarios
+    """
+    print("\nTesting BaziChart Class:")
+    print("=" * 50)
+    
+    # Test cases with different birth dates and genders
+    test_cases = [
+        {
+            "birth_date": datetime(1979, 4, 27, 13),
+            "name": "John Doe",
+            "gender": "male",
+            "desc": "Male born in afternoon"
+        },
+        {
+            "birth_date": datetime(1985, 6, 21, 12),
+            "name": "Jane Smith",
+            "gender": "female",
+            "desc": "Female born at noon"
+        },
+        {
+            "birth_date": datetime(1990, 12, 22, 23),
+            "name": "Bob Wilson",
+            "gender": "male",
+            "desc": "Male born at night"
+        }
+    ]
+    
+    for case in test_cases:
+        print(f"\nTest Case: {case['desc']}")
+        print("-" * 30)
+        
+        # Create BaziChart instance
+        chart = bazi.BaziChart(
+            birth_time=case['birth_date'],
+            name=case['name'],
+            gender=case['gender']
+        )
+        
+        # Print basic information
+        print(f"Name: {chart.name}")
+        print(f"Gender: {chart.gender.value}")
+        print(f"Birth Time: {chart.birth_time}")
+        
+        # Convert chart to dictionary and print
+        chart_dict = chart.to_dict()
+        print("\nChart Details:")
+        print(f"Solar Term: {chart_dict['solar_term']['current']['name']}")
+        print("\nPillars:")
+        for pillar_type, value in chart_dict['pillars'].items():
+            print(f"{pillar_type}: {value}")
+
+def test_solar_to_lunar():
+    """
+    Test the conversion from solar to lunar dates
+    """
+    print("\nTesting Solar to Lunar Date Conversion:")
+    print("=" * 50)
+    
+    # Test cases with different dates
+    test_cases = [
+        {
+            "date": datetime(1979, 4, 27, 13),
+            "desc": "Spring 1979"
+        },
+        {
+            "date": datetime(1985, 6, 21, 12),
+            "desc": "Summer Solstice 1985"
+        },
+        {
+            "date": datetime(1990, 12, 22, 23),
+            "desc": "Winter Solstice 1990"
+        },
+        {
+            "date": datetime(2024, 2, 10, 0),
+            "desc": "Chinese New Year 2024"
+        },
+        {
+            "date": datetime(2024, 4, 5, 0),
+            "desc": "Qing Ming 2024"
+        }
+    ]
+    
+    for case in test_cases:
+        print(f"\nTest Case: {case['desc']}")
+        print("-" * 30)
+        
+        date = case['date']
+        lunar_year, lunar_month, lunar_day = bazi.convert_Solar_to_Luna(
+            date.year,
+            date.month,
+            date.day
+        )
+        
+        print(f"Solar Date: {date.strftime('%Y-%m-%d')}")
+        print(f"Lunar Date: Year {lunar_year}, Month {lunar_month}, Day {lunar_day}")
+
 def main():
-    # Add test function calls
+    # Add test_solar_to_lunar to the test sequence
+    test_solar_to_lunar()
+    
+    # Existing test functions
     test_siyun()
     test_flip_pillars()
     
