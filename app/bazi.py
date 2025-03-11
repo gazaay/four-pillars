@@ -2273,49 +2273,52 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
     # Get LiuXi cycles
     liu_xi_data = get_liu_xi_cycle(year, month, day, hour)
     year_cycle = liu_xi_data['yearCycle']
-    # Determine middle earth based on 6 parts of year
-    month_num = month
-    if month_num == 11 or month_num == 12:
-        year_middle_earth_index = 0  # First part (Nov-Dec)
-    elif month_num == 1 or month_num == 2:
-        year_middle_earth_index = 1  # Second part (Jan-Feb) 
-    elif month_num == 3 or month_num == 4:
-        year_middle_earth_index = 2  # Third part (Mar-Apr)
-    elif month_num == 5 or month_num == 6:
-        year_middle_earth_index = 3  # Fourth part (May-Jun)
-    elif month_num == 7 or month_num == 8:
-        year_middle_earth_index = 4  # Fifth part (Jul-Aug)
+    
+    # Convert solar date to lunar date using convert_Solar_to_Luna
+    lunar_year, lunar_month, lunar_day = convert_Solar_to_Luna(year, month, day)
+    
+    # Determine middle earth based on 6 parts of year using lunar month
+    if lunar_month == 11 or lunar_month == 12:
+        year_middle_earth_index = 0  # First part (Lunar Nov-Dec)
+    elif lunar_month == 1 or lunar_month == 2:
+        year_middle_earth_index = 1  # Second part (Lunar Jan-Feb)
+    elif lunar_month == 3 or lunar_month == 4:
+        year_middle_earth_index = 2  # Third part (Lunar Mar-Apr)
+    elif lunar_month == 5 or lunar_month == 6:
+        year_middle_earth_index = 3  # Fourth part (Lunar May-Jun)
+    elif lunar_month == 7 or lunar_month == 8:
+        year_middle_earth_index = 4  # Fifth part (Lunar Jul-Aug)
     else:
-        year_middle_earth_index = 5  # Sixth part (Sep-Oct)
+        year_middle_earth_index = 5  # Sixth part (Lunar Sep-Oct)
 
     # Determine lower earth based on 12 parts of year
-    if month_num == 12:
+    if lunar_month == 12:
         year_lower_earth_index = 0  # December
-    elif month_num == 1:
+    elif lunar_month == 1:
         year_lower_earth_index = 1  # January
-    elif month_num == 2:
+    elif lunar_month == 2:
         year_lower_earth_index = 2  # February
-    elif month_num == 3:
+    elif lunar_month == 3:
         year_lower_earth_index = 3  # March
-    elif month_num == 4:
+    elif lunar_month == 4:
         year_lower_earth_index = 4  # April
-    elif month_num == 5:
+    elif lunar_month == 5:
         year_lower_earth_index = 5  # May
-    elif month_num == 6:
+    elif lunar_month == 6:
         year_lower_earth_index = 6  # June
-    elif month_num == 7:
+    elif lunar_month == 7:
         year_lower_earth_index = 7  # July
-    elif month_num == 8:
+    elif lunar_month == 8:
         year_lower_earth_index = 8  # August
-    elif month_num == 9:
+    elif lunar_month == 9:
         year_lower_earth_index = 9  # September
-    elif month_num == 10:
+    elif lunar_month == 10:
         year_lower_earth_index = 10  # October
     else:
         year_lower_earth_index = 11  # November
         
     # Determine upper heaven based on 2 parts of year
-    is_first_half = month_num <= 6
+    is_first_half = lunar_month <= 6
     centerPillar = year_cycle['centerPillar']
     upper_heaven = year_cycle['upperHeavens'][0] if is_first_half else year_cycle['upperHeavens'][1]
     # Combine into year pillar
