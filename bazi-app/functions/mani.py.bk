@@ -102,7 +102,7 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
                 "harmed": bazi_data.get("害時", ""),
                 "harmed_hidden": bazi_data.get("-害時", ""),
                 "clashed": bazi_data.get("破時", ""),
-                "clashed_hidden": bazi_data.get("-破時", "")
+                "clasghed_hidden": bazi_data.get("-破時", "")
             },
             "dayun": bazi_data.get("大運", [])  # Add the 大運 section directly
         }

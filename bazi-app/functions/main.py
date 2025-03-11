@@ -63,7 +63,7 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
 
     try:
         return {
-            "year_pillar": {
+            "year_pillar" : {
                 "stems": bazi_data.get("年", ""),
                 "hidden_stems": bazi_data.get("-年", ""),
                 "combined": bazi_data.get("合年", ""),
@@ -133,9 +133,9 @@ def get_current_bazi(
         input_date = datetime(year, month, day, hour)
         bazi_data = bazi.get_ymdh_current(year, month, day, hour)
 
-        logger.debug(f"Received bazi data: {bazi_data}")
+        logger.info(f"Received bazi data: {bazi_data}")
         formatted_data = format_bazi_data(bazi_data)
-        logger.debug(f"Formatted data: {formatted_data}")
+        logger.info(f"Formatted data: {formatted_data}")
 
         response = BaziResponse(
             **formatted_data,
@@ -165,7 +165,7 @@ def get_base_bazi(
     hour: Optional[int] = 9
 ):
     try:
-        logger.debug(f"Calculating base bazi for {year}-{month}-{day} {hour}")
+        logger.info(f"Calculating base bazi for {year}-{month}-{day} {hour}")
 
         if hour is None:
             hour = datetime.now().hour
@@ -173,9 +173,9 @@ def get_base_bazi(
         input_date = datetime(year, month, day, hour)
         bazi_data = bazi.get_ymdh_base(year, month, day, hour)
 
-        logger.debug(f"Received bazi data: {bazi_data}")
+        logger.info(f"Received bazi data: {bazi_data}")
         formatted_data = format_bazi_data(bazi_data)
-        logger.debug(f"Formatted data: {formatted_data}")
+        logger.info(f"Formatted data: {formatted_data}")
 
         response = BaziResponse(
             **formatted_data,
