@@ -71,7 +71,9 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
                 "harmed": bazi_data.get("害年", ""),
                 "harmed_hidden": bazi_data.get("-害年", ""),
                 "clashed": bazi_data.get("破年", ""),
-                "clashed_hidden": bazi_data.get("-破年", "")
+                "clashed_hidden": bazi_data.get("-破年", ""),
+                "fan": bazi_data.get("反年", ""),
+                "fan_hidden": bazi_data.get("-反年", "")
             },
             "month_pillar": {
                 "stems": bazi_data.get("月", ""),
@@ -81,10 +83,11 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
                 "harmed": bazi_data.get("害月", ""),
                 "harmed_hidden": bazi_data.get("-害月", ""),
                 "clashed": bazi_data.get("破月", ""),
-                "clashed_hidden": bazi_data.get("-破月", "")
+                "clashed_hidden": bazi_data.get("-破月", ""),
+                "fan": bazi_data.get("反月", ""),
+                "fan_hidden": bazi_data.get("-反月", "")
             },
             "day_pillar": {
-
                 "stems": bazi_data.get("日", ""),
                 "hidden_stems": bazi_data.get("-日", ""),
                 "combined": bazi_data.get("合日", ""),
@@ -92,10 +95,11 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
                 "harmed": bazi_data.get("害日", ""),
                 "harmed_hidden": bazi_data.get("-害日", ""),
                 "clashed": bazi_data.get("破日", ""),
-                "clashed_hidden": bazi_data.get("-破日", "")
+                "clashed_hidden": bazi_data.get("-破日", ""),
+                "fan": bazi_data.get("反日", ""),
+                "fan_hidden": bazi_data.get("-反日", "")
             },
             "hour_pillar": {
-
                 "stems": bazi_data.get("時", ""),
                 "hidden_stems": bazi_data.get("-時", ""),
                 "combined": bazi_data.get("合時", ""),
@@ -103,7 +107,9 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
                 "harmed": bazi_data.get("害時", ""),
                 "harmed_hidden": bazi_data.get("-害時", ""),
                 "clashed": bazi_data.get("破時", ""),
-                "clashed_hidden": bazi_data.get("-破時", "")
+                "clashed_hidden": bazi_data.get("-破時", ""),
+                "fan": bazi_data.get("反時", ""),
+                "fan_hidden": bazi_data.get("-反時", "")
             },
             "dayun": bazi_data.get("大運", [])  # Add the 大運 section directly
         }
