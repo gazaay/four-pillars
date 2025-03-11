@@ -2273,52 +2273,103 @@ def get_complete_wuxi_data(year: int, month: int, day: int, hour: int, minutes: 
     # Get LiuXi cycles
     liu_xi_data = get_liu_xi_cycle(year, month, day, hour)
     year_cycle = liu_xi_data['yearCycle']
-    
-    # Determine lower earth based on 6 parts of year
+    # Determine middle earth based on 6 parts of year
     month_num = month
     if month_num == 11 or month_num == 12:
-        year_lower_earth_index = 0  # First part (Nov-Dec)
+        year_middle_earth_index = 0  # First part (Nov-Dec)
     elif month_num == 1 or month_num == 2:
-        year_lower_earth_index = 1  # Second part (Jan-Feb) 
+        year_middle_earth_index = 1  # Second part (Jan-Feb) 
     elif month_num == 3 or month_num == 4:
-        year_lower_earth_index = 2  # Third part (Mar-Apr)
+        year_middle_earth_index = 2  # Third part (Mar-Apr)
     elif month_num == 5 or month_num == 6:
-        year_lower_earth_index = 3  # Fourth part (May-Jun)
+        year_middle_earth_index = 3  # Fourth part (May-Jun)
     elif month_num == 7 or month_num == 8:
-        year_lower_earth_index = 4  # Fifth part (Jul-Aug)
+        year_middle_earth_index = 4  # Fifth part (Jul-Aug)
     else:
-        year_lower_earth_index = 5  # Sixth part (Sep-Oct)
+        year_middle_earth_index = 5  # Sixth part (Sep-Oct)
+
+    # Determine lower earth based on 12 parts of year
+    if month_num == 12:
+        year_lower_earth_index = 0  # December
+    elif month_num == 1:
+        year_lower_earth_index = 1  # January
+    elif month_num == 2:
+        year_lower_earth_index = 2  # February
+    elif month_num == 3:
+        year_lower_earth_index = 3  # March
+    elif month_num == 4:
+        year_lower_earth_index = 4  # April
+    elif month_num == 5:
+        year_lower_earth_index = 5  # May
+    elif month_num == 6:
+        year_lower_earth_index = 6  # June
+    elif month_num == 7:
+        year_lower_earth_index = 7  # July
+    elif month_num == 8:
+        year_lower_earth_index = 8  # August
+    elif month_num == 9:
+        year_lower_earth_index = 9  # September
+    elif month_num == 10:
+        year_lower_earth_index = 10  # October
+    else:
+        year_lower_earth_index = 11  # November
         
     # Determine upper heaven based on 2 parts of year
     is_first_half = month_num <= 6
     centerPillar = year_cycle['centerPillar']
     upper_heaven = year_cycle['upperHeavens'][0] if is_first_half else year_cycle['upperHeavens'][1]
     # Combine into year pillar
-    year_pillar = upper_heaven + year_cycle['middleEarths'][year_lower_earth_index]
+    year_pillar = upper_heaven + year_cycle['middleEarths'][year_middle_earth_index]
 
 
     # Get day cycle data
     day_cycle = liu_xi_data['dayCycle']
     
-    # Determine lower earth based on 6 parts of day (4 hour blocks)
+    # Determine middle earth based on 6 parts of day (4 hour blocks)
     if hour >= 23 or hour < 3:
-        day_lower_earth_index = 0  # 23:00-03:00
+        middle_earth_index = 0  # 23:00-03:00
     elif hour >= 3 and hour < 7:
-        day_lower_earth_index = 1  # 03:00-07:00
+        middle_earth_index = 1  # 03:00-07:00
     elif hour >= 7 and hour < 11:
-        day_lower_earth_index = 2  # 07:00-11:00
+        middle_earth_index = 2  # 07:00-11:00
     elif hour >= 11 and hour < 15:
-        day_lower_earth_index = 3  # 11:00-15:00
+        middle_earth_index = 3  # 11:00-15:00
     elif hour >= 15 and hour < 19:
-        day_lower_earth_index = 4  # 15:00-19:00
+        middle_earth_index = 4  # 15:00-19:00
     else:
-        day_lower_earth_index = 5  # 19:00-23:00
+        middle_earth_index = 5  # 19:00-23:00
+
+    # Determine lower earth based on 12 parts of day (2 hour blocks)
+    if hour >= 23 or hour < 1:
+        day_lower_earth_index = 0  # 23:00-01:00
+    elif hour >= 1 and hour < 3:
+        day_lower_earth_index = 1  # 01:00-03:00
+    elif hour >= 3 and hour < 5:
+        day_lower_earth_index = 2  # 03:00-05:00
+    elif hour >= 5 and hour < 7:
+        day_lower_earth_index = 3  # 05:00-07:00
+    elif hour >= 7 and hour < 9:
+        day_lower_earth_index = 4  # 07:00-09:00
+    elif hour >= 9 and hour < 11:
+        day_lower_earth_index = 5  # 09:00-11:00
+    elif hour >= 11 and hour < 13:
+        day_lower_earth_index = 6  # 11:00-13:00
+    elif hour >= 13 and hour < 15:
+        day_lower_earth_index = 7  # 13:00-15:00
+    elif hour >= 15 and hour < 17:
+        day_lower_earth_index = 8  # 15:00-17:00
+    elif hour >= 17 and hour < 19:
+        day_lower_earth_index = 9  # 17:00-19:00
+    elif hour >= 19 and hour < 21:
+        day_lower_earth_index = 10  # 19:00-21:00
+    else:
+        day_lower_earth_index = 11  # 21:00-23:00
         
     # # Determine upper heaven based on 2 parts of day (12 hour blocks)
     is_first_half = hour < 12
     upper_heaven = day_cycle['upperHeavens'][0] if is_first_half else day_cycle['upperHeavens'][1]
     # Combine into day pillar
-    day_pillar = upper_heaven + day_cycle['middleEarths'][day_lower_earth_index]
+    day_pillar = upper_heaven + day_cycle['middleEarths'][middle_earth_index]
     
     # Get WuYun cycles
     wu_yun_data = get_wu_yun_cycle(year, month, day, hour)

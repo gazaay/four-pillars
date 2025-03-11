@@ -232,6 +232,25 @@ def print_complete_wuxi_data(wuxi_data):
     print("=" * 50)
     format_bazi_output_fourpillars(wuxi_data["topGrid"])
     print()
+
+    # Print WuXi pillars
+    print("WuXi Pillars (五系):")
+    print("=" * 50)
+    wuxi_pillars = wuxi_data["topGrid"]["wuxipillar"]
+    print(f"Year Pillar: {wuxi_pillars['year']}")
+    print(f"Month Pillar: {wuxi_pillars['month']}")
+    print(f"Day Pillar: {wuxi_pillars['day']}")
+    print(f"Hour Pillar: {wuxi_pillars['hour']}")
+    print()
+
+    # Print cycle indices
+    print("Cycle Indices:")
+    print("=" * 50)
+    print(f"Year Cycle Index: {wuxi_data['yearCycle']['index']}")
+    print(f"Month Cycle Index: {wuxi_data['monthCycle']['index']}")
+    print(f"Day Cycle Index: {wuxi_data['dayCycle']['index']}")
+    print(f"Hour Cycle Index: {wuxi_data['hourCycle']['index']}")
+    print()
     
     # Print year and day cycles (六氣)
     print_liu_xi_cycle(wuxi_data)
@@ -464,10 +483,10 @@ def main():
     # print(f"Days until next solar term: {days:.2f} days")
 
     # Example: Calculate bazi for a specific date and time
-    year = 1979
-    month = 4
-    day = 27
-    hour = 13
+    year = 2025
+    month = 3
+    day = 11
+    hour = 10
 
     # Call get_ymdh_base
     # bazi_data = bazi.get_ymdh_base(year, month, day, hour)
