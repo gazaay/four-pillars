@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="bazi",
-    version="",
+    version="1.8.9",
     # packages=find_packages(),
     packages=["bazi"],  # Explicitly include the 'app' package
     package_dir={"bazi": "app"},  # Map the 'app' package to the 'app' directory
