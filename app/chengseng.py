@@ -36,7 +36,11 @@ def process_8w_row(index, row):
         current_attempt = 0
         required_columns = [
             #   '本時', '本日', '-本時', '本月', '本年', '-本月', 
-                            '流時', '流日', '-流時', '流月', '流年', '-流月', '時運', '日運', '-日運', '-時運', '月運', '年運', '-年運', '-月運', ]
+                            '流時', '流日', '-流時', '流月', '流年', '-流月', '時運', '日運',
+                            # '-日運', '-時運', 
+                            '月運', '年運', 
+                            # '-年運', '-月運', 
+                            ]
         # sorted_df_with_new_features = pd.DataFrame()
         while current_attempt < max_attempts:
                 # with lock:
@@ -70,18 +74,20 @@ def process_8w_row(index, row):
 
                             enhanced_row["時運"] = result_wuxi["時運"]
                             enhanced_row["日運"] = result_wuxi["日運"]
-                            enhanced_row["-日運"] = result_wuxi["-日運"]
-                            enhanced_row["-時運"] = result_wuxi["-時運"]
+                            # enhanced_row["-日運"] = result_wuxi["-日運"]
+                            # enhanced_row["-時運"] = result_wuxi["-時運"]
                             enhanced_row["月運"] = result_wuxi["月運"]
                             enhanced_row["年運"] = result_wuxi["年運"]
-                            enhanced_row["-年運"] = result_wuxi["-年運"]
-                            enhanced_row["-月運"] = result_wuxi["-月運"]
+                            # enhanced_row["-年運"] = result_wuxi["-年運"]
+                            # enhanced_row["-月運"] = result_wuxi["-月運"]
 
                             return enhanced_row
 
                         
                     except Exception as e:
-                            logger.info(f"{index} -  An error occurred: {e}")
+                            import traceback
+                            error_details = traceback.format_exc()
+                            logger.error(f"{index} - {year}-{month}-{day} {hour}:00 - An error occurred: {e}\nTraceback:\n{error_details}")
                             current_attempt += 1
 
 
@@ -93,13 +99,17 @@ def adding_8w_pillars( sorted_df):
     columns_to_initialize = [
         #    '本時', '本日', '-本時', '本月', '本年', '-本月', 
                              '流時', '流日', '-流時', '流月', '流年', '-流月',
-                             '時運', '日運', '-日運', '-時運', '月運', '年運', '-年運', '-月運', ]
+                             '時運', '日運', 
+                            # '-日運', '-時運', 
+                            '月運', '年運', 
+                            # '-年運', '-月運', 
+                            ]
 
     for column in columns_to_initialize:
         _local_df[column] = "_"
 
     # If you only want to see the column names
-    print("\nColumn names:")
+    print("\nColumn full names:")
     print(_local_df.columns.tolist())
     # Set the maximum number of threads you want to use
     max_threads = 5000  # Change this as needed

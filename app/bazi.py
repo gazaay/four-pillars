@@ -270,67 +270,68 @@ solarterms = {
         "LiDong":19, "XiaoXue":20, "DaXue":21, "DongZhi":22, "XiaoHan":23, "DaHan":24
     }
 
-heavenly_earthly_dict = {
-    "甲子": 1,
-    "乙丑": 2,
-    "丙寅": 3,
-    "丁卯": 4,
-    "戊辰": 5,
-    "己巳": 6,
-    "庚午": 7,
-    "辛未": 8,
-    "壬申": 9,
-    "癸酉": 10,
-    "甲戌": 11,
-    "乙亥": 12,
-    "丙子": 13,
-    "丁丑": 14,
-    "戊寅": 15,
-    "己卯": 16,
-    "庚辰": 17,
-    "辛巳": 18,
-    "壬午": 19,
-    "癸未": 20,
-    "甲申": 21,
-    "乙酉": 22,
-    "丙戌": 23,
-    "丁亥": 24,
-    "戊子": 25,
-    "己丑": 26,
-    "庚寅": 27,
-    "辛卯": 28,
-    "壬辰": 29,
-    "癸巳": 30,
-    "甲午": 31,
-    "乙未": 32,
-    "丙申": 33,
-    "丁酉": 34,
-    "戊戌": 35,
-    "己亥": 36,
-    "庚子": 37,
-    "辛丑": 38,
-    "壬寅": 39,
-    "癸卯": 40,
-    "甲辰": 41,
-    "乙巳": 42,
-    "丙午": 43,
-    "丁未": 44,
-    "戊申": 45,
-    "己酉": 46,
-    "庚戌": 47,
-    "辛亥": 48,
-    "壬子": 49,
-    "癸丑": 50,
-    "甲寅": 51,
-    "乙卯": 52,
-    "丙辰": 53,
-    "丁巳": 54,
-    "戊午": 55,
-    "己未": 56,
-    "庚申": 57,
-    "辛酉": 58,
-    "壬戌": 59,
-    "癸亥": 60
+heavenly_earthly_dict  = {
+    # Traditional 60 Jiazi combinations (1-60)
+    "甲子": 1, "乙丑": 2, "丙寅": 3, "丁卯": 4, "戊辰": 5, "己巳": 6,
+    "庚午": 7, "辛未": 8, "壬申": 9, "癸酉": 10, "甲戌": 11, "乙亥": 12,
+    "丙子": 13, "丁丑": 14, "戊寅": 15, "己卯": 16, "庚辰": 17, "辛巳": 18,
+    "壬午": 19, "癸未": 20, "甲申": 21, "乙酉": 22, "丙戌": 23, "丁亥": 24,
+    "戊子": 25, "己丑": 26, "庚寅": 27, "辛卯": 28, "壬辰": 29, "癸巳": 30,
+    "甲午": 31, "乙未": 32, "丙申": 33, "丁酉": 34, "戊戌": 35, "己亥": 36,
+    "庚子": 37, "辛丑": 38, "壬寅": 39, "癸卯": 40, "甲辰": 41, "乙巳": 42,
+    "丙午": 43, "丁未": 44, "戊申": 45, "己酉": 46, "庚戌": 47, "辛亥": 48,
+    "壬子": 49, "癸丑": 50, "甲寅": 51, "乙卯": 52, "丙辰": 53, "丁巳": 54,
+    "戊午": 55, "己未": 56, "庚申": 57, "辛酉": 58, "壬戌": 59, "癸亥": 60,
+
+    # # Additional combinations (61-120)
+    # "甲丑": 61, "甲寅": 62, "甲卯": 63, "甲辰": 64, "甲巳": 65,
+    # "甲午": 66, "甲未": 67, "甲申": 68, "甲酉": 69, "甲戌": 70, "甲亥": 71,
+    
+    # "乙子": 72, "乙丑": 73, "乙寅": 74, "乙卯": 75, "乙辰": 76, "乙巳": 77,
+    # "乙午": 78, "乙未": 79, "乙申": 80, "乙酉": 81, "乙戌": 82, "乙亥": 83,
+    
+    # "丙子": 84, "丙丑": 85, "丙寅": 86, "丙卯": 87, "丙辰": 88, "丙巳": 89,
+    # "丙午": 90, "丙未": 91, "丙申": 92, "丙酉": 93, "丙戌": 94, "丙亥": 95,
+    
+    # "丁子": 96, "丁丑": 97, "丁寅": 98, "丁卯": 99, "丁辰": 100, "丁巳": 101,
+    # "丁午": 102, "丁未": 103, "丁申": 104, "丁酉": 105, "丁戌": 106, "丁亥": 107,
+    
+    # "戊子": 108, "戊丑": 109, "戊寅": 110, "戊卯": 111, "戊辰": 112, "戊巳": 113,
+    # "戊午": 114, "戊未": 115, "戊申": 116, "戊酉": 117, "戊戌": 118, "戊亥": 119,
+    
+    # "己子": 120
+}
+
+heavenly_earthly_wuxi_dict  = {
+    # Traditional 60 Jiazi combinations (1-60)
+    "甲子": 1, "乙丑": 2, "丙寅": 3, "丁卯": 4, "戊辰": 5, "己巳": 6,
+    "庚午": 7, "辛未": 8, "壬申": 9, "癸酉": 10, "甲戌": 11, "乙亥": 12,
+    "丙子": 13, "丁丑": 14, "戊寅": 15, "己卯": 16, "庚辰": 17, "辛巳": 18,
+    "壬午": 19, "癸未": 20, "甲申": 21, "乙酉": 22, "丙戌": 23, "丁亥": 24,
+    "戊子": 25, "己丑": 26, "庚寅": 27, "辛卯": 28, "壬辰": 29, "癸巳": 30,
+    "甲午": 31, "乙未": 32, "丙申": 33, "丁酉": 34, "戊戌": 35, "己亥": 36,
+    "庚子": 37, "辛丑": 38, "壬寅": 39, "癸卯": 40, "甲辰": 41, "乙巳": 42,
+    "丙午": 43, "丁未": 44, "戊申": 45, "己酉": 46, "庚戌": 47, "辛亥": 48,
+    "壬子": 49, "癸丑": 50, "甲寅": 51, "乙卯": 52, "丙辰": 53, "丁巳": 54,
+    "戊午": 55, "己未": 56, "庚申": 57, "辛酉": 58, "壬戌": 59, "癸亥": 60,
+
+    # Additional combinations (61-120)
+    "甲丑": 61, "甲寅": 62, "甲卯": 63, "甲辰": 64, "甲巳": 65,
+    "甲午": 66, "甲未": 67, "甲申": 68, "甲酉": 69, "甲戌": 70, "甲亥": 71,
+    
+    "乙子": 72, "乙丑": 73, "乙寅": 74, "乙卯": 75, "乙辰": 76, "乙巳": 77,
+    "乙午": 78, "乙未": 79, "乙申": 80, "乙酉": 81, "乙戌": 82, "乙亥": 83,
+    
+    "丙子": 84, "丙丑": 85, "丙寅": 86, "丙卯": 87, "丙辰": 88, "丙巳": 89,
+    "丙午": 90, "丙未": 91, "丙申": 92, "丙酉": 93, "丙戌": 94, "丙亥": 95,
+    
+    "丁子": 96, "丁丑": 97, "丁寅": 98, "丁卯": 99, "丁辰": 100, "丁巳": 101,
+    "丁午": 102, "丁未": 103, "丁申": 104, "丁酉": 105, "丁戌": 106, "丁亥": 107,
+    
+    "戊子": 108, "戊丑": 109, "戊寅": 110, "戊卯": 111, "戊辰": 112, "戊巳": 113,
+    "戊午": 114, "戊未": 115, "戊申": 116, "戊酉": 117, "戊戌": 118, "戊亥": 119,
+    
+    "己子": 120
 }
 
 def get_cheung_sheng(stem_branch):
@@ -513,7 +514,7 @@ def SixtyStem(index: int) :
     
     return combination
 
-def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datetime], is_yang: bool = False) -> tuple:
+def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datetime], is_yang: bool = True) -> tuple:
     """
     Find the next major solar term and calculate days until it occurs.
     Only considers major solar terms at start of each month.
@@ -526,12 +527,12 @@ def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datet
     Returns:
         tuple: (days_to_next, next_solar_term, next_solar_term_name)
     """
-    logger.info(f"Finding days to next solar term for current_time: {current_time}, is_yang: {is_yang}")
+    logger.debug(f"Finding days to next solar term for current_time: {current_time}, is_yang: {is_yang}")
 
     # Ensure current_time is timezone-aware
     if current_time.tzinfo is None:
         current_time = pytz.timezone('Asia/Shanghai').localize(current_time)
-        logger.info(f"Localized current_time to Asia/Shanghai: {current_time}")
+        logger.debug(f"Localized current_time to Asia/Shanghai: {current_time}")
 
     # Only major solar terms at start of months
     major_solar_terms = [
@@ -551,10 +552,10 @@ def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datet
 
     # Get only major solar terms (every other term starting at index 0)
     major_terms = solar_terms[1::2]
-    logger.info(f"Major solar terms: {[term.strftime('%Y-%m-%d') for term in major_terms]}")
+    logger.debug(f"Major solar terms: {[term.strftime('%Y-%m-%d') for term in major_terms]}")
 
     if is_yang:
-        logger.info("Using yang energy - looking forward for next major term")
+        logger.debug("Using yang energy - looking forward for next major term")
         # Look forward for next major term
         next_term = None
         next_term_idx = 0
@@ -562,7 +563,7 @@ def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datet
             if current_time < term:
                 next_term = term
                 next_term_idx = idx
-                logger.info(f"Found next major term: {term} at index {idx}")
+                logger.debug(f"Found next major term: {term} at index {idx}")
                 break
         
         if next_term is None:
@@ -570,7 +571,7 @@ def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datet
             raise ValueError("No future major solar term found")
             
     else:
-        logger.info("Using yin energy - looking backward for previous major term")
+        logger.debug("Using yin energy - looking backward for previous major term")
         # Look backward for previous major term
         prev_term = None
         next_term_idx = 0
@@ -578,7 +579,7 @@ def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datet
             if current_time > major_terms[idx]:
                 prev_term = major_terms[idx]
                 next_term_idx = idx
-                logger.info(f"Found previous major term: {prev_term} at index {idx}")
+                logger.debug(f"Found previous major term: {prev_term} at index {idx}")
                 break
                 
         if prev_term is None:
@@ -589,11 +590,11 @@ def find_days_to_next_solar_term(current_time: datetime, solar_terms: List[datet
     # Calculate days difference
     time_diff = next_term - current_time
     days_to_next = abs(time_diff.total_seconds() / (24 * 3600)/3) # Convert to days and make positive
-    logger.info(f"Days to next/previous term: {days_to_next:.2f}")
+    logger.debug(f"Days to next/previous term: {days_to_next:.2f}")
 
     # Get the name of the next term
     next_term_name = major_solar_terms[next_term_idx % 12]
-    logger.info(f"Next term name: {next_term_name}")
+    logger.debug(f"Next term name: {next_term_name}")
 
     return days_to_next, next_term, next_term_name
 
@@ -885,16 +886,15 @@ def calculate_day_heavenly_base(year, month, day, hour, mins):
 
     return HeavenlyStem(heavenly_stem_index) , EarthlyBranch(earthly_branch_index)
 
-
 def calculate_dark_stem(heavenly_index, earthly_index):
     stem = resolveHeavenlyStem(heavenly_index) + resolveEarthlyBranch(earthly_index)
-    # logger.debug(f"Input stem {stem} with {heavenly_index}")
+    logger.info(f"Input stem {stem} with {heavenly_index}")
     if earthly_index.value > 7:
         offset = -5
     else:
         offset = 5
     stemIndex = getSixtyStemIndex(stem)
-    # logger.debug(f"output stem {SixtyStem(stemIndex + offset)}")
+    logger.info(f"output stem {SixtyStem(stemIndex + offset)}")
     return SixtyStem(stemIndex + offset)
 
 def calculate_dark_stem(heavenly_index, earthly_index, direction: Direction = Direction.CLOCKWISE):
@@ -1843,8 +1843,8 @@ def get_wuxi_ymdh_base(year: int, month: int, day: int, hour: int) -> dict:
     is_yang = year_stem.value % 2 == 1
     hd_direction = Direction.ANTICLOCKWISE if is_yang else Direction.CLOCKWISE
     my_direction = Direction.CLOCKWISE if is_yang else Direction.ANTICLOCKWISE
-
     # Calculate hidden stems for each pillar using consistent direction
+    
     hour_hidden = hidden_pillar(hour_stem, hour_branch, hd_direction)
     day_hidden = hidden_pillar(day_stem, day_branch, hd_direction)
     month_hidden = hidden_pillar(month_stem, month_branch, my_direction)
@@ -2427,13 +2427,13 @@ def get_complete_wuxi_data(year: int = None, month: int = None, day: int = None,
             if days_to_prev <= days_to_next:
                 previous_term_start = major_terms[i-1] if i > 0 else major_terms[-1]
                 current_term_start = major_terms[i]
-                logger.info(f"Previous term starts at: {previous_term_start}")
-                logger.info(f"Current term starts at: {current_term_start}")
+                logger.debug(f"Previous term starts at: {previous_term_start}")
+                logger.debug(f"Current term starts at: {current_term_start}")
             else:
                 previous_term_start = major_terms[i]
                 current_term_start = major_terms[i+1]
-                logger.info(f"Previous term starts at: {previous_term_start}")
-                logger.info(f"Current term starts at: {current_term_start}")
+                logger.debug(f"Previous term starts at: {previous_term_start}")
+                logger.debug(f"Current term starts at: {current_term_start}")
             break
             
     # Handle edge case at end of year
@@ -2441,39 +2441,39 @@ def get_complete_wuxi_data(year: int = None, month: int = None, day: int = None,
         if target_date >= major_terms[-1]:
             previous_term_start = major_terms[-2]
             current_term_start = major_terms[-1]
-            logger.info(f"Previous term starts at: {previous_term_start}")
-            logger.info(f"Current term (year end) starts at: {current_term_start}")
+            logger.debug(f"Previous term starts at: {previous_term_start}")
+            logger.debug(f"Current term (year end) starts at: {current_term_start}")
         else:
             previous_term_start = major_terms[-1]
             current_term_start = major_terms[0]
-            logger.info(f"Previous term (last year) starts at: {previous_term_start}")
-            logger.info(f"Current term (year start) starts at: {current_term_start}")
+            logger.debug(f"Previous term (last year) starts at: {previous_term_start}")
+            logger.debug(f"Current term (year start) starts at: {current_term_start}")
             
     # Calculate days since start of current term
     days_elapsed = (target_date - previous_term_start).total_seconds() / (24 * 3600)
     
     # Calculate total days in this term period
     total_days = (current_term_start - previous_term_start).total_seconds() / (24 * 3600)
-    logger.info(f"Total days in term period: {total_days}")
+    logger.debug(f"Total days in term period: {total_days}")
     # Calculate month pillar index based on days elapsed
     # Each month cycle is approximately 30.44 days (365.25/12)
     days_per_month = total_days/10 # Divide term into 12 parts for months
     month_cycle_index = int(days_elapsed / days_per_month)
-    logger.info(f"Days per month: {days_per_month}")
-    logger.info(f"Initial month cycle index: {month_cycle_index}")
+    logger.debug(f"Days per month: {days_per_month}")
+    logger.debug(f"Initial month cycle index: {month_cycle_index}")
     
     # Get month cycle data and select pillar based on index
     month_cycle = wu_yun_data['monthCycle']
-    logger.info(f"Days elapsed: {days_elapsed}")
-    logger.info(f"Month cycle data: {month_cycle}")
-    logger.info(f"Month cycle index before mod: {month_cycle_index}")
+    logger.debug(f"Days elapsed: {days_elapsed}")
+    logger.debug(f"Month cycle data: {month_cycle}")
+    logger.debug(f"Month cycle index before mod: {month_cycle_index}")
     
     # Ensure index is within bounds of heavenly stems array (0-9)
     month_cycle_index = month_cycle_index % len(month_cycle['heavenlyStems'])
-    logger.info(f"Final month cycle index: {month_cycle_index}")
+    logger.debug(f"Final month cycle index: {month_cycle_index}")
     
     month_pillar = month_cycle['heavenlyStems'][month_cycle_index]
-    logger.info(f"Selected month pillar: {month_pillar}")
+    logger.debug(f"Selected month pillar: {month_pillar}")
 
 
     # Calculate hour pillar based on dividing 120 minutes into 10 parts
@@ -2577,20 +2577,31 @@ def get_wuxi_current(year: int = None, month: int = None, day: int = None, hour:
     # Extract the wuxipillar data
     wuxipillar = wuxi_data['topGrid']['wuxipillar']
     
-    # Calculate hidden stems for each pillar
-    hour_hidden = hidden_pillar(wuxipillar['hour'], wuxipillar['hour'], 'forward')
-    day_hidden = hidden_pillar(wuxipillar['day'], wuxipillar['day'], 'forward')
-    month_hidden = hidden_pillar(wuxipillar['month'], wuxipillar['month'], 'forward')
-    year_hidden = hidden_pillar(wuxipillar['year'], wuxipillar['year'], 'forward')
+    # Calculate hidden stems for each pillar using converter
+    hour_stem = converter.chinese_to_enum(wuxipillar['hour'][0])
+    hour_branch = converter.chinese_to_enum(wuxipillar['hour'][1])
+    # hour_hidden = hidden_pillar(hour_stem, hour_branch, Direction.CLOCKWISE)
+
+    day_stem = converter.chinese_to_enum(wuxipillar['day'][0]) 
+    day_branch = converter.chinese_to_enum(wuxipillar['day'][1])
+    # day_hidden = hidden_pillar(day_stem, day_branch, Direction.CLOCKWISE)
+
+    month_stem = converter.chinese_to_enum(wuxipillar['month'][0])
+    month_branch = converter.chinese_to_enum(wuxipillar['month'][1]) 
+    # month_hidden = hidden_pillar(month_stem, month_branch, Direction.CLOCKWISE)
+
+    year_stem = converter.chinese_to_enum(wuxipillar['year'][0])
+    year_branch = converter.chinese_to_enum(wuxipillar['year'][1])
+    # year_hidden = hidden_pillar(year_stem, year_branch, Direction.CLOCKWISE)
     return {
         "時運": wuxipillar['hour'],
         "日運": wuxipillar['day'],
-        "-日運": day_hidden,
-        "-時運": hour_hidden,
+        # "-日運": day_hidden,
+        # "-時運": hour_hidden,
         "月運": wuxipillar['month'],
         "年運": wuxipillar['year'],
-        "-年運": year_hidden,
-        "-月運": month_hidden,
+        # "-年運": year_hidden,
+        # "-月運": month_hidden,
     }
 
 
