@@ -2476,9 +2476,36 @@ def get_complete_wuxi_data(year: int = None, month: int = None, day: int = None,
     logger.info(f"Selected month pillar: {month_pillar}")
 
 
-    # Calculate hour pillar based on dividing hour into 10 parts
-    hour_parts = 24 / 10  # Each part is 2.4 hours
-    hour_cycle_index = int(hour / hour_parts)
+    # Calculate hour pillar based on dividing 120 minutes into 10 parts
+    minutes_per_part = 120 / 10  # Each part is 12 minutes
+    
+    # Convert hour to minutes since start of 2-hour block
+    if hour >= 23 or hour < 1:
+        minutes_from_start = (hour - 23) * 60 if hour >= 23 else (hour + 1) * 60  # 23:00-01:00
+    elif hour >= 1 and hour < 3:
+        minutes_from_start = (hour - 1) * 60  # 01:00-03:00 
+    elif hour >= 3 and hour < 5:
+        minutes_from_start = (hour - 3) * 60  # 03:00-05:00
+    elif hour >= 5 and hour < 7:
+        minutes_from_start = (hour - 5) * 60  # 05:00-07:00
+    elif hour >= 7 and hour < 9:
+        minutes_from_start = (hour - 7) * 60  # 07:00-09:00
+    elif hour >= 9 and hour < 11:
+        minutes_from_start = (hour - 9) * 60  # 09:00-11:00
+    elif hour >= 11 and hour < 13:
+        minutes_from_start = (hour - 11) * 60  # 11:00-13:00
+    elif hour >= 13 and hour < 15:
+        minutes_from_start = (hour - 13) * 60  # 13:00-15:00
+    elif hour >= 15 and hour < 17:
+        minutes_from_start = (hour - 15) * 60  # 15:00-17:00
+    elif hour >= 17 and hour < 19:
+        minutes_from_start = (hour - 17) * 60  # 17:00-19:00
+    elif hour >= 19 and hour < 21:
+        minutes_from_start = (hour - 19) * 60  # 19:00-21:00
+    else:  # 21:00-23:00
+        minutes_from_start = (hour - 21) * 60
+
+    hour_cycle_index = int(minutes_from_start / minutes_per_part)
     
     # Get hour cycle data and select pillar based on index
     hour_cycle = wu_yun_data['hourCycle']
@@ -2529,6 +2556,43 @@ def get_complete_wuxi_data(year: int = None, month: int = None, day: int = None,
         "solarTerm": solar_term_info,
         "flipPillars": flip_pillars
     }
+
+def get_wuxi_current(year: int = None, month: int = None, day: int = None, hour: int = None) -> dict:
+    """
+    Get the heavenly branch pillars for year, month, day and hour with their hidden stems.
+    This is a simplified version that only returns the wuxipillar data.
+
+    Args:
+        year: Year (defaults to current year if None)
+        month: Month (defaults to current month if None) 
+        day: Day (defaults to current day if None)
+        hour: Hour (defaults to current hour if None)
+
+    Returns:
+        dict: Dictionary containing the pillars and their hidden stems
+    """
+    # Get the complete wuxi data
+    wuxi_data = get_complete_wuxi_data(year, month, day, hour)
+    
+    # Extract the wuxipillar data
+    wuxipillar = wuxi_data['topGrid']['wuxipillar']
+    
+    # Calculate hidden stems for each pillar
+    hour_hidden = hidden_pillar(wuxipillar['hour'], wuxipillar['hour'], 'forward')
+    day_hidden = hidden_pillar(wuxipillar['day'], wuxipillar['day'], 'forward')
+    month_hidden = hidden_pillar(wuxipillar['month'], wuxipillar['month'], 'forward')
+    year_hidden = hidden_pillar(wuxipillar['year'], wuxipillar['year'], 'forward')
+    return {
+        "時運": wuxipillar['hour'],
+        "日運": wuxipillar['day'],
+        "-日運": day_hidden,
+        "-時運": hour_hidden,
+        "月運": wuxipillar['month'],
+        "年運": wuxipillar['year'],
+        "-年運": year_hidden,
+        "-月運": month_hidden,
+    }
+
 
 def get_current_solar_term(target_date: datetime) -> tuple[str, datetime, float]:
     """

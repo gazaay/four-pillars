@@ -42,6 +42,8 @@ class PillarData(BaseModel):
     harmed_hidden: Optional[str] = None
     clashed: Optional[str] = None
     clashed_hidden: Optional[str] = None
+    fan: Optional[str] = None
+    fan_hidden: Optional[str] = None
 
 class DayunData(BaseModel):
     stem: str

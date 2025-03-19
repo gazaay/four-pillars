@@ -1,0 +1,23 @@
+# Core dependencies
+fastapi==0.104.1
+uvicorn==0.23.2
+pydantic==2.4.2
+sqlalchemy==2.0.23
+python-dotenv==1.0.0
+asyncpg==0.28.0
+alembic==1.12.1
+
+# AI and ML libraries
+openai==1.2.0
+langchain==0.0.330
+transformers==4.35.2
+torch==2.1.1
+sentence-transformers==2.2.2
+
+# Utilities
+loguru==0.7.2
+pytest==7.4.3
+httpx==0.25.1
+tenacity==8.2.3
+pyjwt==2.8.0
+python-multipart==0.0.6 

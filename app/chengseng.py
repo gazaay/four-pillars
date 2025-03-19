@@ -36,7 +36,7 @@ def process_8w_row(index, row):
         current_attempt = 0
         required_columns = [
             #   '本時', '本日', '-本時', '本月', '本年', '-本月', 
-                            '流時', '流日', '-流時', '流月', '流年', '-流月']
+                            '流時', '流日', '-流時', '流月', '流年', '-流月', '時運', '日運', '-日運', '-時運', '月運', '年運', '-年運', '-月運', ]
         # sorted_df_with_new_features = pd.DataFrame()
         while current_attempt < max_attempts:
                 # with lock:
@@ -56,16 +56,26 @@ def process_8w_row(index, row):
 
                         # logger.info(f"{index} - {year} - {month} - {day} - {hour}Started processing")
                         result_current = bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year,month,day,hour)
+                        result_wuxi = bazi.get_wuxi_current(year,month,day,hour)
 
                         with lock:
                             enhanced_row = row.copy()
 
                             enhanced_row["流時"] = str(result_current["時"])
-                            enhanced_row["流日"] = result_current["日"]
+                            enhanced_row["流日"] = result_current["日"] 
                             enhanced_row["-流時"] = result_current["-時"]
                             enhanced_row["流月"] = result_current["月"]
                             enhanced_row["流年"] = result_current["年"]
                             enhanced_row["-流月"] = result_current["-月"]
+
+                            enhanced_row["時運"] = result_wuxi["時運"]
+                            enhanced_row["日運"] = result_wuxi["日運"]
+                            enhanced_row["-日運"] = result_wuxi["-日運"]
+                            enhanced_row["-時運"] = result_wuxi["-時運"]
+                            enhanced_row["月運"] = result_wuxi["月運"]
+                            enhanced_row["年運"] = result_wuxi["年運"]
+                            enhanced_row["-年運"] = result_wuxi["-年運"]
+                            enhanced_row["-月運"] = result_wuxi["-月運"]
 
                             return enhanced_row
 
@@ -82,7 +92,8 @@ def adding_8w_pillars( sorted_df):
     _local_df = sorted_df.copy()
     columns_to_initialize = [
         #    '本時', '本日', '-本時', '本月', '本年', '-本月', 
-                             '流時', '流日', '-流時', '流月', '流年', '-流月']
+                             '流時', '流日', '-流時', '流月', '流年', '-流月',
+                             '時運', '日運', '-日運', '-時運', '月運', '年運', '-年運', '-月運', ]
 
     for column in columns_to_initialize:
         _local_df[column] = "_"
@@ -225,7 +236,7 @@ def create_chengseng_for_dataset(data_for_analytics_):
 
     column_index = {
         'base_sets': ["本時", "本日", "-本時", "本月", "本年", "-本月"],
-        'current_sets': ["流時", "流日", "-流時", "流月", "流年", "-流月"]
+        'current_sets': ["流時", "流日", "-流時", "流月", "流年", "-流月", '時運', '日運', '-日運', '-時運', '月運', '年運', '-年運', '-月運', ]
     }
     data_for_analytics = data_for_analytics_.copy()
 
