@@ -648,6 +648,21 @@ def main():
     days, next_term, term_name = bazi.find_days_to_next_solar_term(date, solar_terms)
 
     # print(f"Days: {days}, Next Term: {next_term}, Term Name: {term_name}")
+    # Test calculate_month_heavenly_withSeason_for_current_time for 2025-12-24 09:00
+    test_year = 2025
+    test_month = 12 
+    test_day = 24
+    test_hour = 9
+
+    heavenly_month_stem, earthly_month_stem = bazi.calculate_month_heavenly_withSeason_for_current_time(
+        test_year, test_month, test_day, test_hour
+    )
+
+    print(f"\nTesting calculate_month_heavenly_withSeason_for_current_time:")
+    print(f"Date: {test_year}-{test_month:02d}-{test_day:02d} {test_hour:02d}:00")
+    print(f"Heavenly Month Stem: {heavenly_month_stem.name}")
+    print(f"Earthly Month Branch: {earthly_month_stem.name}")
+    print(f"Combined Result: {bazi.resolveHeavenlyStem(heavenly_month_stem)}{bazi.resolveEarthlyBranch(earthly_month_stem)}")
 
 
 if __name__ == "__main__":

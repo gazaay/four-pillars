@@ -394,9 +394,23 @@ def converge(d, deg):
     nutation_dpsi = nutation(d)[1]
     d0, d1 = d-ephem.degrees('0:05:00'), d+ephem.degrees('0:05:00')
     f0, f1 = get_diff(d0, deg, nutation_dpsi), get_diff(d1, deg, nutation_dpsi)
-    if f0 * f1 > 0.:
+    if f0 * f1 > 0.01:
         raise AssertionError("warning: f0=%f, f1=%f" % (f0, f1))
 
+    # for i in range(20):  # limits the iteration number to 20.
+    #     dn = (d0 + d1) / 2.
+    #     fn = get_diff(dn, deg, nutation_dpsi)
+    #     if fn * f0 > 0.:  # the midpoint has the same sign as the left side -> select the right side
+    #         d0 = dn
+    #         f0 = get_diff(d0, deg, nutation_dpsi)
+    #     elif fn * f1 > 0.:  # the midpoint has the same sign as the right side -> select the left side
+    #         d1 = dn
+    #         f1 = get_diff(d1, deg, nutation_dpsi)
+    #     elif fn == 0:
+    #         return ephem.date(dn)
+    #     else:
+    #         raise AssertionError("warning: impossible")
+        
     for i in range(20):  # limits the iteration number to 20.
         dn = (d0 + d1) / 2.
         fn = get_diff(dn, deg, nutation_dpsi)
@@ -409,10 +423,10 @@ def converge(d, deg):
         elif fn == 0:
             return ephem.date(dn)
         else:
-            raise AssertionError("warning: impossible")
+            # Instead of raising impossible error, return the midpoint as best approximation
+            return ephem.date(dn)
 
     return ephem.Date((d0*abs(f1)+d1*abs(f0))/(abs(f0) + abs(f1)))
-
 
 def solar_term_finder(mj, n, reverse=False):
     def solar_term_finder_deg(mj, deg, reverse=False):

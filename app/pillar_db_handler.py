@@ -133,12 +133,12 @@ def calculate_thousand_year_pillars() -> pd.DataFrame:
     today = today.replace(hour=9, minute=0, second=0, microsecond=0)
     
     # start_date = today - timedelta(days=1525)
-    start_date = today - timedelta(days=-1)
-    end_date = today + timedelta(days=1)
+    start_date = today - timedelta(days=50)
+    end_date = today + timedelta(days=2)
     
     # Create a blank data frame with time column
     time_range = pd.date_range(start=start_date, end=end_date, freq='1H').union(
-        pd.date_range(end_date, end_date + pd.DateOffset(days=1), freq='D'))
+        pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
     dataset = pd.DataFrame({'time': time_range})
     
     # Adding 8w pillars to the dataset

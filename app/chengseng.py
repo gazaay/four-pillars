@@ -59,7 +59,7 @@ def process_8w_row(index, row):
                         hour = parsed_time.hour
 
                         # logger.info(f"{index} - {year} - {month} - {day} - {hour}Started processing")
-                        result_current = bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year,month,day,hour)
+                        result_current = bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year,month,day,hour,True)
                         result_wuxi = bazi.get_wuxi_current(year,month,day,hour)
 
                         with lock:
@@ -128,19 +128,11 @@ def adding_8w_pillars( sorted_df):
                     for future in concurrent.futures.as_completed(futures):
                             # Update the progress bar for each completed task
                             future_row = future.result()
-                            # print(future_row)
-                            # future_row['本時'] = result_base["時"]
-                            # future_row['本日'] = result_base["日"]
-                            # future_row['-本時'] = result_base["-時"]
-                            # future_row['本月'] = result_base["月"]
-                            # future_row['本年'] = result_base["年"]
-                            # future_row['-本月'] = result_base["-月"]
                             
                             try:
                                 if isinstance(future_row, dict):
                                     future_row = pd.Series(future_row)
                                     
-                                # _local_df[_local_df['time'] == future_row['time']] = future_row
                                 # Ensuring future_row is a Series if it's not already, for compatibility with .loc[row_indexer, col_indexer] = value
                                 
                                 # Finding the index(es) where 'time' matches future_row['time'] and updating those rows
