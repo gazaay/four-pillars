@@ -49,7 +49,17 @@ def main():
     """Main test function"""
     version = args.version
     force_recalculate = args.force
+    # Test specific date
+    stock_birthday_timestamp = datetime(1969, 11, 24, 9)
     
+    # Import bazi module for pillar calculations
+    from app import bazi
+    
+    # Get base 8 words for test date
+    base_8w = bazi.get_heavenly_branch_ymdh_pillars_current(stock_birthday_timestamp.year,
+                                                            stock_birthday_timestamp.month,
+                                                            stock_birthday_timestamp.day,
+                                                            stock_birthday_timestamp.hour)
     print(f"\n{'='*80}")
     print(f"Testing pillars database with version: {version}, force_recalculate: {force_recalculate}")
     print(f"{'='*80}\n")
@@ -63,7 +73,16 @@ def main():
         
         # Print statistics
         elapsed_time = time.time() - start_time
+        # Set timezone for test timestamp
+        dataset['time'] = stock_birthday_timestamp
         
+        # Add base 8 words columns from test date
+        dataset['本時'] = base_8w["時"]
+        dataset['本日'] = base_8w["日"] 
+        dataset['-本時'] = base_8w["-時"]
+        dataset['本月'] = base_8w["月"]
+        dataset['本年'] = base_8w["年"]
+        dataset['-本月'] = base_8w["-月"]
         print(f"\n{'='*80}")
         print(f"Test completed successfully in {elapsed_time:.2f} seconds")
         print(f"Retrieved dataset version {version} with {len(dataset)} rows")
@@ -72,6 +91,18 @@ def main():
         print(dataset.head())
         print(f"{'='*80}\n")
         
+
+        # Test chengseng calculation
+        print("\nTesting chengseng calculation...")
+        try:
+            from app import chengseng
+            dataset = chengseng.create_chengseng_for_dataset(dataset)
+            print("Successfully calculated chengseng values")
+            print("\nSample data with chengseng columns:")
+            print(dataset.head())
+        except Exception as e:
+            print(f"Error calculating chengseng: {str(e)}")
+            raise
         return 0
     except Exception as e:
         elapsed_time = time.time() - start_time
