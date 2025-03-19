@@ -1080,7 +1080,7 @@ def get_Luna_Month_With_Season(target_date):
         "YuShui", "JingZhe", "ChunFen", "QingMing", "GuYu",
         "LiXia", "XiaoMan", "MangZhong", "XiaZhi", "XiaoShu", "DaShu",
         "LiQiu", "ChuShu", "BaiLu", "QiuFen", "HanLu", "ShuangJiang",
-        "LiDong", "XiaoXue", "DaXue", "DongZhi"
+        "LiDong", "XiaoXue", "DaXue", "DongZhi","XiaoHan", 
     ]
     # date_list = date_list[:-1]
     # Merge the three lists into a DataFrame
@@ -1090,8 +1090,9 @@ def get_Luna_Month_With_Season(target_date):
     # Update the end_date value for the row with index 21
     # df.loc[21, "end_date"] = solarterm.XiaoHan(target_date.year+1)
 
-    logger.debug (df.loc[21]["end_date"])
-    logger.debug (df)
+    logger.debug ("target_date is " + str(target_date))
+    logger.debug(f"df.loc[21]['end_date'] is {df.loc[21]['end_date']}")
+    logger.debug (df)    
     return find_solar_term_and_index(df,target_date)
 
     # return solarterms_list[luna_month], luna_month+1
