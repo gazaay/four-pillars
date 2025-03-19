@@ -238,7 +238,7 @@ def create_chengseng_for_dataset(data_for_analytics_):
 
     column_index = {
         'base_sets': ["本時", "本日", "-本時", "本月", "本年", "-本月"],
-        'current_sets': ["流時", "流日", "-流時", "流月", "流年", "-流月", '時運', '日運', '-日運', '-時運', '月運', '年運', '-年運', '-月運', ]
+        'current_sets': ["流時", "流日", "-流時", "流月", "流年", "-流月", '時運', '日運', '月運', '年運',]
     }
     data_for_analytics = data_for_analytics_.copy()
 
