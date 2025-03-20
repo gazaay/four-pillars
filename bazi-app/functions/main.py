@@ -119,7 +119,7 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
                 "fan": bazi_data.get("反時", ""),
                 "fan_hidden": bazi_data.get("-反時", "")
             },
-            "dayun": bazi_data.get("大運", [])  # Add the 大運 section directly
+            "dayun": bazi_data.get("大運", []),  # Add the 大運 section directly
             "siyun": bazi_data.get("時運", [])  # Add the 時運 section directly
         }
     except Exception as e:
