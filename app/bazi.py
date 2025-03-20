@@ -452,7 +452,9 @@ def calculate_dayun(gender, year_pillar, month_pillar, days_to_next_solar_term):
     starting_ages = []
     base_age = days_to_next_solar_term
     for i in range(8):
-        starting_ages.append(base_age + (i) * 10)
+        age = base_age + (i) * 10
+        if age >= 1:
+            starting_ages.append(age)
 
     return dayun_sequence, starting_ages
 
@@ -1392,8 +1394,22 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
         current_date=datetime.now(),
         is_current=False
     )
-
-    # Return a dictionary with both original 
+    # Calculate SiYun sequence using same parameters as DaYun
+    siyun = calculate_siyun(
+        gender="male", 
+        hour_pillar=resolveHeavenlyStem(heavenly_hour_stem) + resolveEarthlyBranch(earthly_hour_stem),
+        year_stem=resolveHeavenlyStem(heavenly_stem),
+        base_date=input_date
+    )
+    # Format siyun results same as daiYun
+    siyun_formatted = []
+    for pillar, age in zip(siyun[0], siyun[1]):
+        siyun_formatted.append({
+            "stem": pillar[0],
+            "branch": pillar[1], 
+            "chinese": pillar,
+            "starting_age": round(age, 1)
+        })
     return {
         "時": resolveHeavenlyStem(heavenly_hour_stem) + resolveEarthlyBranch(earthly_hour_stem),
         "日": resolveHeavenlyStem(heavenly_day_stem) + resolveEarthlyBranch(earthly_day_stem),
@@ -1438,6 +1454,7 @@ def get_heavenly_branch_ymdh_pillars_current_flip_Option_2(year: int, month: int
         "-破月": po_dark_month_stem, ##resolveHeavenlyStem(po_month_stem) + resolveEarthlyBranch(po_month_branch),
 # 刑,衝,破,害 
         "大運": daiYun,
+        "時運": siyun_formatted,
 
         # Add flip pillars with Chinese word "fan"
         "反時": flip_pillars["時"],
@@ -3003,7 +3020,8 @@ def calculate_siyun(gender: str, hour_pillar: str, year_stem: str, base_date: da
     days, next_term, term_name = find_days_to_next_solar_term(base_date, solar_terms)
     base_age = days
     for _ in range(8):
-        starting_ages.append(base_age)
+        if base_age >= 1:
+            starting_ages.append(base_age)
         base_age += 10
     
     return sequence, starting_ages

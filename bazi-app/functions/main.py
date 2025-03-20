@@ -51,6 +51,12 @@ class DayunData(BaseModel):
     chinese: str
     starting_age: float
 
+class SiyunData(BaseModel):
+    stem: str
+    branch: str
+    chinese: str
+    starting_age: float
+
 class BaziResponse(BaseModel):
     year_pillar: PillarData
     month_pillar: PillarData
@@ -58,7 +64,7 @@ class BaziResponse(BaseModel):
     hour_pillar: PillarData
     datetime: str
     dayun: Optional[List[DayunData]] = None
-
+    siyun: Optional[List[DayunData]] = None
 def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
     """Convert bazi data dictionary into a structured response."""
     logger.info(f"Formatting bazi data: {bazi_data}")
@@ -114,6 +120,7 @@ def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
                 "fan_hidden": bazi_data.get("-反時", "")
             },
             "dayun": bazi_data.get("大運", [])  # Add the 大運 section directly
+            "siyun": bazi_data.get("時運", [])  # Add the 時運 section directly
         }
     except Exception as e:
         logger.error(f"Error formatting bazi data: {e}")

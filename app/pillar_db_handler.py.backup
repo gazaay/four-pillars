@@ -7,17 +7,13 @@ import json
 # Configure logging
 logger = logging.getLogger(__name__)
 
-def get_versioned_pillars(version: str = "v1.0", force_recalculate: bool = False, 
-                          days_back: int = 50, days_forward: int = 2, forecast_months: int = 12) -> pd.DataFrame:
+def get_versioned_pillars(version: str = "v1.0", force_recalculate: bool = False) -> pd.DataFrame:
     """
     Get the thousand-year current pillars dataset, either from database or by calculating it.
     
     Args:
         version: Version number for the dataset (e.g., "v1.0")
         force_recalculate: If True, recalculate even if data exists in database
-        days_back: Number of days to look back from today (default: 50)
-        days_forward: Number of days to look forward from today (default: 2)
-        forecast_months: Number of months to include in the forecast (default: 12)
         
     Returns:
         DataFrame containing the time and 8-word pillars
@@ -67,24 +63,8 @@ def get_versioned_pillars(version: str = "v1.0", force_recalculate: bool = False
         
         # If we reach here, we need to calculate the dataset
         logger.info(f"Calculating new dataset version {version}")
-        dataset = calculate_thousand_year_pillars(days_back, days_forward, forecast_months)
-        # Rename columns to match database schema
-        column_mapping = {
-            'time': 'time',
-            '流時': 'hour_pillar',
-            '流日': 'day_pillar', 
-            '-流時': 'hidden_hour_pillar',
-            '流月': 'month_pillar',
-            '流年': 'year_pillar',
-            '-流月': 'hidden_month_pillar',
-            '時運': 'hour_yun',
-            '日運': 'day_yun',
-            '月運': 'month_yun',
-            '年運': 'year_yun'
-        }
+        dataset = calculate_thousand_year_pillars()
         
-        logger.info("Renaming columns to match database schema")
-        dataset = dataset.rename(columns=column_mapping)
         # Add version column
         dataset['version'] = version
         
@@ -104,19 +84,18 @@ def get_versioned_pillars(version: str = "v1.0", force_recalculate: bool = False
                 bigquery.SchemaField("time", "TIMESTAMP"),
                 bigquery.SchemaField("version", "STRING"),
                 # Add other columns as needed based on your dataset structure
-
-                bigquery.SchemaField("hour_pillar", "STRING"),
-                bigquery.SchemaField("day_pillar", "STRING"),
-                bigquery.SchemaField("hidden_hour_pillar", "STRING"),
-                bigquery.SchemaField("month_pillar", "STRING"),
                 bigquery.SchemaField("year_pillar", "STRING"),
-                bigquery.SchemaField("hidden_month_pillar", "STRING"),
-
-              
-                bigquery.SchemaField("hour_yun", "STRING"),
-                bigquery.SchemaField("day_yun", "STRING"),
-                bigquery.SchemaField("month_yun", "STRING"),
-                bigquery.SchemaField("year_yun", "STRING"),
+                bigquery.SchemaField("month_pillar", "STRING"),
+                bigquery.SchemaField("day_pillar", "STRING"),
+                bigquery.SchemaField("hour_pillar", "STRING"),
+                bigquery.SchemaField("year_stem", "STRING"),
+                bigquery.SchemaField("year_branch", "STRING"),
+                bigquery.SchemaField("month_stem", "STRING"),
+                bigquery.SchemaField("month_branch", "STRING"),
+                bigquery.SchemaField("day_stem", "STRING"),
+                bigquery.SchemaField("day_branch", "STRING"),
+                bigquery.SchemaField("hour_stem", "STRING"),
+                bigquery.SchemaField("hour_branch", "STRING")
             ],
             write_disposition="WRITE_APPEND"
         )
@@ -125,52 +104,6 @@ def get_versioned_pillars(version: str = "v1.0", force_recalculate: bool = False
         table_ref = f"{project_id}.{dataset_name}.{table_name}"
         job = client.load_table_from_dataframe(dataset, table_ref, job_config=job_config)
         job.result()  # Wait for the job to complete
-        
-        # Store metadata about the dataset parameters
-        metadata_table = f"{project_id}.{dataset_name}.thousand_year_current_pillars_metadata"
-        
-        try:
-            # Create metadata table if it doesn't exist
-            try:
-                client.get_table(metadata_table)
-            except Exception:
-                # Table doesn't exist, create it
-                schema = [
-                    bigquery.SchemaField("version", "STRING"),
-                    bigquery.SchemaField("metadata", "STRING"),
-                    bigquery.SchemaField("creation_date", "TIMESTAMP")
-                ]
-                table = bigquery.Table(metadata_table, schema=schema)
-                client.create_table(table)
-                logger.info(f"Created metadata table: {metadata_table}")
-            
-            # Delete existing metadata for this version
-            metadata_delete_query = f"""
-            DELETE FROM `{metadata_table}`
-            WHERE version = '{version}'
-            """
-            client.query(metadata_delete_query)
-            
-            # Insert metadata with the parameters used - use string for datetime
-            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
-            metadata = {
-                'days_back': days_back,
-                'days_forward': days_forward,
-                'forecast_months': forecast_months,
-                'creation_date': current_time
-            }
-            
-            metadata_rows = [{
-                'version': version,
-                'metadata': json.dumps(metadata),
-                'creation_date': datetime.now()
-            }]
-            
-            client.insert_rows_json(metadata_table, metadata_rows)
-            logger.info(f"Stored dataset parameters in metadata table")
-        except Exception as e:
-            logger.warning(f"Could not store metadata: {str(e)}")
         
         logger.info(f"Successfully stored {len(dataset)} rows in {table_name} with version {version}")
         
@@ -181,35 +114,31 @@ def get_versioned_pillars(version: str = "v1.0", force_recalculate: bool = False
         logger.error(f"Error in get_versioned_pillars: {str(e)}")
         # Fallback to calculation if database operations fail
         logger.info("Falling back to direct calculation due to error")
-        return calculate_thousand_year_pillars(days_back, days_forward, forecast_months)
+        return calculate_thousand_year_pillars()
 
-def calculate_thousand_year_pillars(days_back=50, days_forward=2, forecast_months=12) -> pd.DataFrame:
+def calculate_thousand_year_pillars() -> pd.DataFrame:
     """
     Calculate the thousand-year current pillars dataset from scratch.
-    
-    Args:
-        days_back: Number of days to look back from today (default: 50)
-        days_forward: Number of days to look forward from today (default: 2)
-        forecast_months: Number of months to include in the forecast (default: 12)
     
     Returns:
         DataFrame containing the time and 8-word pillars
     """
     from app import chengseng  # Import here to avoid circular imports
     
-    logger.info(f"Calculating pillars with parameters: days_back={days_back}, days_forward={days_forward}, forecast_months={forecast_months}")
+    logger.info("Calculating thousand-year pillars from scratch")
     
     # Define time range
     today = datetime.now()
     # Set the time to 9:00 AM to match the original code
     today = today.replace(hour=9, minute=0, second=0, microsecond=0)
     
-    start_date = today - timedelta(days=days_back)
-    end_date = today + timedelta(days=days_forward)
+    # start_date = today - timedelta(days=1525)
+    start_date = today - timedelta(days=50)
+    end_date = today + timedelta(days=2)
     
     # Create a blank data frame with time column
     time_range = pd.date_range(start=start_date, end=end_date, freq='1H').union(
-        pd.date_range(end_date, end_date + pd.DateOffset(months=forecast_months), freq='D'))
+        pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
     dataset = pd.DataFrame({'time': time_range})
     
     # Adding 8w pillars to the dataset
@@ -241,20 +170,18 @@ def check_table_exists(project_id='stock8word', dataset_name='GG88', table_name=
             schema = [
                 bigquery.SchemaField("time", "TIMESTAMP"),
                 bigquery.SchemaField("version", "STRING"),
-
-
-                bigquery.SchemaField("hour_pillar", "STRING"),
-                bigquery.SchemaField("day_pillar", "STRING"),
-                bigquery.SchemaField("hidden_hour_pillar", "STRING"),
-                bigquery.SchemaField("month_pillar", "STRING"),
                 bigquery.SchemaField("year_pillar", "STRING"),
-                bigquery.SchemaField("hidden_month_pillar", "STRING"),
-
-              
-                bigquery.SchemaField("hour_yun", "STRING"),
-                bigquery.SchemaField("day_yun", "STRING"),
-                bigquery.SchemaField("month_yun", "STRING"),
-                bigquery.SchemaField("year_yun", "STRING"),
+                bigquery.SchemaField("month_pillar", "STRING"),
+                bigquery.SchemaField("day_pillar", "STRING"),
+                bigquery.SchemaField("hour_pillar", "STRING"),
+                bigquery.SchemaField("year_stem", "STRING"),
+                bigquery.SchemaField("year_branch", "STRING"),
+                bigquery.SchemaField("month_stem", "STRING"),
+                bigquery.SchemaField("month_branch", "STRING"),
+                bigquery.SchemaField("day_stem", "STRING"),
+                bigquery.SchemaField("day_branch", "STRING"),
+                bigquery.SchemaField("hour_stem", "STRING"),
+                bigquery.SchemaField("hour_branch", "STRING")
             ]
             
             # Create the table

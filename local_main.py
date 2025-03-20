@@ -70,23 +70,23 @@ def get_pillar_from_dict(data_dict, pillar_type):
         return data_dict[pillar_type]
     return None
 
-def generate_bazi_analysis(input_date: datetime):
-    print(f"##### {input_date.year}/{input_date.month}/{input_date.day} {input_date.hour}:00 #####")
+# def generate_bazi_analysis(input_date: datetime):
+#     print(f"##### {input_date.year}/{input_date.month}/{input_date.day} {input_date.hour}:00 #####")
     
-    # Get and display current bazi
-    bazi_data = bazi.get_ymdh_current(input_date.year, input_date.month, input_date.day, input_date.hour)
-    print("Current Bazi:")
-    format_bazi_output_3(bazi_data)
+#     # Get and display current bazi
+#     bazi_data = bazi.get_ymdh_current(input_date.year, input_date.month, input_date.day, input_date.hour)
+#     print("Current Bazi:")
+#     format_bazi_output_3(bazi_data)
     
-    # Get and display base bazi
-    bazi_data = bazi.get_ymdh_base(input_date.year, input_date.month, input_date.day, input_date.hour)
-    print("Base Bazi:")
-    format_bazi_output_3(bazi_data)
+#     # Get and display base bazi
+#     bazi_data = bazi.get_ymdh_base(input_date.year, input_date.month, input_date.day, input_date.hour)
+#     print("Base Bazi:")
+#     format_bazi_output_3(bazi_data)
     
-    # Get pillars and print DaiYun
-    year_pillar = get_pillar_from_dict(bazi_data, '年')
-    month_pillar = get_pillar_from_dict(bazi_data, '月')
-    bazi.print_daiYun("male", year_pillar, month_pillar, input_date)
+#     # Get pillars and print DaiYun
+#     year_pillar = get_pillar_from_dict(bazi_data, '年')
+#     month_pillar = get_pillar_from_dict(bazi_data, '月')
+#     bazi.print_daiYun("male", year_pillar, month_pillar, input_date)
 
 def print_liu_xi_cycle(wu_xi_data):
     """
@@ -355,6 +355,9 @@ def test_flip_pillars():
             birth.day,
             birth.hour
         )
+        # Print base pillars as JSON
+        print("Base Pillars JSON:")
+        print(base)
         
         # Get flipped pillars
         flipped = bazi.calculate_flip_pillars(
@@ -397,7 +400,7 @@ def test_siyun():
             "birth_date": datetime(1957, 3, 4, 22),  # 子時
             "current_date": datetime(2026, 1, 1, 23),
             "gender": "male",
-            "desc": "Male at 子時 (23:00-01:00)"
+            "desc": "S&P "
         },
         {
             "birth_date": datetime(1985, 6, 21, 12),  # 午時
@@ -575,6 +578,8 @@ def test_fan_pillars():
         birth_date.day,
         birth_date.hour
     )
+
+    print(wuxi_data)
     # Extract and print Fan pillars
     print("\nFan (反) Pillars:")
     fan_keys = ['反時', '反日', '-反日', '-反時', '反月', '反年', '-反年', '-反月']

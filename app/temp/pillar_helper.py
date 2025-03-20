@@ -8,7 +8,7 @@ import os
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('pillar_helper')
 
-def get_pillars_dataset(version="v1.0", force_recalculate=False):
+def get_pillars_dataset(version="v1.0", force_recalculate=False, days_back=1, days_forward=1, forecast_months=1):
     """
     Get a dataset with 8-word pillars, either from database or by calculating it.
     This is a wrapper function that can be used in notebooks for convenience.
@@ -16,12 +16,22 @@ def get_pillars_dataset(version="v1.0", force_recalculate=False):
     Args:
         version (str): Version number for the dataset
         force_recalculate (bool): If True, recalculate even if data exists in database
+        days_back (int): Number of days to look back from today (if None, use default 50)
+        days_forward (int): Number of days to look forward from today (if None, use default 2)
+        forecast_months (int): Number of months to include in forecast (if None, use default 12)
         
     Returns:
         DataFrame containing the time and 8-word pillars
     """
     # Setup paths to find our modules
     setup_import_paths()
+    
+    # Use default values if not specified
+    days_back = 50 if days_back is None else days_back
+    days_forward = 2 if days_forward is None else days_forward
+    forecast_months = 12 if forecast_months is None else forecast_months
+    
+    logger.info(f"Getting pillars dataset with parameters: version={version}, days_back={days_back}, days_forward={days_forward}, forecast_months={forecast_months}")
     
     try:
         # Try different import paths to find pillar_db_handler
@@ -42,7 +52,13 @@ def get_pillars_dataset(version="v1.0", force_recalculate=False):
         
         # Get the dataset from the database or calculate it if needed
         logger.info(f"Getting pillars dataset version {version}, force_recalculate={force_recalculate}")
-        dataset = get_versioned_pillars(version=version, force_recalculate=force_recalculate)
+        dataset = get_versioned_pillars(
+            version=version, 
+            force_recalculate=force_recalculate,
+            days_back=days_back,
+            days_forward=days_forward,
+            forecast_months=forecast_months
+        )
         
         logger.info(f"Retrieved dataset with {len(dataset)} rows")
         return dataset
@@ -50,16 +66,21 @@ def get_pillars_dataset(version="v1.0", force_recalculate=False):
     except ImportError as e:
         logger.warning(f"Could not import pillar_db_handler: {e}")
         logger.info("Falling back to direct calculation")
-        return calculate_pillars_directly()
+        return calculate_pillars_directly(days_back, days_forward, forecast_months)
     except Exception as e:
         logger.error(f"Error getting versioned pillars: {e}")
         logger.info("Falling back to direct calculation")
-        return calculate_pillars_directly()
+        return calculate_pillars_directly(days_back, days_forward, forecast_months)
 
-def calculate_pillars_directly():
+def calculate_pillars_directly(days_back=50, days_forward=2, forecast_months=12):
     """
     Calculate the pillars dataset directly without database caching.
     Used as a fallback if the database handler isn't available.
+    
+    Args:
+        days_back (int): Number of days to look back from today (if None, use default 50)
+        days_forward (int): Number of days to look forward from today (if None, use default 2)
+        forecast_months (int): Number of months to include in forecast (if None, use default 12)
     
     Returns:
         DataFrame with pillars
@@ -81,18 +102,18 @@ def calculate_pillars_directly():
                 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
                 from app import chengseng
         
-        logger.info("Calculating pillars directly (no database caching)")
+        logger.info(f"Calculating pillars directly with parameters: days_back={days_back}, days_forward={days_forward}, forecast_months={forecast_months}")
         
         # Define time range
         today = datetime.now()
         today = today.replace(hour=9, minute=0, second=0, microsecond=0)
         
-        start_date = today - timedelta(days=1525)
-        end_date = today + timedelta(days=220)
+        start_date = today - timedelta(days=days_back)
+        end_date = today + timedelta(days=days_forward)
         
         # Create a blank data frame with time column
         time_range = pd.date_range(start=start_date, end=end_date, freq='1H').union(
-            pd.date_range(end_date, end_date + pd.DateOffset(months=12), freq='D'))
+            pd.date_range(end_date, end_date + pd.DateOffset(months=forecast_months), freq='D'))
         dataset = pd.DataFrame({'time': time_range})
         
         # Adding 8w pillars to the dataset
