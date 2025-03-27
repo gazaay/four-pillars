@@ -64,7 +64,8 @@ class BaziResponse(BaseModel):
     hour_pillar: PillarData
     datetime: str
     dayun: Optional[List[DayunData]] = None
-    siyun: Optional[List[DayunData]] = None
+    siyun: Optional[List[SiyunData]] = None
+    
 def format_bazi_data(bazi_data: Dict[str, str]) -> dict:
     """Convert bazi data dictionary into a structured response."""
     logger.info(f"Formatting bazi data: {bazi_data}")
