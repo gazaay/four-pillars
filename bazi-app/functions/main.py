@@ -12,6 +12,21 @@ from fastapi.middleware.wsgi import WSGIMiddleware
 import json
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+import sys
+import os
+
+# Add the parent directory to sys.path to import yijing
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from yijing import phone_to_hexagram_json
+    YIJING_AVAILABLE = True
+    logging.info("Successfully imported yijing module")
+except ImportError as e:
+    YIJING_AVAILABLE = False
+    logging.error(f"Failed to import yijing module: {str(e)}")
+
+# Set version
+VERSION = "1.0.1"
 
 initialize_app()
 # Configure logging
@@ -234,6 +249,36 @@ def get_wuxi_data(
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail=f"Error calculating Wuxi data: {str(e)}")
 
+def get_phone_yijing(phone_number: str):
+    """
+    Get the Yi Jing hexagram for a Hong Kong phone number.
+    
+    Args:
+        phone_number: An 8-digit Hong Kong phone number
+        
+    Returns:
+        JSON with the hexagram information
+    """
+    if not YIJING_AVAILABLE:
+        error_result = {
+            "success": False,
+            "error": "Yi Jing module not available"
+        }
+        return json.dumps(error_result, ensure_ascii=False, indent=2)
+    
+    try:
+        logger.debug(f"Looking up Yi Jing hexagram for phone number: {phone_number}")
+        result = phone_to_hexagram_json(phone_number)
+        logger.debug(f"Yi Jing result: {result}")
+        return result
+    except Exception as e:
+        logger.error(f"Error processing phone number: {str(e)}")
+        error_result = {
+            "success": False,
+            "phone_number": phone_number,
+            "error": str(e)
+        }
+        return json.dumps(error_result, ensure_ascii=False, indent=2)
 
 def validate_datetime_params(year: int, month: int, day: int, hour: int) -> None:
     if not (1900 <= year <= 2100):  # adjust range as needed
@@ -287,6 +332,12 @@ def api_handler(req: https_fn.Request) -> https_fn.Response:
             logger.info(f"Calculating wuxi data for {year}-{month}-{day} {hour}")
             wuxi_response = get_wuxi_data(year, month, day, hour)
             response_data = wuxi_response
+        elif "/api/yijing/phone" in req.path:
+            phone_number = req.args.get('phone', '')
+            logger.info(f"Looking up Yi Jing hexagram for phone number: {phone_number}")
+            yijing_response = get_phone_yijing(phone_number)
+            # Since yijing_response is already a JSON string, we need to parse it
+            response_data = json.loads(yijing_response)
         elif "/api/version" in req.path:
             response_data = {
                 "version": VERSION,
