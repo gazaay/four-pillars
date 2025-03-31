@@ -18,7 +18,7 @@ import os
 # Add the parent directory to sys.path to import yijing
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    from yijing import phone_to_hexagram_json
+    from bazi.yijing import phone_to_hexagram_json
     YIJING_AVAILABLE = True
     logging.info("Successfully imported yijing module")
 except ImportError as e:
