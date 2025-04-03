@@ -594,6 +594,145 @@ def test_fan_pillars():
     # Fourth row: Second characters  
     print("".join(f"{wuxi_data[key][1]:<2}" for key in fan_keys))
 
+def test_20250402_Error_Flip_Pillars():
+    """
+    Test case for specific error occurring with dates:
+    Base: 1969-11-24 09:30:00
+    Current: 2025-08-04 19:00:00
+    """
+    print("\nTesting 20250402 Error Flip Pillars Case")
+    print("=" * 50)
+
+    # Setup test dates
+    base_date = datetime(1969, 11, 24, 9, 30)
+    current_date = datetime(2025, 8, 4, 19, 0)
+
+    print(f"Base date: {base_date}")
+    print(f"Current date: {current_date}")
+
+    # Get base pillars
+    base_pillars = bazi.get_ymdh_base(
+        base_date.year,
+        base_date.month,
+        base_date.day,
+        base_date.hour
+    )
+    print("\nBase Pillars:")
+    format_bazi_output_3(base_pillars)
+
+    # Try to get flipped pillars
+    try:
+        flipped_pillars = bazi.calculate_flip_pillars(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            base_date.hour,
+            "male",  # Assuming male, adjust if needed
+            current_date
+        )
+        print("\nFlipped Pillars:")
+        format_bazi_output_3(flipped_pillars)
+    except Exception as e:
+        print("\nError occurred:")
+        print(f"Type: {type(e).__name__}")
+        print(f"Message: {str(e)}")
+        import traceback
+        print("Traceback:")
+        print(traceback.format_exc())
+
+    # Print additional diagnostic information
+    print("\nDiagnostic Information:")
+    try:
+        # Get DaYun data
+        year_pillar = get_pillar_from_dict(base_pillars, '年')
+        month_pillar = get_pillar_from_dict(base_pillars, '月')
+        print("\nDaYun Calculation:")
+        bazi.print_daiYun("male", year_pillar, month_pillar, base_date)
+        
+        # Get SiYun data
+        hour_pillar = get_pillar_from_dict(base_pillars, '時')
+        year_stem = year_pillar[0] if year_pillar else None
+        print("\nSiYun Calculation:")
+        bazi.print_siyun("male", hour_pillar, year_stem, base_date)
+        
+    except Exception as e:
+        print(f"Error in diagnostic calculations: {str(e)}")
+def test_8w_pillars():
+    """
+    Test the adding_8w_pillars function with sample dataset
+    """
+    print("\nTesting 8W Pillars Processing")
+    print("=" * 50)
+
+    # Create a sample dataset with test cases
+    sample_dataset = [
+        {
+            'birth_date': '1969-11-24 09:30:00',
+            'current_date': '2025-08-04 19:00:00',
+            'gender': 'male'
+        },
+        # Add more test cases as needed
+        {
+            'birth_date': '1979-05-05 12:00:00',
+            'current_date': '2025-08-04 19:00:00',
+            'gender': 'male'
+        }
+    ]
+
+    try:
+        # Process each test case
+        for i, case in enumerate(sample_dataset, 1):
+            print(f"\nTest Case {i}:")
+            print(f"Birth: {case['birth_date']}")
+            print(f"Current: {case['current_date']}")
+            print(f"Gender: {case['gender']}")
+            
+            # Convert string dates to datetime objects
+            birth_dt = datetime.strptime(case['birth_date'], '%Y-%m-%d %H:%M:%S')
+            current_dt = datetime.strptime(case['current_date'], '%Y-%m-%d %H:%M:%S')
+            # Create test row
+            test_row = {
+                'birth_year': birth_dt.year,
+                'birth_month': birth_dt.month,
+                'birth_day': birth_dt.day,
+                'birth_hour': birth_dt.hour,
+                'birth_minute': birth_dt.minute,
+                'current_year': current_dt.year,
+                'current_month': current_dt.month,
+                'current_day': current_dt.day,
+                'current_hour': current_dt.hour,
+                'current_minute': current_dt.minute,
+                'gender': case['gender'],
+                'time': current_dt
+            }
+
+            # Process the row
+            try:
+                result = chengseng.process_8w_row(123,test_row)
+                print("\nProcessed Successfully!")
+                print("\nBase Pillars:")
+                if 'base_pillars' in result:
+                    format_bazi_output_3(result['base_pillars'])
+                print("\nCurrent Pillars:")
+                if 'current_pillars' in result:
+                    format_bazi_output_3(result['current_pillars'])
+                
+            except Exception as e:
+                print(f"\nError processing case {i}:")
+                print(f"Type: {type(e).__name__}")
+                print(f"Message: {str(e)}")
+                import traceback
+                print("Traceback:")
+                print(traceback.format_exc())
+
+    except Exception as e:
+        print("\nError in test execution:")
+        print(f"Type: {type(e).__name__}")
+        print(f"Message: {str(e)}")
+        import traceback
+        print("Traceback:")
+        print(traceback.format_exc())
+
 def main():
     # Add test_fan_pillars to the test sequence
     test_fan_pillars()
@@ -671,4 +810,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # test_20250402_Error_Flip_Pillars()
+    test_8w_pillars()

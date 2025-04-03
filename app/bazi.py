@@ -451,7 +451,7 @@ def calculate_dayun(gender, year_pillar, month_pillar, days_to_next_solar_term):
     # Calculate starting ages
     starting_ages = []
     base_age = days_to_next_solar_term
-    for i in range(8):
+    for i in range(12):
         age = base_age + (i) * 10
         if age >= 1:
             starting_ages.append(age)
@@ -2815,6 +2815,7 @@ def calculate_flip_pillars(base_year: int, base_month: int, base_day: int, base_
         branch = pillar[1]
         if branch in ['子', '亥']:
             # Calculate year for this pillar using base year + starting age
+            logger.info(f"DaYun index {i}: {dayun_sequence} {branch} Calculating pillar year {pillar_year} from base year {base_year} :{starting_ages} ")
             pillar_year = int(base_year + starting_ages[i])
             if pillar_year > max_dayun_target_year:
                 max_dayun_target_year = pillar_year
