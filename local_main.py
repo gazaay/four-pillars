@@ -674,7 +674,7 @@ def test_8w_pillars():
         # Add more test cases as needed
         {
             'birth_date': '1979-05-05 12:00:00',
-            'current_date': '2025-08-04 19:00:00',
+            'current_date': '2024-02-29 19:00:00',
             'gender': 'male'
         }
     ]
