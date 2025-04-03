@@ -2815,7 +2815,6 @@ def calculate_flip_pillars(base_year: int, base_month: int, base_day: int, base_
         branch = pillar[1]
         if branch in ['子', '亥']:
             # Calculate year for this pillar using base year + starting age
-            logger.info(f"DaYun index {i}: {dayun_sequence} {branch} Calculating pillar year {pillar_year} from base year {base_year} :{starting_ages} ")
             pillar_year = int(base_year + starting_ages[i])
             if pillar_year > max_dayun_target_year:
                 max_dayun_target_year = pillar_year
