@@ -2730,8 +2730,12 @@ def calculate_flip_pillars(base_year: int, base_month: int, base_day: int, base_
     Returns:
         dict: Dictionary containing the flipped pillars
     """
-    logger.debug(f" Starting flip pillar calculation for {base_year}-{base_month}-{base_day} {base_hour}")
+    # Handle leap year February 29th case
+    if base_month == 2 and base_day == 29:
+        base_day = 28
+        logger.debug(f"Leap year Feb 29 detected - adjusting to Feb 28")
     
+    logger.debug(f" Starting flip pillar calculation for {base_year}-{base_month}-{base_day} {base_hour}")
     # Get base pillars first
     base_pillars = get_wuxi_ymdh_base(base_year, base_month, base_day, base_hour)
     base_date = datetime(base_year, base_month, base_day, base_hour)
