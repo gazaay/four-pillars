@@ -187,9 +187,17 @@ class BaziFeatureTransformer:
         
         # Sort by time
         result = result.sort_values('time')
+        # Print results and check columns
+        logger.info(f"Data shape before target: {result.shape}")
+        logger.info(f"Columns in dataset: {result.columns.tolist()}")
+        logger.debug(f"First few rows:\n{result.head()}")
         
+        # Check for any missing values
+        missing_values = result.isnull().sum()
+        if missing_values.any():
+            logger.warning(f"Missing values found:\n{missing_values[missing_values > 0]}")
         # Add target variable (next day's close price)
-        result['target'] = result['Close'].shift(-1)
+        result['target'] = result['Close_x'].shift(-1)
         
         # Drop the last row (which has NaN target)
         result = result.dropna(subset=['target'])

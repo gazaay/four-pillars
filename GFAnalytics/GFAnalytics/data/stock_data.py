@@ -214,11 +214,10 @@ class StockDataLoader:
             listing_date = pd.to_datetime(ticker.info.get('startDate'))
             
             if pd.isna(listing_date):
-                # Default to HSI launch date if not found
-                if self.stock_code == 'HSI':
-                    listing_date = pd.to_datetime('1969-11-24')
-                else:
-                    raise ValueError(f"Could not determine listing date for {self.stock_code}")
+                # Get listing date from config
+                listing_date = pd.to_datetime(self.config['stock']['listing_date'])
+                if pd.isna(listing_date):
+                    raise ValueError(f"Could not determine listing date for {self.stock_code} from config")
             
             return listing_date
             

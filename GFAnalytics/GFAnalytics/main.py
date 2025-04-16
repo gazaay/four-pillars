@@ -144,8 +144,16 @@ class GFAnalytics:
         self.predictions = None
         self.evaluation_results = None
     
-    def run(self):
-        """Run the complete GFAnalytics pipeline."""
+    def run(self, show_plots=False):
+        """
+        Run the complete GFAnalytics pipeline.
+        
+        Args:
+            show_plots (bool): Whether to display plots during execution.
+            
+        Returns:
+            dict: Results containing evaluation metrics and predictions.
+        """
         self.logger.info("Starting GFAnalytics pipeline")
         
         # Execute each step of the pipeline
@@ -154,7 +162,7 @@ class GFAnalytics:
         self.train_model()
         self.evaluate_model()
         self.predict_future()
-        self.visualize_results()
+        self.visualize_results(show_plots=show_plots)
         
         self.logger.info("GFAnalytics pipeline completed successfully")
         
@@ -172,33 +180,72 @@ class GFAnalytics:
         self.logger.info("Generating Bazi data")
         self.bazi_data = self.bazi_generator.generate(self.stock_data)
         self.bq_storage.store_bazi_data(self.bazi_data)
+        # Log info about loaded data
+        self.logger.info(f"Stock data shape: {self.stock_data.shape}")
+        self.logger.info(f"Stock data columns: {self.stock_data.columns.tolist()}")
+        self.logger.info(f"\nFirst few rows of stock data:\n{self.stock_data.head()}")
         
+        self.logger.info(f"Bazi data shape: {self.bazi_data.shape}")
+        self.logger.info(f"Bazi data columns: {self.bazi_data.columns.tolist()}")
+        self.logger.info(f"\nFirst few rows of Bazi data:\n{self.bazi_data.head()}")
         return self.stock_data, self.bazi_data
     
     def create_features(self):
         """Create features for training by transforming Bazi data to ChengShen."""
         self.logger.info("Creating training features")
         
+        # Log data shapes before transformation
+        self.logger.info(f"Original Bazi data shape: {self.bazi_data.shape}")
+        self.logger.info(f"Original stock data shape: {self.stock_data.shape}")
+        
         # Transform Bazi pillars to features
+        self.logger.info("Applying Bazi feature transformation...")
         bazi_features = self.bazi_transformer.transform(self.bazi_data)
+        self.logger.info(f"Bazi features shape after transformation: {bazi_features.shape}")
         
         # Transform to ChengShen attributes
+        self.logger.info("Applying ChengShen transformation...")
         chengshen_features = self.chengshen_transformer.transform(bazi_features)
+        self.logger.info(f"Features shape after ChengShen transformation: {chengshen_features.shape}")
         
         # Combine with stock data
+        self.logger.info("Combining features with stock data...")
         self.training_data = self.bazi_transformer.combine_with_stock_data(
             chengshen_features, self.stock_data
         )
+        self.logger.info(f"Final training data shape: {self.training_data.shape}")
+        
+        # Log columns in training data
+        self.logger.info(f"Training data columns: {self.training_data.columns.tolist()}")
+        
+        # Check for target column
+        if 'target' not in self.training_data.columns:
+            self.logger.warning("No 'target' column found in training data!")
+            self.logger.info("Creating target column as next day's close price...")
+            if 'Close' in self.training_data.columns:
+                self.training_data['target'] = self.training_data['Close'].shift(-1)
+                self.training_data = self.training_data.dropna(subset=['target'])
+                self.logger.info(f"Target column created. New shape: {self.training_data.shape}")
+            else:
+                self.logger.error("Cannot create target: 'Close' column not found")
         
         # Store training data
         self.bq_storage.store_training_data(self.training_data)
-        
+        self.logger.info("Training data stored in BigQuery")
+
         return self.training_data
     
     def train_model(self):
         """Train the machine learning model."""
         self.logger.info("Training model")
         
+        # Print first 2 rows of training data
+        self.logger.info(f"\nFirst 2 rows of training data:\n{self.training_data.head(2)}")
+        # Remove duplicate stock code and RIC code columns
+        # if 'stock_code_y' in self.training_data.columns:
+        #     self.training_data = self.training_data.drop('stock_code_y', axis=1)
+        # if 'ric_code_y' in self.training_data.columns:
+        #     self.training_data = self.training_data.drop('ric_code_y', axis=1)
         # Train the model
         self.model.train(self.training_data)
         
@@ -211,11 +258,43 @@ class GFAnalytics:
         """Evaluate the model performance."""
         self.logger.info("Evaluating model")
         
-        # Evaluate the model
-        self.evaluation_results = self.evaluator.evaluate(self.model, self.training_data)
+        # Make sure we're using the same training data for evaluation
+        if self.training_data is None:
+            self.logger.error("Training data not available for evaluation")
+            return None
+            
+        # Copy the training data to avoid modifying it
+        evaluation_data = self.training_data.copy()
         
-        # Store evaluation results
-        self.bq_storage.store_model_metrics(self.evaluation_results)
+        # Log training data shape
+        self.logger.info(f"Evaluation data shape: {evaluation_data.shape}")
+        self.logger.info(f"Evaluation data columns: {evaluation_data.columns[:5]}...")
+        
+        # Evaluate the model using the training data
+        self.evaluation_results = self.evaluator.evaluate(self.model, evaluation_data)
+        
+        # Store evaluation results in BigQuery
+        metrics_dict = {
+            'model_id': f"rf_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            'stock_code': self.config['stock']['code'],
+            'training_start_date': self.config['date_range']['training']['start_date'],
+            'training_end_date': self.config['date_range']['training']['end_date'],
+            'timestamp': datetime.now()
+        }
+        
+        # Add evaluation metrics to the dict
+        for metric, value in self.evaluation_results.items():
+            if isinstance(value, (int, float)):
+                metrics_dict[metric.lower()] = value
+            elif metric == 'feature_importance' and value is not None:
+                # Convert top 20 features to JSON
+                try:
+                    metrics_dict['feature_importance'] = value.head(20).to_json()
+                except:
+                    self.logger.warning("Could not convert feature importance to JSON")
+        
+        # Store metrics in BigQuery
+        self.bq_storage.store_model_metrics(metrics_dict)
         
         return self.evaluation_results
     
@@ -234,23 +313,66 @@ class GFAnalytics:
         
         return self.predictions
     
-    def visualize_results(self):
-        """Visualize the results."""
+    def visualize_results(self, show_plots=False):
+        """
+        Visualize the results.
+        
+        Args:
+            show_plots (bool): Whether to display the plots immediately.
+        
+        Returns:
+            bool: True if visualization was successful, False otherwise.
+        """
         self.logger.info("Visualizing results")
+        
+        # Make sure we have required data
+        if self.stock_data is None or self.predictions is None:
+            self.logger.error("Cannot visualize results: missing stock data or predictions")
+            return False
+            
+        # Make sure the model is trained
+        if self.model is None:
+            self.logger.error("Cannot visualize results: model not trained")
+            return False
         
         # Plot predictions
         if self.config['visualization']['plot_prediction']:
-            self.plotter.plot_prediction(self.stock_data, self.predictions)
+            self.logger.info("Creating prediction plot...")
+            self.plotter.plot_prediction(self.stock_data, self.predictions, show=show_plots)
         
         # Plot feature importance
         if self.config['model']['evaluation']['feature_importance']:
-            self.plotter.plot_feature_importance(self.model, self.training_data)
+            self.logger.info("Creating feature importance plot...")
+            # Use the training data directly
+            self.plotter.plot_feature_importance(self.model, self.training_data, show=show_plots)
         
         # Plot correlation heatmap
         if self.config['model']['evaluation']['correlation_heatmap']:
-            self.plotter.plot_correlation_heatmap(self.training_data)
+            self.logger.info("Creating correlation heatmap...")
+            # Use the training data directly
+            self.plotter.plot_correlation_heatmap(self.training_data, show=show_plots)
+            
+        # Plot Bazi element predictions if we have encoders from the model
+        if hasattr(self.model, 'label_encoders') and self.model.label_encoders:
+            self.logger.info("Creating Bazi predictions plot...")
+            # Pass the encoders for decoding Bazi elements
+            self.plotter.plot_bazi_predictions(self.predictions, self.model.label_encoders, show=show_plots)
         
+        # If show_plots is False but we want to display them all at once
+        if not show_plots and self.config['visualization'].get('display_plots_at_end', True):
+            self.display_plots()
+            
+        self.logger.info("Visualization completed")
         return True
+        
+    def display_plots(self):
+        """Display all generated plots."""
+        if hasattr(self, 'plotter'):
+            self.logger.info("Displaying all plots")
+            return self.plotter.display_all_plots()
+        else:
+            self.logger.error("Plotter not initialized")
+            return False
 
     def clean_tables(self):
         """Clean all tables in BigQuery."""
@@ -271,6 +393,8 @@ def main():
     parser = argparse.ArgumentParser(description='GFAnalytics Framework')
     parser.add_argument('--clean', action='store_true', help='Clean all tables')
     parser.add_argument('--clean-table', type=str, help='Clean specific table')
+    parser.add_argument('--show-plots', action='store_true', help='Show plots during pipeline execution')
+    parser.add_argument('--display-plots', action='store_true', help='Only display previously generated plots')
     args = parser.parse_args()
     
     # Create an instance of the GFAnalytics framework
@@ -280,9 +404,14 @@ def main():
         gf.clean_tables()
     elif args.clean_table:
         gf.clean_table(args.clean_table)
+    elif args.display_plots:
+        # Just display plots without running the pipeline
+        return gf.display_plots()
     else:
         # Run the complete pipeline
-        results = gf.run()
+        results = gf.run(show_plots=args.show_plots)
+        
+        # We don't need to call display_plots here since we're passing show_plots to run()
         return results
 
 if __name__ == "__main__":

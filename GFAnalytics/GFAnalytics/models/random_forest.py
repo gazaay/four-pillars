@@ -14,6 +14,12 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, GridSearchCV
 import joblib
 import os
+import json
+
+# Import encoding utilities
+from GFAnalytics.utils.encoding_utils import process_encode_data, decode_prediction_data
+# Import data utilities
+from GFAnalytics.utils.data_utils import prepare_feature_data, get_feature_importance as get_feature_importance_util
 
 # Set up logger
 logger = logging.getLogger('GFAnalytics.random_forest')
@@ -34,6 +40,8 @@ class RandomForestModel:
         self.config = config
         self.model_params = config['model']['params']
         self.model = None
+        self.label_encoders = {}
+        self.feature_names = None
         logger.info("RandomForestModel initialized")
     
     def train(self, data):
@@ -51,8 +59,15 @@ class RandomForestModel:
         # Create a copy of the data to avoid modifying the original
         df = data.copy()
         
+        # Encode categorical features
+        logger.info("Encoding categorical features")
+        encoded_df, self.label_encoders = process_encode_data(df)
+        
         # Prepare the data
-        X, y = self._prepare_data(df)
+        X, y = self._prepare_data(encoded_df)
+        
+        # Store feature names for later use
+        self.feature_names = X.columns.tolist()
         
         # Split the data into training and testing sets
         X_train, X_test, y_train, y_test = train_test_split(
@@ -66,10 +81,12 @@ class RandomForestModel:
             min_samples_split=self.model_params.get('min_samples_split', 2),
             min_samples_leaf=self.model_params.get('min_samples_leaf', 1),
             random_state=self.model_params.get('random_state', 42),
-            n_jobs=-1  # Use all available cores
+            n_jobs=-1,  # Use all available cores
+            verbose=1
         )
         
         # Train the model
+        logger.info(f"Training with {X_train.shape[0]} samples, {X_train.shape[1]} features")
         self.model.fit(X_train, y_train)
         
         # Log training results
@@ -99,10 +116,31 @@ class RandomForestModel:
         # Create a copy of the data to avoid modifying the original
         df = data.copy()
         
+        # Encode categorical features using the same encoders from training
+        logger.info("Encoding categorical features for prediction")
+        encoded_df, _ = process_encode_data(df)
+        
         # Prepare the data
-        X, _ = self._prepare_data(df, is_training=False)
+        X, _ = self._prepare_data(encoded_df, is_training=False)
+        
+        # Ensure all required features are present
+        if self.feature_names is not None:
+            missing_features = set(self.feature_names) - set(X.columns)
+            extra_features = set(X.columns) - set(self.feature_names)
+            
+            if missing_features:
+                logger.warning(f"Missing features in prediction data: {missing_features}")
+                # Add missing features with zeros
+                for feature in missing_features:
+                    X[feature] = 0
+            
+            if extra_features:
+                logger.warning(f"Extra features in prediction data: {extra_features}")
+                # Keep only the features used in training
+                X = X[self.feature_names]
         
         # Make predictions
+        logger.info(f"Making predictions on {len(X)} samples")
         predictions = self.model.predict(X)
         
         logger.info(f"Made {len(predictions)} predictions")
@@ -119,24 +157,8 @@ class RandomForestModel:
         Returns:
             tuple: A tuple containing (X, y) if is_training is True, otherwise (X, None).
         """
-        # Create a copy of the data to avoid modifying the original
-        df = data.copy()
-        
-        # Drop non-feature columns
-        columns_to_drop = ['time', 'uuid', 'last_modified_date']
-        if is_training:
-            columns_to_drop.append('target')
-        
-        # Drop columns that exist in the DataFrame
-        columns_to_drop = [col for col in columns_to_drop if col in df.columns]
-        
-        # Prepare features (X)
-        X = df.drop(columns_to_drop, axis=1, errors='ignore')
-        
-        # Prepare target (y) if training
-        y = df['target'] if is_training and 'target' in df.columns else None
-        
-        return X, y
+        # Use the shared data preparation utility
+        return prepare_feature_data(data, is_training)
     
     def tune_hyperparameters(self, data):
         """
@@ -153,8 +175,11 @@ class RandomForestModel:
         # Create a copy of the data to avoid modifying the original
         df = data.copy()
         
+        # Encode categorical features
+        encoded_df, self.label_encoders = process_encode_data(df)
+        
         # Prepare the data
-        X, y = self._prepare_data(df)
+        X, y = self._prepare_data(encoded_df)
         
         # Split the data into training and testing sets
         X_train, X_test, y_train, y_test = train_test_split(
@@ -214,23 +239,18 @@ class RandomForestModel:
             logger.error("Model has not been trained yet")
             raise ValueError("Model has not been trained yet")
         
-        # Get feature importance
-        importance = self.model.feature_importances_
+        # Use the shared feature importance utility
+        feature_importance = get_feature_importance_util(self)
         
-        # Create a DataFrame with feature names and importance
-        feature_importance = pd.DataFrame({
-            'feature': self.model.feature_names_in_,
-            'importance': importance
-        })
-        
-        # Sort by importance
-        feature_importance = feature_importance.sort_values('importance', ascending=False)
+        # Log top features
+        top_features = feature_importance.head(20)
+        logger.info(f"Top 20 most important features:\n{top_features}")
         
         return feature_importance
     
     def save(self, filepath):
         """
-        Save the trained model to a file.
+        Save the trained model and encoders to files.
         
         Args:
             filepath (str): The path to save the model to.
@@ -252,7 +272,19 @@ class RandomForestModel:
             # Save the model
             joblib.dump(self.model, filepath)
             
+            # Save the feature names
+            feature_names_path = filepath.replace('.pkl', '_features.json')
+            with open(feature_names_path, 'w') as f:
+                json.dump(self.feature_names, f)
+            
+            # Save the encoders
+            encoders_path = filepath.replace('.pkl', '_encoders.pkl')
+            joblib.dump(self.label_encoders, encoders_path)
+            
             logger.info(f"Model saved successfully to {filepath}")
+            logger.info(f"Feature names saved to {feature_names_path}")
+            logger.info(f"Encoders saved to {encoders_path}")
+            
             return True
         except Exception as e:
             logger.error(f"Failed to save model: {str(e)}")
@@ -260,7 +292,7 @@ class RandomForestModel:
     
     def load(self, filepath):
         """
-        Load a trained model from a file.
+        Load a trained model and encoders from files.
         
         Args:
             filepath (str): The path to load the model from.
@@ -274,7 +306,25 @@ class RandomForestModel:
             # Load the model
             self.model = joblib.load(filepath)
             
+            # Load the feature names
+            feature_names_path = filepath.replace('.pkl', '_features.json')
+            if os.path.exists(feature_names_path):
+                with open(feature_names_path, 'r') as f:
+                    self.feature_names = json.load(f)
+            
+            # Load the encoders
+            encoders_path = filepath.replace('.pkl', '_encoders.pkl')
+            if os.path.exists(encoders_path):
+                self.label_encoders = joblib.load(encoders_path)
+            
             logger.info(f"Model loaded successfully from {filepath}")
+            
+            if self.feature_names:
+                logger.info(f"Loaded {len(self.feature_names)} feature names")
+            
+            if self.label_encoders:
+                logger.info(f"Loaded {len(self.label_encoders)} label encoders")
+            
             return self
         except Exception as e:
             logger.error(f"Failed to load model: {str(e)}")

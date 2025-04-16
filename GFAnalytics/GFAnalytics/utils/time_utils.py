@@ -12,6 +12,20 @@ are in GMT+8 (Hong Kong) timezone as required by the framework.
 import pandas as pd
 import pytz
 from datetime import datetime, timedelta
+import logging
+
+# Configure logging settings
+logging.basicConfig(
+    level=logging.INFO,  # Set the minimum level for displayed logs
+    format='%(asctime)s - %(levelname)s - %(message)s',  # Format of log messages
+    handlers=[
+        logging.StreamHandler(),  # Log to console
+        logging.FileHandler('gfanalytics.log')  # Log to file
+    ]
+)
+
+# Create a logger
+logger = logging.getLogger(__name__)
 
 
 def ensure_hk_timezone(dt):
@@ -26,8 +40,8 @@ def ensure_hk_timezone(dt):
     """
     hk_tz = pytz.timezone('Asia/Hong_Kong')
     # Log the datetime object and its timezone info
-    print(f"Converting datetime: {dt}")
-    print(f"Original timezone: {dt.tzinfo}")
+    logger.debug(f"Converting datetime: {dt}")
+    logger.debug(f"Original timezone: {dt.tzinfo}")
     # If datetime is naive (no timezone info), assume it's UTC and convert
     if dt.tzinfo is None:
         dt = pytz.utc.localize(dt)

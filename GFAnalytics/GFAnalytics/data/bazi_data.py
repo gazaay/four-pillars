@@ -20,7 +20,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 # Import Bazi functionality from the existing codebase
-from app import bazi
+from bazi import bazi
 
 # Import utilities
 from GFAnalytics.utils.time_utils import ensure_hk_timezone, convert_df_timestamps_to_hk
@@ -74,8 +74,10 @@ class BaziDataGenerator:
         data = self._generate_current_pillars(data)
         
         # Add base pillars to the data
+        logger.debug(f"Adding base pillars to data. Base pillars: {base_pillars}")
         for key, value in base_pillars.items():
             column_name = f'base_{key}'
+            logger.info(f"Added column '{column_name}' with value '{value}'")
             data[column_name] = value
         
         # Add stock code and UUID columns if they don't exist
@@ -109,12 +111,16 @@ class BaziDataGenerator:
         
         try:
             # Generate base Bazi pillars using the existing bazi module
-            base_pillars = bazi.get_heavenly_branch_ymdh_pillars_base(
+            base_pillars = bazi.get_ymdh_base(
                 listing_date.year,
                 listing_date.month,
                 listing_date.day,
                 listing_date.hour
             )
+            
+            # Update 時運 to 大時運 if present
+            if '時運' in base_pillars:
+                base_pillars['大時運'] = base_pillars.pop('時運')
             
             # Map the keys to more descriptive names
             key_mapping = {
@@ -123,11 +129,14 @@ class BaziDataGenerator:
                 '日': 'day_pillar',
                 '時': 'hour_pillar',
                 '-月': 'month_pillar_minus',
-                '-時': 'hour_pillar_minus'
+                '-時': 'hour_pillar_minus',
+                '-年': 'year_pillar_minus',
+                '-日': 'day_pillar_minus',
+                # '大運': 'current_daiyun',
+                # '大時運': 'current_siyun'
             }
-            
             # Create a new dictionary with the mapped keys
-            mapped_pillars = {key_mapping.get(k, k): v for k, v in base_pillars.items()}
+            mapped_pillars = {v: base_pillars[k] for k, v in key_mapping.items() if k in base_pillars}
             
             logger.info(f"Base Bazi pillars generated: {mapped_pillars}")
             return mapped_pillars
@@ -141,7 +150,11 @@ class BaziDataGenerator:
                 'day_pillar': '',
                 'hour_pillar': '',
                 'month_pillar_minus': '',
-                'hour_pillar_minus': ''
+                'hour_pillar_minus': '',
+                'year_pillar_minus': '',
+                'day_pillar_minus': '',
+                # 'current_daiyun': '',
+                # 'current_siyun': ''
             }
     
     def _generate_current_pillars(self, data):
@@ -154,7 +167,7 @@ class BaziDataGenerator:
         Returns:
             pandas.DataFrame: The data with added current Bazi pillars.
         """
-        logger.info("Generating current Bazi pillars for each timestamp")
+        logger.debug("Generating current Bazi pillars for each timestamp")
         
         # Create a copy of the data to avoid modifying the original
         result = data.copy()
@@ -164,34 +177,57 @@ class BaziDataGenerator:
             try:
                 # Get the timestamp
                 timestamp = row['time']
-                logger.info(f"Processing row: {row}")
-                logger.info(f"Processing Bazi pillars for timestamp: {timestamp}")
+                logger.debug(f"Processing row: {row}")
+                logger.debug(f"Processing Bazi pillars for timestamp: {timestamp}")
                 # Ensure the timestamp is in Hong Kong timezone
                 timestamp = ensure_hk_timezone(timestamp)
-                logger.info(f"Converted timestamp to HK timezone: {timestamp}")
+                logger.debug(f"Converted timestamp to HK timezone: {timestamp}")
                 
                 # Generate current Bazi pillars using the existing bazi module
-                current_pillars = bazi.get_heavenly_branch_ymdh_pillars_current_flip_Option_2(
+                current_pillars = bazi.get_ymdh_current(
                     timestamp.year,
                     timestamp.month,
                     timestamp.day,
                     timestamp.hour,
-                    auto_adjust=True,
-                    progress=False  # This helped avoid JSON decode errors
+                    # auto_adjust=True,
+                    # progress=False  # This helped avoid JSON decode errors
+                )
+                # Update 時運 to 大時運
+                if '時運' in current_pillars:
+                    current_pillars['大時運'] = current_pillars.pop('時運')
+
+                # Generate current wuxi pillars
+                wuxi_pillars = bazi.get_wuxi_current(
+                    timestamp.year,
+                    timestamp.month, 
+                    timestamp.day,
+                    timestamp.hour
                 )
                 
                 # Map the keys to more descriptive names
                 key_mapping = {
                     '年': 'current_year_pillar',
-                    '月': 'current_month_pillar',
+                    '月': 'current_month_pillar', 
                     '日': 'current_day_pillar',
                     '時': 'current_hour_pillar',
+                    '-年': 'current_year_pillar_minus',
                     '-月': 'current_month_pillar_minus',
-                    '-時': 'current_hour_pillar_minus'
+                    '-日': 'current_day_pillar_minus', 
+                    '-時': 'current_hour_pillar_minus',
+                    # '大運': 'current_daiyun',
+                    # '大時運': 'current_siyun',
+                    # Add wuxi mappings
+                    '時運': 'current_wuxi_hour',
+                    '日運': 'current_wuxi_day',
+                    '月運': 'current_wuxi_month',
+                    '年運': 'current_wuxi_year'
                 }
                 
-                # Create a new dictionary with the mapped keys
-                mapped_pillars = {key_mapping.get(k, k): v for k, v in current_pillars.items()}
+                # Create a new dictionary with only the mapped keys
+                mapped_pillars = {key_mapping[k]: v for k, v in current_pillars.items() if k in key_mapping}
+                # Add mapped wuxi pillars
+                mapped_wuxi = {key_mapping.get(k, k): v for k, v in wuxi_pillars.items()}
+                mapped_pillars.update(mapped_wuxi)
                 
                 return pd.Series(mapped_pillars)
             except Exception as e:
@@ -204,7 +240,11 @@ class BaziDataGenerator:
                     'current_day_pillar': '',
                     'current_hour_pillar': '',
                     'current_month_pillar_minus': '',
-                    'current_hour_pillar_minus': ''
+                    'current_hour_pillar_minus': '',
+                    'current_wuxi_hour': '',
+                    'current_wuxi_day': '',
+                    'current_wuxi_month': '',
+                    'current_wuxi_year': ''
                 })
         
         # Apply the function to each row
