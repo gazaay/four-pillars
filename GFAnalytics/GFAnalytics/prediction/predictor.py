@@ -14,6 +14,7 @@ import logging
 from datetime import datetime
 
 from GFAnalytics.utils.time_utils import ensure_hk_timezone
+from GFAnalytics.utils.csv_utils import logdf
 
 
 class Predictor:
@@ -50,8 +51,14 @@ class Predictor:
         # Make a copy of future data to avoid modifying the original
         prediction_data = future_data.copy()
         
+        # Log the raw future data
+        logdf(prediction_data, 'predictor_raw_future_data')
+        
         # Extract features for prediction
         X_pred = self._prepare_features(prediction_data)
+        
+        # Log the prepared features
+        logdf(X_pred, 'predictor_prepared_features')
         
         # Generate predictions
         try:
@@ -59,15 +66,26 @@ class Predictor:
             
             # Create prediction dataframe
             predictions = pd.DataFrame({
-                'date': prediction_data['date'],
+                'date': prediction_data['date'] if 'date' in prediction_data.columns else prediction_data['time'],
                 'predicted_value': y_pred
             })
+            
+            # Log the predictions
+            logdf(predictions, 'predictor_predictions')
+            
+            # Print out all predicted values
+            self.logger.info("Predicted values:")
+            for idx, row in predictions.iterrows():
+                self.logger.info(f"Date: {row['date']}, Predicted: {row['predicted_value']:.2f}")
             
             # Add confidence intervals if available
             if hasattr(model, 'predict_with_confidence'):
                 y_pred_lower, y_pred_upper = model.predict_with_confidence(X_pred)
                 predictions['predicted_lower'] = y_pred_lower
                 predictions['predicted_upper'] = y_pred_upper
+                
+                # Log the predictions with confidence intervals
+                logdf(predictions, 'predictor_predictions_with_confidence')
             
             self.logger.info(f"Generated {len(predictions)} predictions")
             
@@ -75,6 +93,8 @@ class Predictor:
             
         except Exception as e:
             self.logger.error(f"Error generating predictions: {str(e)}")
+            # Log the prediction data that caused the error
+            logdf(prediction_data, 'predictor_error_data')
             raise
     
     def _prepare_features(self, data):
@@ -87,13 +107,24 @@ class Predictor:
         Returns:
             pandas.DataFrame: Features ready for prediction.
         """
+        # Log the incoming data
+        logdf(data, 'predictor_incoming_data')
+        
         # Get feature columns from config
         feature_cols = self._get_feature_columns()
+        
+        # Log the feature columns we're trying to use
+        feature_cols_df = pd.DataFrame({'feature_columns': feature_cols})
+        logdf(feature_cols_df, 'predictor_feature_columns')
         
         # Check if all required features are present
         missing_features = [col for col in feature_cols if col not in data.columns]
         if missing_features:
             self.logger.warning(f"Missing features for prediction: {missing_features}")
+            
+            # Log the missing features
+            missing_features_df = pd.DataFrame({'missing_features': missing_features})
+            logdf(missing_features_df, 'predictor_missing_features')
             
             # Try to handle missing features
             for feature in missing_features:
@@ -101,6 +132,9 @@ class Predictor:
         
         # Select only the required features
         X = data[feature_cols].copy()
+        
+        # Log the final feature set
+        logdf(X, 'predictor_final_features')
         
         return X
     
@@ -138,5 +172,9 @@ class Predictor:
         if self.config['model']['features']['use_technical_indicators']:
             for indicator in self.config['model']['features']['technical_indicators']:
                 feature_cols.append(f'{indicator}_encoded')
+        
+        # Log the feature columns we're using
+        feature_cols_df = pd.DataFrame({'feature_column': feature_cols})
+        logdf(feature_cols_df, 'predictor_derived_feature_columns')
         
         return feature_cols 

@@ -15,6 +15,7 @@ import logging
 from datetime import datetime
 import sys
 import argparse
+import pandas as pd
 # print(sys.path)
 
 # Import modules from the framework
@@ -31,6 +32,7 @@ from GFAnalytics.prediction.predictor import Predictor
 from GFAnalytics.visualization.plots import Plotter
 from GFAnalytics.utils.time_utils import ensure_hk_timezone
 from GFAnalytics.utils.gcp_utils import setup_gcp_credentials
+from GFAnalytics.utils.csv_utils import configure as configure_csv_logging, logdf
 
 
 class GFAnalytics:
@@ -70,6 +72,17 @@ class GFAnalytics:
         self._initialize_components()
         
         self.logger.info("GFAnalytics framework initialized")
+        
+        # Configure DataFrame logging
+        configure_csv_logging(config_path)
+        
+        # Data containers
+        self.stock_data = None
+        self.bazi_data = None
+        self.training_data = None
+        self.future_data = None
+        self.predictions = None
+        self.evaluation_results = None
     
     def _load_config(self, config_path):
         """
@@ -177,9 +190,16 @@ class GFAnalytics:
         self.stock_data = self.stock_loader.load()
         self.bq_storage.store_stock_data(self.stock_data)
         
+        # Log stock data to CSV
+        logdf(self.stock_data, 'stock_data')
+        
         self.logger.info("Generating Bazi data")
         self.bazi_data = self.bazi_generator.generate(self.stock_data)
         self.bq_storage.store_bazi_data(self.bazi_data)
+        
+        # Log Bazi data to CSV
+        logdf(self.bazi_data, 'bazi_data')
+        
         # Log info about loaded data
         self.logger.info(f"Stock data shape: {self.stock_data.shape}")
         self.logger.info(f"Stock data columns: {self.stock_data.columns.tolist()}")
@@ -203,10 +223,16 @@ class GFAnalytics:
         bazi_features = self.bazi_transformer.transform(self.bazi_data)
         self.logger.info(f"Bazi features shape after transformation: {bazi_features.shape}")
         
+        # Log intermediate bazi features
+        logdf(bazi_features, 'bazi_features')
+        
         # Transform to ChengShen attributes
         self.logger.info("Applying ChengShen transformation...")
         chengshen_features = self.chengshen_transformer.transform(bazi_features)
         self.logger.info(f"Features shape after ChengShen transformation: {chengshen_features.shape}")
+        
+        # Log chengshen features
+        logdf(chengshen_features, 'chengshen_features')
         
         # Combine with stock data
         self.logger.info("Combining features with stock data...")
@@ -229,6 +255,9 @@ class GFAnalytics:
             else:
                 self.logger.error("Cannot create target: 'Close' column not found")
         
+        # Log final training data
+        logdf(self.training_data, 'training_data')
+        
         # Store training data
         self.bq_storage.store_training_data(self.training_data)
         self.logger.info("Training data stored in BigQuery")
@@ -236,93 +265,95 @@ class GFAnalytics:
         return self.training_data
     
     def train_model(self):
-        """Train the machine learning model."""
+        """Train the Random Forest model."""
         self.logger.info("Training model")
         
-        # Print first 2 rows of training data
-        self.logger.info(f"\nFirst 2 rows of training data:\n{self.training_data.head(2)}")
-        # Remove duplicate stock code and RIC code columns
-        # if 'stock_code_y' in self.training_data.columns:
-        #     self.training_data = self.training_data.drop('stock_code_y', axis=1)
-        # if 'ric_code_y' in self.training_data.columns:
-        #     self.training_data = self.training_data.drop('ric_code_y', axis=1)
         # Train the model
         self.model.train(self.training_data)
         
-        # Save the model to Google Drive
-        self.model_storage.save_model(self.model)
+        # Get and log feature importance
+        try:
+            feature_importance = self.model.get_feature_importance()
+            self.logger.info(f"Top 10 important features: {feature_importance.head(10)}")
+            
+            # Log feature importance to CSV
+            logdf(feature_importance, 'feature_importance')
+        except Exception as e:
+            self.logger.error(f"Failed to get feature importance: {str(e)}")
         
+        # Save the model
+        try:
+            model_path = self.model_storage.save_model(self.model)
+            self.logger.info(f"Model saved to {model_path}")
+        except Exception as e:
+            self.logger.error(f"Failed to save model: {str(e)}")
+            
         return self.model
     
     def evaluate_model(self):
-        """Evaluate the model performance."""
+        """Evaluate the trained model."""
         self.logger.info("Evaluating model")
         
-        # Make sure we're using the same training data for evaluation
-        if self.training_data is None:
-            self.logger.error("Training data not available for evaluation")
-            return None
+        # Evaluate model
+        self.evaluation_results = self.evaluator.evaluate(self.model, self.training_data)
+        
+        # Log evaluation metrics
+        metrics_dict = {k: v for k, v in self.evaluation_results.items() 
+                        if k not in ['feature_importance', 'correlation_data']}
+        metrics_df = pd.DataFrame([metrics_dict])
+        logdf(metrics_df, 'evaluation_metrics')
+        
+        # Log correlation data if available
+        if 'correlation_data' in self.evaluation_results:
+            correlation_df = self.evaluation_results['correlation_data']
+            logdf(correlation_df, 'correlation_matrix')
+        
+        # Log feature importance if available
+        if 'feature_importance' in self.evaluation_results:
+            feature_importance_df = self.evaluation_results['feature_importance']
+            logdf(feature_importance_df, 'feature_importance_from_eval')
+        
+        # Print metrics
+        self.logger.info("Model evaluation results:")
+        for key, value in metrics_dict.items():
+            self.logger.info(f"  {key}: {value}")
             
-        # Copy the training data to avoid modifying it
-        evaluation_data = self.training_data.copy()
-        
-        # Log training data shape
-        self.logger.info(f"Evaluation data shape: {evaluation_data.shape}")
-        self.logger.info(f"Evaluation data columns: {evaluation_data.columns[:5]}...")
-        
-        # Evaluate the model using the training data
-        self.evaluation_results = self.evaluator.evaluate(self.model, evaluation_data)
-        
-        # Store evaluation results in BigQuery
-        metrics_dict = {
-            'model_id': f"rf_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            'stock_code': self.config['stock']['code'],
-            'training_start_date': self.config['date_range']['training']['start_date'],
-            'training_end_date': self.config['date_range']['training']['end_date'],
-            'timestamp': datetime.now()
-        }
-        
-        # Add evaluation metrics to the dict
-        for metric, value in self.evaluation_results.items():
-            if isinstance(value, (int, float)):
-                metrics_dict[metric.lower()] = value
-            elif metric == 'feature_importance' and value is not None:
-                # Convert top 20 features to JSON
-                try:
-                    metrics_dict['feature_importance'] = value.head(20).to_json()
-                except:
-                    self.logger.warning("Could not convert feature importance to JSON")
-        
-        # Store metrics in BigQuery
-        self.bq_storage.store_model_metrics(metrics_dict)
-        
         return self.evaluation_results
     
     def predict_future(self):
-        """Generate predictions for future data."""
-        self.logger.info("Generating future predictions")
+        """Predict future data."""
+        self.logger.info("Generating predictions for future data")
         
         # Generate future data
-        self.future_data = self.future_generator.generate()
+        self.future_data = self.future_generator.generate(
+            label_encoders=getattr(self.model, 'label_encoders', None)
+        )
+        
+        # Log future data
+        logdf(self.future_data, 'future_data')
         
         # Make predictions
         self.predictions = self.predictor.predict(self.model, self.future_data)
         
+        # Create predictions DataFrame
+        predictions_df = pd.DataFrame({
+            'date': self.future_data['time'] if 'time' in self.future_data.columns else self.future_data.index,
+            'stock_code': self.config['stock']['code'],
+            'predicted_value': self.predictions,
+            'confidence': 0.95  # Placeholder
+        })
+        
+        # Log predictions
+        logdf(predictions_df, 'predictions')
+        
         # Store predictions
-        self.bq_storage.store_prediction_data(self.predictions)
+        self.bq_storage.store_prediction_data(predictions_df)
+        self.logger.info(f"Made {len(self.predictions)} predictions")
         
         return self.predictions
     
     def visualize_results(self, show_plots=False):
-        """
-        Visualize the results.
-        
-        Args:
-            show_plots (bool): Whether to display the plots immediately.
-        
-        Returns:
-            bool: True if visualization was successful, False otherwise.
-        """
+        """Visualize the results with plots."""
         self.logger.info("Visualizing results")
         
         # Make sure we have required data
@@ -335,36 +366,75 @@ class GFAnalytics:
             self.logger.error("Cannot visualize results: model not trained")
             return False
         
-        # Plot predictions
-        if self.config['visualization']['plot_prediction']:
-            self.logger.info("Creating prediction plot...")
-            self.plotter.plot_prediction(self.stock_data, self.predictions, show=show_plots)
-        
-        # Plot feature importance
-        if self.config['model']['evaluation']['feature_importance']:
-            self.logger.info("Creating feature importance plot...")
-            # Use the training data directly
-            self.plotter.plot_feature_importance(self.model, self.training_data, show=show_plots)
-        
-        # Plot correlation heatmap
-        if self.config['model']['evaluation']['correlation_heatmap']:
-            self.logger.info("Creating correlation heatmap...")
-            # Use the training data directly
-            self.plotter.plot_correlation_heatmap(self.training_data, show=show_plots)
+        # Create prediction plot
+        try:
+            if self.config['visualization']['plot_prediction']:
+                self.logger.info("Creating prediction plot...")
+                prediction_fig = self.plotter.plot_prediction(
+                    self.stock_data, self.predictions, show=show_plots
+                )
+                self.logger.info("Prediction plot created")
+            else:
+                prediction_fig = None
+        except Exception as e:
+            self.logger.error(f"Failed to create prediction plot: {str(e)}")
+            prediction_fig = None
             
-        # Plot Bazi element predictions if we have encoders from the model
-        if hasattr(self.model, 'label_encoders') and self.model.label_encoders:
-            self.logger.info("Creating Bazi predictions plot...")
-            # Pass the encoders for decoding Bazi elements
-            self.plotter.plot_bazi_predictions(self.predictions, self.model.label_encoders, show=show_plots)
-        
+        # Create feature importance plot
+        try:
+            if self.config['model']['evaluation']['feature_importance'] and hasattr(self.model, 'get_feature_importance'):
+                self.logger.info("Creating feature importance plot...")
+                importance_fig = self.plotter.plot_feature_importance(
+                    self.model, self.training_data, show=show_plots
+                )
+                self.logger.info("Feature importance plot created")
+            else:
+                importance_fig = None
+        except Exception as e:
+            self.logger.error(f"Failed to create feature importance plot: {str(e)}")
+            importance_fig = None
+            
+        # Create correlation heatmap
+        try:
+            if self.config['model']['evaluation']['correlation_heatmap']:
+                self.logger.info("Creating correlation heatmap...")
+                correlation_fig = self.plotter.plot_correlation_heatmap(
+                    self.training_data, show=show_plots
+                )
+                self.logger.info("Correlation heatmap created")
+            else:
+                correlation_fig = None
+        except Exception as e:
+            self.logger.error(f"Failed to create correlation heatmap: {str(e)}")
+            correlation_fig = None
+            
+        # Create Bazi predictions plot
+        try:
+            if hasattr(self.model, 'label_encoders'):
+                self.logger.info("Creating Bazi predictions plot...")
+                bazi_fig = self.plotter.plot_bazi_predictions(
+                    self.predictions, self.model.label_encoders, show=show_plots
+                )
+                self.logger.info("Bazi predictions plot created")
+            else:
+                bazi_fig = None
+        except Exception as e:
+            self.logger.error(f"Failed to create Bazi predictions plot: {str(e)}")
+            bazi_fig = None
+            
         # If show_plots is False but we want to display them all at once
         if not show_plots and self.config['visualization'].get('display_plots_at_end', True):
             self.display_plots()
             
-        self.logger.info("Visualization completed")
-        return True
+        self.logger.info("Visualization complete")
         
+        return {
+            'prediction_plot': prediction_fig,
+            'importance_plot': importance_fig,
+            'correlation_plot': correlation_fig,
+            'bazi_plot': bazi_fig
+        }
+    
     def display_plots(self):
         """Display all generated plots."""
         if hasattr(self, 'plotter'):

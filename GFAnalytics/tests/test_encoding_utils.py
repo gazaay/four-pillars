@@ -52,6 +52,30 @@ class TestEncodingUtils(unittest.TestCase):
         self.existing_encoder = LabelEncoder()
         self.existing_encoder.fit(['金', '木', '水', '火'])  # Deliberately missing '土'
         
+        # Create empty DataFrame
+        self.empty_df = pd.DataFrame()
+        
+        # Create DataFrame with only numerical columns
+        self.numeric_df = pd.DataFrame({
+            'open': np.random.random(5) * 100,
+            'high': np.random.random(5) * 100,
+            'low': np.random.random(5) * 100,
+            'close': np.random.random(5) * 100,
+            'volume': np.random.randint(1000, 10000, 5)
+        })
+        
+        # Create DataFrame with a single value in categorical column
+        self.single_value_df = pd.DataFrame({
+            'category': ['A', 'A', 'A', 'A', 'A'],
+            'value': np.random.random(5) * 100
+        })
+        
+        # Create DataFrame with boolean column
+        self.bool_df = pd.DataFrame({
+            'category': ['A', 'B', 'C', 'D', 'E'],
+            'bool_col': [True, False, True, False, True]
+        })
+        
     def test_get_categorical_columns(self):
         """Test identifying categorical columns."""
         cat_cols = get_categorical_columns(self.test_data)
@@ -151,6 +175,93 @@ class TestEncodingUtils(unittest.TestCase):
         
         # Check that the error is handled and predictions are returned as is
         self.assertTrue(all(decoded == invalid_predictions))
+    
+    def test_empty_dataframe(self):
+        """Test behavior with empty DataFrame."""
+        # Test get_categorical_columns with empty DataFrame
+        cat_cols = get_categorical_columns(self.empty_df)
+        self.assertEqual(len(cat_cols), 0, "Empty DataFrame should return empty list of categorical columns")
+        
+        # Test process_encode_data with empty DataFrame
+        processed_data, encoders = process_encode_data(self.empty_df)
+        self.assertEqual(len(processed_data.columns), 0, "Processed empty DataFrame should remain empty")
+        self.assertEqual(len(encoders), 0, "No encoders should be created for empty DataFrame")
+    
+    def test_numeric_only_dataframe(self):
+        """Test behavior with DataFrame containing only numeric columns."""
+        # Test get_categorical_columns with numeric-only DataFrame
+        cat_cols = get_categorical_columns(self.numeric_df)
+        self.assertEqual(len(cat_cols), 0, "Numeric-only DataFrame should have no categorical columns")
+        
+        # Test process_encode_data with numeric-only DataFrame
+        processed_data, encoders = process_encode_data(self.numeric_df)
+        self.assertEqual(len(encoders), 0, "No encoders should be created for numeric-only DataFrame")
+        # Check that all columns remain unchanged
+        for col in self.numeric_df.columns:
+            self.assertTrue(np.allclose(processed_data[col], self.numeric_df[col]))
+    
+    def test_single_value_column(self):
+        """Test behavior with column containing a single unique value."""
+        # Test encoding a column with single value
+        encoded_col, encoder = encode_column(self.single_value_df, 'category')
+        
+        # Check the encoder and encoded values
+        self.assertEqual(len(encoder.classes_), 1, "Encoder should have one class for single-value column")
+        self.assertTrue(all(val == 0 for val in encoded_col), "All encoded values should be 0")
+        
+        # Test process_encode_data with single-value categorical column
+        processed_data, encoders = process_encode_data(self.single_value_df)
+        self.assertEqual(len(encoders), 1, "One encoder should be created")
+        self.assertTrue(all(val == 0 for val in processed_data['category']), "All encoded values should be 0")
+    
+    def test_boolean_column(self):
+        """Test behavior with boolean column."""
+        # Test get_categorical_columns with boolean column
+        cat_cols = get_categorical_columns(self.bool_df)
+        self.assertIn('bool_col', cat_cols, "Boolean column should be identified as categorical")
+        
+        # Test encoding a boolean column
+        encoded_col, encoder = encode_column(self.bool_df, 'bool_col')
+        
+        # Check the encoder and encoded values
+        self.assertEqual(len(encoder.classes_), 2, "Encoder should have two classes for boolean column")
+        self.assertTrue(all(isinstance(val, int) for val in encoded_col), "Encoded values should be integers")
+    
+    def test_column_does_not_exist(self):
+        """Test behavior when trying to encode a non-existent column."""
+        # Test encode_column with non-existent column
+        with self.assertRaises(KeyError):
+            encode_column(self.test_data, 'non_existent_column')
+    
+    def test_mixed_type_column(self):
+        """Test behavior with column containing mixed types."""
+        # Create DataFrame with mixed types column
+        mixed_df = pd.DataFrame({
+            'mixed_col': ['A', 1, 2.5, True, 'B'],
+            'value': np.random.random(5) * 100
+        })
+        
+        # Test identifying mixed type column as categorical
+        cat_cols = get_categorical_columns(mixed_df)
+        self.assertIn('mixed_col', cat_cols, "Mixed-type column should be identified as categorical")
+        
+        # Test encoding mixed type column
+        encoded_col, encoder = encode_column(mixed_df, 'mixed_col')
+        
+        # Check the encoder and encoded values
+        self.assertEqual(len(encoder.classes_), 5, "Encoder should have 5 classes for 5 unique values")
+        self.assertTrue(all(isinstance(val, int) for val in encoded_col), "Encoded values should be integers")
+    
+    def test_process_encode_data_with_specific_columns(self):
+        """Test process_encode_data when specifying which columns to encode."""
+        # We'll simulate this by passing only a subset of encoders
+        existing_encoders = {'wuxi': self.existing_encoder}  # Only encode 'wuxi'
+        processed_data, encoders = process_encode_data(self.test_data, existing_encoders)
+        
+        # Check that only 'wuxi' is encoded and other categorical columns remain unchanged
+        self.assertTrue(all(isinstance(val, int) for val in processed_data['wuxi']), "'wuxi' should be encoded")
+        for col in ['day_gan', 'day_zhi', 'bazi_day', 'cs_relation']:
+            self.assertTrue(all(processed_data[col] == self.test_data[col]), f"{col} should remain unchanged")
 
 if __name__ == '__main__':
     unittest.main() 

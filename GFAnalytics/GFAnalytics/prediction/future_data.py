@@ -19,6 +19,7 @@ from GFAnalytics.data.bazi_data import BaziDataGenerator
 from GFAnalytics.features.bazi_features import BaziFeatureTransformer
 from GFAnalytics.features.chengshen import ChengShenTransformer
 from GFAnalytics.utils.encoding_utils import process_encode_data
+from GFAnalytics.utils.csv_utils import logdf
 
 
 class FutureDataGenerator:
@@ -71,6 +72,10 @@ class FutureDataGenerator:
         # Generate future dates
         future_dates = self._generate_future_dates(base_date, days_ahead)
         
+        # Log the generated future dates
+        future_dates_df = pd.DataFrame({'future_dates': future_dates})
+        logdf(future_dates_df, 'future_generator_dates')
+        
         # Create empty dataframe for future data
         future_data = pd.DataFrame({
             'time': future_dates,
@@ -78,8 +83,14 @@ class FutureDataGenerator:
             'stock_code': self.config['stock']['code']
         })
         
+        # Log the initial future data
+        logdf(future_data, 'future_generator_initial_data')
+        
         # Generate Bazi data for future dates
         future_bazi_data = self._generate_bazi_data(future_dates)
+        
+        # Log the Bazi data
+        logdf(future_bazi_data, 'future_generator_bazi_data')
         
         # Merge with future data
         if 'time' in future_bazi_data.columns:
@@ -87,21 +98,34 @@ class FutureDataGenerator:
         else:
             future_data = pd.merge(future_data, future_bazi_data, on='date', how='left')
         
+        # Log the merged data
+        logdf(future_data, 'future_generator_merged_data')
+        
         # Transform Bazi pillars to features if transformer is available
         if self.bazi_transformer:
             try:
                 future_data = self.bazi_transformer.transform(future_data)
                 self.logger.info("Applied Bazi feature transformation")
+                
+                # Log the data after Bazi transformation
+                logdf(future_data, 'future_generator_bazi_transformed_data')
             except Exception as e:
                 self.logger.error(f"Failed to apply Bazi transformation: {str(e)}")
+                # Log the data that caused the error
+                logdf(future_data, 'future_generator_bazi_transform_error_data')
         
         # Transform to ChengShen attributes if transformer is available
         if self.chengshen_transformer:
             try:
                 future_data = self.chengshen_transformer.transform(future_data)
                 self.logger.info("Applied ChengShen transformation")
+                
+                # Log the data after ChengShen transformation
+                logdf(future_data, 'future_generator_chengshen_transformed_data')
             except Exception as e:
                 self.logger.error(f"Failed to apply ChengShen transformation: {str(e)}")
+                # Log the data that caused the error
+                logdf(future_data, 'future_generator_chengshen_transform_error_data')
         
         # Add stock launch day Bazi if available
         if 'stock' in self.config and 'listing_date' in self.config['stock']:
@@ -118,14 +142,30 @@ class FutureDataGenerator:
                     future_data[f'base_{col}'] = value
                     
                 self.logger.info(f"Added listing date Bazi data from {listing_date_str}")
+                
+                # Log the data after adding listing Bazi
+                logdf(future_data, 'future_generator_with_listing_bazi')
             except Exception as e:
                 self.logger.error(f"Failed to add listing date Bazi data: {str(e)}")
+                # Log the error state
+                logdf(future_data, 'future_generator_listing_bazi_error_data')
         
         # Apply encoding to categorical features
         self.logger.info("Encoding categorical features for prediction")
         try:
             # If label_encoders provided, use them, otherwise create new ones
             encoded_data, new_encoders = process_encode_data(future_data, label_encoders=label_encoders)
+            
+            # Log the encoded data
+            logdf(encoded_data, 'future_generator_encoded_data')
+            
+            # Log the encoders
+            if new_encoders:
+                encoders_info = pd.DataFrame({
+                    'encoder_name': list(new_encoders.keys()),
+                    'encoder_classes_count': [len(enc.classes_) for enc in new_encoders.values()]
+                })
+                logdf(encoders_info, 'future_generator_encoders_info')
             
             # If new encoders were created and we didn't have any before, store them
             if label_encoders is None and new_encoders:
@@ -146,6 +186,9 @@ class FutureDataGenerator:
         except Exception as e:
             self.logger.error(f"Failed to encode categorical features: {str(e)}")
             self.logger.warning("Returning unencoded data, which may cause prediction issues")
+            
+            # Log the error state
+            logdf(future_data, 'future_generator_encoding_error_data')
             return future_data
     
     def _generate_future_dates(self, base_date, days_ahead):
@@ -188,6 +231,13 @@ class FutureDataGenerator:
                 if current_date.weekday() < 5:  # Monday to Friday
                     future_dates.append(current_date)
         
+        # Log the generated dates
+        dates_info = pd.DataFrame({
+            'date': future_dates,
+            'weekday': [d.strftime('%A') for d in future_dates]
+        })
+        logdf(dates_info, 'future_generator_dates_details')
+        
         return future_dates
         
     def _generate_bazi_data(self, future_dates):
@@ -204,14 +254,27 @@ class FutureDataGenerator:
             # Create a dataframe with the dates
             date_df = pd.DataFrame({'time': future_dates})
             
+            # Log the input dates
+            logdf(date_df, 'future_generator_bazi_input_dates')
+            
             # Generate Bazi data
             bazi_data = self.bazi_generator.generate(date_df)
+            
+            # Log the generated Bazi data
+            logdf(bazi_data, 'future_generator_bazi_generated_data')
             
             self.logger.info(f"Generated Bazi data for {len(future_dates)} future dates")
             return bazi_data
             
         except Exception as e:
             self.logger.error(f"Failed to generate Bazi data: {str(e)}")
+            
+            # Log the error state
+            error_info = pd.DataFrame({
+                'error': [str(e)],
+                'dates_count': [len(future_dates)]
+            })
+            logdf(error_info, 'future_generator_bazi_error_info')
             
             # Create an empty DataFrame with the same columns as would be expected
             empty_df = pd.DataFrame({'time': future_dates})
@@ -225,5 +288,8 @@ class FutureDataGenerator:
             
             for col in bazi_columns:
                 empty_df[col] = ''
+                
+            # Log the fallback empty data
+            logdf(empty_df, 'future_generator_bazi_fallback_data')
                 
             return empty_df 

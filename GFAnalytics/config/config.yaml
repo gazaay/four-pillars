@@ -1,0 +1,108 @@
+# GFAnalytics Configuration
+
+# Stock/Index Configuration
+stock:
+  code: "HSI"  # Stock or index code to analyze
+  ric_code: "^HSI"  # Reuters Instrument Code
+  listing_date: "1969-11-24 09:30:00"  # Added time component for market open
+# Date Range Configuration
+date_range:
+  training:
+    start_date: "2023-11-01"  # Start date for training data
+    end_date: "2024-12-31"    # End date for training data
+
+  testing:
+    start_date: "2025-10-31"  # Start date for testing data
+    end_date: "2025-01-31"    # End date for testing data
+  prediction:
+    days_ahead: 90          # Number of days to predict ahead
+
+# Data Period Configuration
+period: "1D"  # Trading period (1H, 2H, 1D, etc.)
+
+# Google Cloud Platform Configuration
+gcp:
+  project_id: "stock8word"
+  credentials_path: "stock8word-70af0959c4cb.json"
+  
+  # BigQuery Configuration
+  bigquery:
+    dataset: "GFAnalytics"
+    tables:
+      stock_data: "stock_data"
+      bazi_data: "bazi_data"
+      training_data: "training_data"
+      prediction_data: "prediction_data"
+      model_metrics: "model_metrics"
+      batch: "batch"  # New batch table to track batch operations
+  
+  # Google Drive Configuration
+  gdrive:
+    folder_id: "your_gdrive_folder_id"  # Replace with actual folder ID
+    model_filename: "gf_model.pkl"
+
+# Model Configuration
+model:
+  type: "random_forest"
+  params:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 2
+    min_samples_leaf: 1
+    random_state: 42
+  
+  # Feature Engineering
+  features:
+    use_bazi: true
+    use_chengshen: true
+    use_technical_indicators: true
+    
+    # Technical indicators to include
+    technical_indicators:
+      - "SMA"  # Simple Moving Average
+      - "EMA"  # Exponential Moving Average
+      - "RSI"  # Relative Strength Index
+      - "MACD" # Moving Average Convergence Divergence
+      - "BB"   # Bollinger Bands
+    
+    # Encoding configuration
+    encoding:
+      method: "label_encoding"  # Options: label_encoding, one_hot_encoding
+      
+  # Evaluation metrics
+  evaluation:
+    metrics:
+      - "MSE"    # Mean Squared Error
+      - "RMSE"   # Root Mean Squared Error
+      - "R2"     # R-squared
+      - "MedAE"  # Median Absolute Error
+    
+    # Feature importance analysis
+    feature_importance: true
+    correlation_heatmap: true
+
+# Visualization Configuration
+visualization:
+  plot_prediction: true
+  plot_feature_importance: true
+  plot_correlation_heatmap: true
+  save_plots: true
+  plots_dir: "plots"
+  display_plots_at_end: true  # Whether to show all plots at the end of pipeline
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "gfanalytics.log" 
+
+# CSV Logging Configuration
+csv_logging:
+  enabled: true                # Enable/disable CSV logging
+  output_dir: "csv_logs"       # Directory for CSV log files
+  include_timestamp: true      # Add timestamp to filenames
+  timestamp_format: "%Y%m%d_%H%M%S"  # Format for timestamp
+  max_rows: 1000               # Maximum rows to log (0 for unlimited)
+  index: true                  # Include DataFrame index in CSV
+  compression: null            # Optional compression (null, 'gzip', 'bz2', 'zip', 'xz')
+  float_format: "%.6g"         # Format for floating point numbers
+  encoding: "utf-8"            # File encoding 

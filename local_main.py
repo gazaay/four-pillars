@@ -811,4 +811,5 @@ def main():
 
 if __name__ == "__main__":
     # test_20250402_Error_Flip_Pillars()
-    test_8w_pillars()
+    # test_8w_pillars()
+    main()
