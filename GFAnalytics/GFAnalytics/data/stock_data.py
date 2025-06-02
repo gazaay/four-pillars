@@ -91,7 +91,7 @@ class StockDataLoader:
     
     def _load_from_yfinance(self):
         """
-        Load stock data from YFinance.
+        Load stock data from YFinance using the Ticker().history() method.
         
         Returns:
             pandas.DataFrame: The loaded stock data.
@@ -99,32 +99,50 @@ class StockDataLoader:
         # Convert start and end dates to datetime
         start_date = pd.to_datetime(self.start_date)
         end_date = pd.to_datetime(self.end_date)
+        
         # Log yfinance version
         logger.info(f"Using yfinance version: {yf.__version__}")
-        # Download data from YFinance
-        data = yf.download(
-            self.ric_code,
+        logger.info(f"Loading data for {self.ric_code} from {start_date} to {end_date}")
+        
+        # Create ticker object and get historical data
+        ticker = yf.Ticker(self.ric_code)
+        
+        # Use the working approach: ticker.history() instead of yf.download()
+        logger.info("Calling ticker.history()...")
+        data = ticker.history(
             start=start_date,
             end=end_date,
             interval=self.interval,
             auto_adjust=True
-        ).xs(self.ric_code, axis=1, level='Ticker')
+        )
+        
+        # Check if data is empty
+        if data.empty:
+            logger.error("YFinance returned empty DataFrame!")
+            raise ValueError(f"No data returned for {self.ric_code}")
+        
         # Log raw data from YFinance
         logger.info("Raw YFinance data:")
-        logger.info(f"\nShape: {data.shape}")
+        logger.info(f"Shape: {data.shape}")
         logger.info(f"Index: {data.index}")
         logger.info(f"Columns: {data.columns}")
         logger.info(f"First few rows:\n{data.head()}")
+        
         # Reset index to make the date a column
         data.reset_index(inplace=True)
         
         # Rename the date column to 'time'
-        data.rename(columns={'Date': 'time', 'Datetime': 'time'}, inplace=True)
+        date_column = 'Date' if 'Date' in data.columns else 'Datetime'
+        if date_column in data.columns:
+            data.rename(columns={date_column: 'time'}, inplace=True)
+        else:
+            logger.warning(f"Expected date column not found. Available columns: {data.columns.tolist()}")
         
         # Ensure the time column is in Hong Kong timezone
         data = convert_df_timestamps_to_hk(data, 'time')
+        
         # Log data statistics
-        logger.info(f"Data shape: {data.shape}")
+        logger.info(f"Data shape after processing: {data.shape}")
         logger.info(f"Date range: {data['time'].min()} to {data['time'].max()}")
         logger.info(f"Columns: {data.columns.tolist()}")
         
@@ -136,16 +154,17 @@ class StockDataLoader:
         missing = data.isnull().sum()
         if missing.any():
             logger.warning(f"Missing values found:\n{missing[missing > 0]}")
+        else:
+            logger.info("No missing values found")
         
-        # Add stock code column
+        # Add metadata columns
         data['stock_code'] = self.stock_code
         data['ric_code'] = self.ric_code
-        
-        # Add a UUID column for tracking
         data['uuid'] = pd.util.hash_pandas_object(data).astype(str)
-        
-        # Add last modified date
         data['last_modified_date'] = datetime.now(pytz.timezone('Asia/Hong_Kong'))
+        
+        logger.info(f"Final data shape: {data.shape}")
+        logger.info(f"Final columns: {data.columns.tolist()}")
         
         return data
     

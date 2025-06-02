@@ -77,6 +77,8 @@ class BaziDataGenerator:
         logger.debug(f"Adding base pillars to data. Base pillars: {base_pillars}")
         for key, value in base_pillars.items():
             column_name = f'base_{key}'
+            if column_name in data.columns:
+                logger.warning(f"Column '{column_name}' already exists, overwriting...")
             logger.info(f"Added column '{column_name}' with value '{value}'")
             data[column_name] = value
         
@@ -91,7 +93,16 @@ class BaziDataGenerator:
         if 'last_modified_date' not in data.columns:
             data['last_modified_date'] = datetime.now(pytz.timezone('Asia/Hong_Kong'))
         
-        logger.info(f"Generated Bazi data with {len(data)} records")
+        # Final validation to ensure no duplicate columns
+        duplicate_cols = data.columns[data.columns.duplicated()].tolist()
+        if duplicate_cols:
+            logger.error(f"Duplicate columns found in final Bazi data: {duplicate_cols}")
+            # Remove duplicates by keeping the first occurrence
+            data = data.loc[:, ~data.columns.duplicated()]
+            logger.info(f"Removed duplicate columns. Final data shape: {data.shape}")
+        
+        logger.info(f"Generated Bazi data with {len(data)} records and {len(data.columns)} columns")
+        logger.info(f"Final Bazi data columns: {data.columns.tolist()}")
         return data
     
     def _generate_base_pillars(self, listing_date):
@@ -250,8 +261,23 @@ class BaziDataGenerator:
         # Apply the function to each row
         pillars_df = result.apply(generate_pillars_for_timestamp, axis=1)
         
-        # Concatenate the original data with the generated pillars
+        # Check for overlapping columns between result and pillars_df
+        overlapping_cols = set(result.columns).intersection(set(pillars_df.columns))
+        if overlapping_cols:
+            logger.warning(f"Found overlapping columns: {overlapping_cols}")
+            # Drop overlapping columns from pillars_df to avoid duplicates
+            pillars_df = pillars_df.drop(columns=list(overlapping_cols))
+        
+        # Concatenate the original data with the generated pillars (now safe from duplicates)
         result = pd.concat([result, pillars_df], axis=1)
+        
+        # Final check for duplicate columns
+        duplicate_cols = result.columns[result.columns.duplicated()].tolist()
+        if duplicate_cols:
+            logger.error(f"Duplicate columns detected after concatenation: {duplicate_cols}")
+            # Remove duplicate columns by keeping only the first occurrence
+            result = result.loc[:, ~result.columns.duplicated()]
+            logger.info(f"Removed duplicate columns. Final shape: {result.shape}")
         
         logger.info("Current Bazi pillars generated for all timestamps")
         return result

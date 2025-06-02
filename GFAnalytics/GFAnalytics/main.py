@@ -16,6 +16,7 @@ from datetime import datetime
 import sys
 import argparse
 import pandas as pd
+import numpy as np
 # print(sys.path)
 
 # Import modules from the framework
@@ -32,7 +33,8 @@ from GFAnalytics.prediction.predictor import Predictor
 from GFAnalytics.visualization.plots import Plotter
 from GFAnalytics.utils.time_utils import ensure_hk_timezone
 from GFAnalytics.utils.gcp_utils import setup_gcp_credentials
-from GFAnalytics.utils.csv_utils import configure as configure_csv_logging, logdf
+from GFAnalytics.utils.csv_utils import configure as configure_csv_logging, logdf, list_runs, get_run_logs
+from GFAnalytics.utils.global_run_id import generate_run_id, get_run_id
 
 
 class GFAnalytics:
@@ -67,6 +69,10 @@ class GFAnalytics:
         
         # Setup logging
         self._setup_logging()
+        
+        # Generate a unique run ID for this execution
+        self.run_id = generate_run_id()
+        self.logger.info(f"Starting new run with ID: {self.run_id}")
         
         # Initialize components
         self._initialize_components()
@@ -165,7 +171,7 @@ class GFAnalytics:
             show_plots (bool): Whether to display plots during execution.
             
         Returns:
-            dict: Results containing evaluation metrics and predictions.
+            dict: Results containing evaluation metrics, predictions, and run ID.
         """
         self.logger.info("Starting GFAnalytics pipeline")
         
@@ -180,6 +186,7 @@ class GFAnalytics:
         self.logger.info("GFAnalytics pipeline completed successfully")
         
         return {
+            'run_id': self.run_id,
             'evaluation': self.evaluation_results,
             'predictions': self.predictions
         }
@@ -329,25 +336,15 @@ class GFAnalytics:
             label_encoders=getattr(self.model, 'label_encoders', None)
         )
         
-        # Log future data
-        logdf(self.future_data, 'future_data')
-        
         # Make predictions
         self.predictions = self.predictor.predict(self.model, self.future_data)
         
-        # Create predictions DataFrame
-        predictions_df = pd.DataFrame({
-            'date': self.future_data['time'] if 'time' in self.future_data.columns else self.future_data.index,
-            'stock_code': self.config['stock']['code'],
-            'predicted_value': self.predictions,
-            'confidence': 0.95  # Placeholder
-        })
+        # Log the future data used for prediction
+        logdf(self.future_data, 'predictor_future_data')
         
-        # Log predictions
-        logdf(predictions_df, 'predictions')
+        # Log the predictions
+        logdf(self.predictions, 'final_predictions')
         
-        # Store predictions
-        self.bq_storage.store_prediction_data(predictions_df)
         self.logger.info(f"Made {len(self.predictions)} predictions")
         
         return self.predictions
@@ -465,7 +462,33 @@ def main():
     parser.add_argument('--clean-table', type=str, help='Clean specific table')
     parser.add_argument('--show-plots', action='store_true', help='Show plots during pipeline execution')
     parser.add_argument('--display-plots', action='store_true', help='Only display previously generated plots')
+    parser.add_argument('--list-runs', action='store_true', help='List all available runs')
+    parser.add_argument('--run-logs', type=str, help='Show logs for a specific run ID')
     args = parser.parse_args()
+    
+    # Handle command-line arguments for run management
+    if args.list_runs:
+        runs = list_runs()
+        if len(runs) == 0:
+            print("No runs found.")
+        else:
+            print(f"Found {len(runs)} runs:")
+            # Format timestamp nicely
+            runs['timestamp_str'] = runs['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            print(runs[['run_id', 'timestamp_str', 'logs_count']].to_string(index=False))
+        return runs
+    
+    if args.run_logs:
+        logs = get_run_logs(args.run_logs)
+        if len(logs) == 0:
+            print(f"No logs found for run ID: {args.run_logs}")
+        else:
+            print(f"Found {len(logs)} logs for run ID: {args.run_logs}")
+            # Format size and timestamp nicely
+            logs['size_kb'] = (logs['size'] / 1024).round(2)
+            logs['modified_time_str'] = logs['modified_time'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            print(logs[['filename', 'size_kb', 'modified_time_str']].to_string(index=False))
+        return logs
     
     # Create an instance of the GFAnalytics framework
     gf = GFAnalytics()
@@ -480,6 +503,10 @@ def main():
     else:
         # Run the complete pipeline
         results = gf.run(show_plots=args.show_plots)
+        
+        # Print run ID for reference
+        print(f"\nCompleted run with ID: {results['run_id']}")
+        print(f"CSV logs are stored in: {os.path.join('csv_logs', results['run_id'])}")
         
         # We don't need to call display_plots here since we're passing show_plots to run()
         return results

@@ -196,8 +196,10 @@ class BaziFeatureTransformer:
         missing_values = result.isnull().sum()
         if missing_values.any():
             logger.warning(f"Missing values found:\n{missing_values[missing_values > 0]}")
-        # Add target variable (next day's close price)
-        result['target'] = result['Close_x'].shift(-1)
+        
+        # FIXED: Use Close_y (actual HSI stock values) instead of Close_x (wrong Bazi values)
+        # Close_x contains wrong values (~150-160), Close_y contains correct HSI values (~16,000-17,000)
+        result['target'] = result['Close_y'].shift(-1)
         
         # Drop the last row (which has NaN target)
         result = result.dropna(subset=['target'])

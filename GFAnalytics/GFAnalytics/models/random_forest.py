@@ -15,6 +15,9 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 import joblib
 import os
 import json
+# Import logging utilities
+from GFAnalytics.utils.csv_utils import logdf
+
 
 # Import encoding utilities
 from GFAnalytics.utils.encoding_utils import process_encode_data, decode_prediction_data
@@ -74,6 +77,10 @@ class RandomForestModel:
             X, y, test_size=0.2, random_state=self.model_params.get('random_state', 42)
         )
         
+        # Log training data
+        logdf(pd.DataFrame(X_train, columns=X.columns), 'random_forest_X_train')
+        logdf(pd.DataFrame(y_train, columns=['target']), 'random_forest_y_train')
+
         # Create and train the model
         self.model = RandomForestRegressor(
             n_estimators=self.model_params.get('n_estimators', 100),

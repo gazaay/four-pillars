@@ -14,6 +14,9 @@ import logging
 import yaml
 import sys
 from pathlib import Path
+import glob
+
+from GFAnalytics.utils.global_run_id import get_run_id
 
 logger = logging.getLogger('GFAnalytics.CSVUtils')
 
@@ -31,6 +34,7 @@ class DataFrameLogger:
                 If None, will look for a default configuration.
         """
         self.config = self._load_config(config_path)
+        self.run_id = get_run_id()
         self.output_dir = self._ensure_output_dir()
         logger.info(f"DataFrameLogger initialized. Output directory: {self.output_dir}")
     
@@ -77,15 +81,15 @@ class DataFrameLogger:
     
     def _ensure_output_dir(self):
         """
-        Ensure the output directory exists.
+        Ensure the output directory exists, organized by run_id.
         
         Returns:
             str: Path to the output directory.
         """
-        output_dir = self.config['output_dir']
+        base_output_dir = self.config['output_dir']
         
         # Check if it's a relative or absolute path
-        if not os.path.isabs(output_dir):
+        if not os.path.isabs(base_output_dir):
             # For relative paths, try to create relative to:
             # 1. Current working directory
             # 2. Project root directory (if we can find it)
@@ -102,14 +106,17 @@ class DataFrameLogger:
                 current_dir = os.path.dirname(current_dir)
             
             if project_root:
-                output_dir = os.path.join(project_root, output_dir)
+                base_output_dir = os.path.join(project_root, base_output_dir)
             else:
                 # Use current working directory if we can't find the project root
-                output_dir = os.path.join(os.getcwd(), output_dir)
+                base_output_dir = os.path.join(os.getcwd(), base_output_dir)
+        
+        # Create the run-specific directory using the run_id
+        run_output_dir = os.path.join(base_output_dir, self.run_id)
         
         # Create the directory if it doesn't exist
-        os.makedirs(output_dir, exist_ok=True)
-        return output_dir
+        os.makedirs(run_output_dir, exist_ok=True)
+        return run_output_dir
     
     def log_df(self, df, name, **kwargs):
         """
@@ -216,4 +223,140 @@ def configure(config_path):
     """
     global _df_logger
     _df_logger = DataFrameLogger(config_path)
-    return _df_logger 
+    return _df_logger
+
+def get_base_output_dir(config_path=None):
+    """
+    Get the base output directory for CSV logs.
+    
+    Args:
+        config_path (str, optional): Path to configuration file.
+        
+    Returns:
+        str: Path to the base output directory.
+    """
+    # Use the same logic as in DataFrameLogger._load_config and _ensure_output_dir
+    # but without creating a new instance
+    
+    # Default configuration
+    default_config = {
+        'csv_logging': {
+            'output_dir': 'csv_logs',
+        }
+    }
+    
+    # Try to load the config file
+    if config_path is not None:
+        try:
+            with open(config_path, 'r') as f:
+                user_config = yaml.safe_load(f)
+            
+            # Update the default config with user config
+            if 'csv_logging' in user_config:
+                default_config['csv_logging'].update(user_config['csv_logging'])
+        except Exception as e:
+            logger.error(f"Failed to load configuration from {config_path}: {str(e)}")
+    
+    base_output_dir = default_config['csv_logging']['output_dir']
+    
+    # Check if it's a relative or absolute path
+    if not os.path.isabs(base_output_dir):
+        # Try to find project root (look for GFAnalytics directory)
+        project_root = None
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Navigate up the directory tree looking for the project root
+        while current_dir != os.path.dirname(current_dir):  # Stop at the root directory
+            if os.path.basename(current_dir) == 'GFAnalytics' or os.path.exists(os.path.join(current_dir, 'GFAnalytics')):
+                project_root = current_dir
+                break
+            current_dir = os.path.dirname(current_dir)
+        
+        if project_root:
+            base_output_dir = os.path.join(project_root, base_output_dir)
+        else:
+            # Use current working directory if we can't find the project root
+            base_output_dir = os.path.join(os.getcwd(), base_output_dir)
+    
+    return base_output_dir
+
+def list_runs(config_path=None):
+    """
+    List all available run directories.
+    
+    Args:
+        config_path (str, optional): Path to configuration file.
+        
+    Returns:
+        pandas.DataFrame: DataFrame with run_id, timestamp, and logs_count information.
+    """
+    base_dir = get_base_output_dir(config_path)
+    
+    # Check if the directory exists
+    if not os.path.exists(base_dir):
+        logger.warning(f"Base output directory {base_dir} does not exist.")
+        return pd.DataFrame(columns=['run_id', 'timestamp', 'logs_count'])
+    
+    # Get all subdirectories
+    run_dirs = sorted([d for d in os.listdir(base_dir) 
+                      if os.path.isdir(os.path.join(base_dir, d))], 
+                      reverse=True)  # Sort newest first
+    
+    runs_data = []
+    for run_id in run_dirs:
+        try:
+            # Extract timestamp from run_id (assuming format: YYYYMMDD_HHMMSS_uuid)
+            timestamp_str = run_id.split('_')[0] + '_' + run_id.split('_')[1]
+            timestamp = datetime.datetime.strptime(timestamp_str, '%Y%m%d_%H%M%S')
+            
+            # Count CSV files in the run directory
+            run_path = os.path.join(base_dir, run_id)
+            csv_files = glob.glob(os.path.join(run_path, '*.csv'))
+            logs_count = len(csv_files)
+            
+            runs_data.append({
+                'run_id': run_id,
+                'timestamp': timestamp,
+                'logs_count': logs_count
+            })
+        except Exception as e:
+            logger.warning(f"Error processing run directory {run_id}: {str(e)}")
+    
+    return pd.DataFrame(runs_data)
+
+def get_run_logs(run_id, config_path=None):
+    """
+    Get a list of all log files for a specific run.
+    
+    Args:
+        run_id (str): The run ID to get logs for.
+        config_path (str, optional): Path to configuration file.
+        
+    Returns:
+        pandas.DataFrame: DataFrame with log file information.
+    """
+    base_dir = get_base_output_dir(config_path)
+    run_dir = os.path.join(base_dir, run_id)
+    
+    # Check if the directory exists
+    if not os.path.exists(run_dir):
+        logger.warning(f"Run directory {run_dir} does not exist.")
+        return pd.DataFrame(columns=['filename', 'size', 'modified_time'])
+    
+    # Get all CSV files
+    csv_files = glob.glob(os.path.join(run_dir, '*.csv'))
+    
+    log_data = []
+    for file_path in csv_files:
+        filename = os.path.basename(file_path)
+        size = os.path.getsize(file_path)
+        modified_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+        
+        log_data.append({
+            'filename': filename,
+            'size': size,
+            'modified_time': modified_time
+        })
+    
+    # Sort by modified time (newest first)
+    return pd.DataFrame(log_data).sort_values('modified_time', ascending=False) 

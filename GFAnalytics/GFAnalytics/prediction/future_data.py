@@ -20,6 +20,7 @@ from GFAnalytics.features.bazi_features import BaziFeatureTransformer
 from GFAnalytics.features.chengshen import ChengShenTransformer
 from GFAnalytics.utils.encoding_utils import process_encode_data
 from GFAnalytics.utils.csv_utils import logdf
+from GFAnalytics.utils.data_utils import prepare_feature_data
 
 
 class FutureDataGenerator:
@@ -131,7 +132,7 @@ class FutureDataGenerator:
         if 'stock' in self.config and 'listing_date' in self.config['stock']:
             try:
                 listing_date_str = self.config['stock']['listing_date']
-                listing_date = datetime.strptime(listing_date_str, '%Y-%m-%d')
+                listing_date = datetime.strptime(listing_date_str, '%Y-%m-%d %H:%M:%S')
                 listing_date = ensure_hk_timezone(listing_date)
                 
                 # Generate Bazi data for listing date
@@ -180,11 +181,28 @@ class FutureDataGenerator:
                     joblib.dump(label_encoders, encoders_path)
                     self.logger.info(f"Saved label encoders to {encoders_path}")
             
-            self.logger.info(f"Generated future data with {len(encoded_data)} rows")
-            return encoded_data
+            # Add placeholder stock features to match training data BEFORE feature preparation
+            # These will be filled with zeros since we don't have actual stock data for future dates
+            stock_features = ['Open_x', 'High_x', 'Low_x', 'Close_x', 'Volume_x', 'Dividends_x', 'Stock Splits_x']
+            for feature in stock_features:
+                if feature not in encoded_data.columns:
+                    encoded_data[feature] = 0.0
+                    self.logger.debug(f"Added placeholder feature: {feature}")
+            
+            self.logger.info(f"Added {len([f for f in stock_features if f not in encoded_data.columns])} placeholder stock features to match training")
+            
+            # Use prepare_feature_data to prepare features in a standardized way
+            self.logger.info("Preparing features using the standardized utility")
+            X_prepared, _ = prepare_feature_data(encoded_data, is_training=False)
+            
+            # Log the prepared features
+            logdf(X_prepared, 'future_generator_prepared_features')
+            
+            self.logger.info(f"Generated future data with {len(X_prepared)} rows and {X_prepared.shape[1]} features")
+            return X_prepared
             
         except Exception as e:
-            self.logger.error(f"Failed to encode categorical features: {str(e)}")
+            self.logger.error(f"Failed to encode or prepare features: {str(e)}")
             self.logger.warning("Returning unencoded data, which may cause prediction issues")
             
             # Log the error state

@@ -3,22 +3,22 @@
 # Stock/Index Configuration
 stock:
   code: "HSI"  # Stock or index code to analyze
-  ric_code: "^HSI"  # Reuters Instrument Code
+  ric_code: "^HSI"  # Reuters Instrument Code - Confirmed working with Ticker().history()
   listing_date: "1969-11-24 09:30:00"  # Added time component for market open
 # Date Range Configuration
 date_range:
   training:
     start_date: "2023-11-01"  # Start date for training data
-    end_date: "2024-12-31"    # End date for training data
+    end_date: "2025-05-31"    # End date for training data
 
   testing:
-    start_date: "2025-10-31"  # Start date for testing data
-    end_date: "2025-01-31"    # End date for testing data
+    start_date: "2025-01-31"  # Start date for testing data
+    end_date: "2025-04-31"    # End date for testing data
   prediction:
     days_ahead: 90          # Number of days to predict ahead
 
 # Data Period Configuration
-period: "1D"  # Trading period (1H, 2H, 1D, etc.)
+period: "1h"  # Trading period (1H, 2H, 1D, etc.)
 
 # Google Cloud Platform Configuration
 gcp:
