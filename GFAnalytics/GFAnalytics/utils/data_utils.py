@@ -15,78 +15,99 @@ import logging
 # Set up logger
 logger = logging.getLogger('GFAnalytics.DataUtils')
 
+
 def prepare_feature_data(data, is_training=True):
     """
-    Prepare feature data for model training or prediction by removing 
-    non-feature columns and handling missing values.
+    Prepare feature data for training or prediction.
     
     Args:
-        data (pandas.DataFrame): The data to prepare.
-        is_training (bool): Whether the data is for training (includes target column).
+        data (pandas.DataFrame): Input data
+        is_training (bool): Whether this is training data
         
     Returns:
-        tuple: A tuple containing (X, y) if is_training is True, otherwise (X, None).
+        tuple: (X, y) if is_training=True, (X, None) if is_training=False
+               where X is features DataFrame and y is target Series
     """
-    # Create a copy of the data to avoid modifying the original
-    df = data.copy()
+    if data is None or data.empty:
+        if is_training:
+            return pd.DataFrame(), pd.Series(dtype=float)
+        else:
+            return pd.DataFrame(), None
     
-    # Drop non-feature columns
-    columns_to_drop = ['time', 'uuid', 'last_modified_date', 'batch_id']
-    if is_training:
-        columns_to_drop.append('target')
+    logger = logging.getLogger(__name__)
     
-    # Drop columns that exist in the DataFrame
-    columns_to_drop = [col for col in columns_to_drop if col in df.columns]
+    try:
+        # Create a copy to avoid modifying original data
+        df = data.copy()
+        
+        # List of specific columns to drop
+        columns_to_drop = [
+            'year', 'time'  # Year column (user doesn't want)
+            'Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',  # Stock price data
+            # Also drop _x and _y variants
+            'Open_x', 'High_x', 'Low_x', 'Close_x', 'Volume_x', 'Dividends_x', 'Stock Splits_x',
+            'Open_y', 'High_y', 'Low_y', 'Close_y', 'Volume_y', 'Dividends_y', 'Stock Splits_y'
+        ]
+        
+        # Filter out columns that don't exist in dataframe
+        columns_to_drop = [col for col in columns_to_drop if col in df.columns]
+        
+        if columns_to_drop:
+            logger.info(f"Dropping columns: {columns_to_drop}")
+            df = df.drop(columns=columns_to_drop)
+        
+        # Handle Chinese characters by encoding them to numbers
+        for col in df.columns:
+            if col != 'target':  # Don't convert target column
+                try:
+                    # If column contains Chinese characters, try to encode them
+                    if df[col].dtype == 'object':
+                        # Check if it contains Chinese characters
+                        sample_values = df[col].dropna().head(5)
+                        has_chinese = any(
+                            isinstance(val, str) and any('\u4e00' <= char <= '\u9fff' for char in val)
+                            for val in sample_values
+                        )
+                        
+                        if has_chinese:
+                            # Try to convert Chinese characters to numeric codes
+                            df[col] = df[col].astype(str).apply(
+                                lambda x: hash(x) % 10000 if isinstance(x, str) and any('\u4e00' <= c <= '\u9fff' for c in x) else x
+                            )
+                    
+                    # Convert to numeric
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                except Exception as e:
+                    logger.warning(f"Could not process column {col}: {e}")
+        
+        # Drop columns with all NaN values
+        df = df.dropna(axis=1, how='all')
+        
+        if is_training:
+            # For training, separate features and target
+            if 'target' not in df.columns:
+                logger.error("No target column found in training data")
+                return pd.DataFrame(), pd.Series(dtype=float)
+            
+            # Separate features (X) and target (y)
+            X = df.drop('target', axis=1)
+            y = df['target']
+            
+            logger.info(f"Prepared training data: {X.shape[0]} samples, {X.shape[1]} features")
+            return X, y
+        else:
+            # For prediction, return only features (no target expected)
+            X = df
+            logger.info(f"Prepared prediction data: {X.shape[0]} samples, {X.shape[1]} features")
+            return X, None
+        
+    except Exception as e:
+        logger.error(f"Error in prepare_feature_data: {e}")
+        if is_training:
+            return pd.DataFrame(), pd.Series(dtype=float)
+        else:
+            return pd.DataFrame(), None
     
-    # Drop batch_id if it exists
-    if 'batch_id' in df.columns:
-        df = df.drop('batch_id', axis=1)
-    
-    # Drop stock code and RIC code columns, including variants like stock_code_x
-    for col in df.columns:
-        if 'stock_code' in col or 'ric_code' in col or 'uuid' in col or 'last_modified_date' in col:
-            columns_to_drop.append(col)
-    
-    # Drop original categorical features that have been encoded
-    encoded_columns = [col for col in df.columns if col.startswith('encoded_')]
-    original_encoded = [col.replace('encoded_', '') for col in encoded_columns]
-    
-    # Only drop original columns if they have encoded versions
-    for col in original_encoded:
-        if col in df.columns:
-            columns_to_drop.append(col)
-    
-    # Drop columns that end with _y (usually duplicates from merges)
-    y_columns = [col for col in df.columns if col.endswith('_y')]
-    columns_to_drop.extend(y_columns)
-    
-    # Drop non-numeric columns
-    non_numeric_cols = df.select_dtypes(exclude=['number']).columns.tolist()
-    for col in non_numeric_cols:
-        if col not in columns_to_drop and col != 'target':
-            columns_to_drop.append(col)
-    
-    # Remove duplicates from columns_to_drop
-    columns_to_drop = list(set(columns_to_drop))
-    
-    # Prepare features (X)
-    X = df.drop(columns_to_drop, axis=1, errors='ignore')
-    
-    # Replace any infinities with NaNs, then fill NaNs with 0
-    X = X.replace([np.inf, -np.inf], np.nan)
-    X = X.fillna(0)
-    
-    # Log feature information
-    logger.info(f"Using {X.shape[1]} features for {'training' if is_training else 'prediction'}")
-    logger.debug(f"Feature dtypes:\n{X.dtypes}")
-    
-    # Prepare target (y) if training
-    y = None
-    if is_training and 'target' in df.columns:
-        y = df['target']
-        logger.debug(f"Target shape: {y.shape}")
-    
-    return X, y
 
 def get_feature_importance(model, feature_names=None):
     """

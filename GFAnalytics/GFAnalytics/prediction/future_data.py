@@ -221,8 +221,7 @@ class FutureDataGenerator:
             list: List of future dates.
         """
         future_dates = []
-        current_date = base_date
-        
+        current_date = base_date - timedelta(days=180)
         # Get period from config
         period = self.config['period']
         

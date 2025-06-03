@@ -128,11 +128,14 @@ class BaziDataGenerator:
                 listing_date.day,
                 listing_date.hour
             )
-            
+            logger.info(f"Listing date: {listing_date.strftime('%Y-%m-%d')}")
+            logger.info(f"Listing hour: {listing_date.hour}")
             # Update 時運 to 大時運 if present
             if '時運' in base_pillars:
                 base_pillars['大時運'] = base_pillars.pop('時運')
-            
+            # Print out 大時運 if present
+            if '大時運' in base_pillars:
+                logger.info(f"大時運: {base_pillars['大時運']}")
             # Map the keys to more descriptive names
             key_mapping = {
                 '年': 'year_pillar',

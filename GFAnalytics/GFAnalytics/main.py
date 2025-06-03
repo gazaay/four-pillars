@@ -453,6 +453,58 @@ class GFAnalytics:
         self.bq_storage.clean_table(table_name)
         self.logger.info(f"Table {table_name} cleaned successfully")
 
+    def load_pretrained_model(self, model_path):
+        """
+        Load a pre-trained model and restore it to the model object.
+        
+        Args:
+            model_path (str): Path to model file or Google Drive ID
+        """
+        self.logger.info(f"Loading pre-trained model from: {model_path}")
+        
+        # Load model data using model storage
+        model_data = self.model_storage.load_model(model_path)
+        
+        # Restore the model components
+        self.model.model = model_data['model']
+        self.model.feature_names = model_data['feature_names']
+        self.model.label_encoders = model_data['label_encoders']
+        
+        self.logger.info("Pre-trained model loaded successfully")
+        self.logger.info(f"Model has {len(self.model.feature_names)} features")
+        self.logger.info(f"Model has {len(self.model.label_encoders)} label encoders")
+        
+        return self.model
+
+    def run_with_pretrained_model(self, model_path, show_plots=False):
+        """
+        Run pipeline with pre-trained model (skip training).
+        
+        Args:
+            model_path (str): Path to model file or Google Drive ID
+            show_plots (bool): Whether to display plots during execution
+            
+        Returns:
+            dict: Results containing predictions and run ID
+        """
+        self.logger.info("Starting GFAnalytics pipeline with pre-trained model")
+        
+        # Load the pre-trained model
+        self.load_pretrained_model(model_path)
+        
+        # Execute pipeline steps (skip training)
+        self.load_data()  # Still need data for predictions and plotting
+        self.predict_future()
+        self.visualize_results(show_plots=show_plots)
+        
+        self.logger.info("GFAnalytics pipeline completed successfully with pre-trained model")
+        
+        return {
+            'run_id': self.run_id,
+            'predictions': self.predictions,
+            'model_loaded': True
+        }
+
 
 def main():
     """Main entry point for the GFAnalytics framework."""
@@ -464,6 +516,11 @@ def main():
     parser.add_argument('--display-plots', action='store_true', help='Only display previously generated plots')
     parser.add_argument('--list-runs', action='store_true', help='List all available runs')
     parser.add_argument('--run-logs', type=str, help='Show logs for a specific run ID')
+    
+    # NEW: Add model loading arguments
+    parser.add_argument('--load-model', type=str, help='Load pre-trained model (file path or Google Drive ID) and skip training')
+    parser.add_argument('--list-models', action='store_true', help='List all available saved models')
+    
     args = parser.parse_args()
     
     # Handle command-line arguments for run management
@@ -493,6 +550,19 @@ def main():
     # Create an instance of the GFAnalytics framework
     gf = GFAnalytics()
     
+    # NEW: Handle model listing
+    if args.list_models:
+        models = list_models(gf)
+        if len(models) == 0:
+            print("No saved models found.")
+        else:
+            print(f"Found {len(models)} saved models:")
+            for model in models:
+                print(f"  {model['type']}: {model['name']} ({model['size_mb']} MB) - {model['modified']}")
+                if model['type'] == 'local':
+                    print(f"    Path: {model['path']}")
+        return models
+    
     if args.clean:
         gf.clean_tables()
     elif args.clean_table:
@@ -500,16 +570,39 @@ def main():
     elif args.display_plots:
         # Just display plots without running the pipeline
         return gf.display_plots()
+    elif args.load_model:
+        # NEW: Run with pre-trained model
+        results = gf.run_with_pretrained_model(args.load_model, show_plots=args.show_plots)
+        print(f"\nCompleted run with loaded model. Run ID: {results['run_id']}")
+        print(f"CSV logs are stored in: {os.path.join('csv_logs', results['run_id'])}")
+        return results
     else:
-        # Run the complete pipeline
+        # Run the complete pipeline (including training)
         results = gf.run(show_plots=args.show_plots)
-        
-        # Print run ID for reference
         print(f"\nCompleted run with ID: {results['run_id']}")
         print(f"CSV logs are stored in: {os.path.join('csv_logs', results['run_id'])}")
-        
-        # We don't need to call display_plots here since we're passing show_plots to run()
         return results
+
+def list_models(gf_instance):
+    """List all available models."""
+    models = []
+    
+    # List local models
+    local_models_dir = gf_instance.model_storage.local_backup_dir
+    if os.path.exists(local_models_dir):
+        local_files = [f for f in os.listdir(local_models_dir) if f.endswith('.pkl')]
+        for file in local_files:
+            file_path = os.path.join(local_models_dir, file)
+            stat = os.stat(file_path)
+            models.append({
+                'type': 'local',
+                'name': file,
+                'path': file_path,
+                'size_mb': round(stat.st_size / (1024*1024), 2),
+                'modified': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+            })
+    
+    return models
 
 if __name__ == "__main__":
     main() 

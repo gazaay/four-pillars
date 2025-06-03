@@ -57,7 +57,7 @@ class Plotter:
     
     def plot_prediction(self, stock_data, predictions, show=False):
         """
-        Plot stock price predictions.
+        Plot stock price predictions with both full view and zoomed view.
         
         Args:
             stock_data (pandas.DataFrame): Historical stock data.
@@ -69,8 +69,12 @@ class Plotter:
         """
         self.logger.info("Plotting predictions")
         
-        # Create figure
-        fig, ax = plt.subplots(figsize=(12, 6))
+        # Import date formatting utilities
+        from matplotlib.dates import DateFormatter, DayLocator, MonthLocator, WeekdayLocator
+        import matplotlib.dates as mdates
+        
+        # Create figure with 2 subplots (full view and zoomed view)
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
         
         # Ensure we have proper date columns
         stock_date_col = self._get_date_column(stock_data)
@@ -91,10 +95,6 @@ class Plotter:
                 self.logger.error("No numeric columns found in stock data")
                 return None
         
-        # Plot historical data
-        ax.plot(stock_data[stock_date_col], stock_data[close_col], 
-                label='Historical Close Price', color='blue', linewidth=1.5)
-        
         # Determine prediction column
         pred_col = 'predicted_value'
         if pred_col not in predictions.columns:
@@ -107,37 +107,143 @@ class Plotter:
                 self.logger.error("Prediction column not found")
                 return None
         
+        # Plot confidence intervals function
+        def plot_confidence_intervals(ax, predictions, pred_date_col):
+            lower_col = self._find_column(predictions, ['predicted_lower', 'lower_bound', 'lower'])
+            upper_col = self._find_column(predictions, ['predicted_upper', 'upper_bound', 'upper'])
+            
+            if lower_col and upper_col:
+                ax.fill_between(
+                    predictions[pred_date_col],
+                    predictions[lower_col],
+                    predictions[upper_col],
+                    color='red',
+                    alpha=0.2,
+                    label='Prediction Interval'
+                )
+        
+        # Function to format axes with better date formatting and dotted grid
+        def format_axis(ax, is_zoomed=False):
+            # Set date formatters
+            if is_zoomed:
+                # For zoomed view: show every day or every few days
+                ax.xaxis.set_major_locator(DayLocator(interval=7))  # Major ticks every week
+                ax.xaxis.set_minor_locator(DayLocator(interval=1))  # Minor ticks every day
+                ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+            else:
+                # For full view: show months
+                ax.xaxis.set_major_locator(MonthLocator(interval=1))  # Major ticks every month
+                ax.xaxis.set_minor_locator(DayLocator(interval=7))   # Minor ticks every week
+                ax.xaxis.set_major_formatter(DateFormatter('%Y-%m'))
+            
+            # Add dotted grid lines
+            ax.grid(True, linestyle=':', linewidth=0.8, alpha=0.7, color='gray')
+            ax.grid(True, which='minor', linestyle=':', linewidth=0.4, alpha=0.4, color='lightgray')
+            
+            # Rotate date labels for better readability
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+        
+        # ===== SUBPLOT 1: FULL VIEW =====
+        # Plot historical data
+        ax1.plot(pd.to_datetime(stock_data[stock_date_col]), stock_data[close_col], 
+                label='Historical Close Price', color='blue', linewidth=1.5)
+        
         # Plot predictions
-        ax.plot(predictions[pred_date_col], predictions[pred_col], 
+        ax1.plot(pd.to_datetime(predictions[pred_date_col]), predictions[pred_col], 
                 label='Predicted Price', color='red', linewidth=1.5, marker='o', markersize=4)
         
-        # Plot confidence intervals if available
-        lower_col = self._find_column(predictions, ['predicted_lower', 'lower_bound', 'lower'])
-        upper_col = self._find_column(predictions, ['predicted_upper', 'upper_bound', 'upper'])
+        # Plot confidence intervals
+        plot_confidence_intervals(ax1, predictions, pred_date_col)
         
-        if lower_col and upper_col:
-            ax.fill_between(
-                predictions[pred_date_col],
-                predictions[lower_col],
-                predictions[upper_col],
-                color='red',
-                alpha=0.2,
-                label='Prediction Interval'
-            )
+        # Set labels and title for full view
+        ax1.set_xlabel('Date')
+        ax1.set_ylabel('Price')
+        ax1.set_title(f"Stock Price Prediction for {self.config['stock']['code']} - Full View")
+        ax1.legend()
         
-        # Set labels and title
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Price')
-        ax.set_title(f"Stock Price Prediction for {self.config['stock']['code']}")
+        # Format full view axis
+        format_axis(ax1, is_zoomed=False)
         
-        # Add legend
-        ax.legend()
+        # ===== SUBPLOT 2: ZOOMED VIEW =====
+        # Calculate zoom window: prediction start - 10 days to +365 days
+        if len(predictions) > 0:
+            # Get the first prediction date
+            first_pred_date = pd.to_datetime(predictions[pred_date_col].iloc[0])
+            
+            # Calculate zoom window
+            zoom_start = first_pred_date - pd.Timedelta(days=10)
+            zoom_end = first_pred_date + pd.Timedelta(days=365)
+            
+            self.logger.info(f"Zoom window: {zoom_start} to {zoom_end}")
+            self.logger.info(f"First prediction date: {first_pred_date}")
+            
+            # Convert date columns to datetime for proper filtering
+            stock_dates = pd.to_datetime(stock_data[stock_date_col])
+            pred_dates = pd.to_datetime(predictions[pred_date_col])
+            
+            # Filter stock data for zoom window
+            stock_zoom_mask = (stock_dates >= zoom_start) & (stock_dates <= zoom_end)
+            stock_data_zoom = stock_data[stock_zoom_mask].copy()
+            
+            # Filter predictions for zoom window (should be most/all of them)
+            pred_zoom_mask = (pred_dates >= zoom_start) & (pred_dates <= zoom_end)
+            predictions_zoom = predictions[pred_zoom_mask].copy()
+            
+            self.logger.info(f"Stock data in zoom window: {len(stock_data_zoom)} points")
+            self.logger.info(f"Predictions in zoom window: {len(predictions_zoom)} points")
+            
+            # If no data in zoom window, expand the window
+            if len(stock_data_zoom) == 0 and len(predictions_zoom) == 0:
+                self.logger.warning("No data in zoom window, expanding window")
+                # Use all available data
+                stock_data_zoom = stock_data.copy()
+                predictions_zoom = predictions.copy()
+                zoom_start = stock_dates.min() if len(stock_data) > 0 else pred_dates.min()
+                zoom_end = pred_dates.max() if len(predictions) > 0 else stock_dates.max()
+            
+            # Plot historical data in zoom window
+            if len(stock_data_zoom) > 0:
+                ax2.plot(pd.to_datetime(stock_data_zoom[stock_date_col]), stock_data_zoom[close_col], 
+                        label='Historical Close Price', color='blue', linewidth=2)
+                self.logger.info("Plotted historical data in zoomed view")
+            else:
+                self.logger.warning("No historical data to plot in zoomed view")
+            
+            # Plot predictions in zoom window
+            if len(predictions_zoom) > 0:
+                ax2.plot(pd.to_datetime(predictions_zoom[pred_date_col]), predictions_zoom[pred_col], 
+                        label='Predicted Price', color='red', linewidth=2, marker='o', markersize=5)
+                
+                # Plot confidence intervals for zoom
+                plot_confidence_intervals(ax2, predictions_zoom, pred_date_col)
+                self.logger.info("Plotted predictions in zoomed view")
+            else:
+                self.logger.warning("No predictions to plot in zoomed view")
+            
+            # Add vertical line at prediction start (only if we have data)
+            if len(stock_data_zoom) > 0 or len(predictions_zoom) > 0:
+                ax2.axvline(x=first_pred_date, color='green', linestyle='--', linewidth=2, 
+                           label='Prediction Start', alpha=0.7)
+            
+            # Set labels and title for zoomed view
+            ax2.set_xlabel('Date')
+            ax2.set_ylabel('Price')
+            ax2.set_title(f"Zoomed View: {zoom_start.strftime('%Y-%m-%d')} to {zoom_end.strftime('%Y-%m-%d')}")
+            ax2.legend()
+            
+            # Format zoomed view axis
+            format_axis(ax2, is_zoomed=True)
+            
+            self.logger.info(f"Zoomed plot covers {len(stock_data_zoom)} historical points and {len(predictions_zoom)} predictions")
+        else:
+            # No predictions available
+            self.logger.warning("No predictions available for zoomed view")
+            ax2.text(0.5, 0.5, 'No prediction data available', 
+                    horizontalalignment='center', verticalalignment='center',
+                    transform=ax2.transAxes, fontsize=12)
         
-        # Format x-axis dates
-        fig.autofmt_xdate()
-        
-        # Add grid
-        ax.grid(True, alpha=0.3)
+        # Adjust layout to prevent overlap
+        plt.tight_layout()
         
         # Save plot if enabled
         if self.save_plots:
@@ -224,29 +330,20 @@ class Plotter:
         
         # Process data to get features
         try:
+            # prepare_feature_data returns (X, y) tuple for training
             X, y = prepare_feature_data(training_data, is_training=True)
             
-            if X is None or y is None:
+            if X is None or X.empty or y is None:
                 self.logger.error("Could not prepare data for correlation heatmap")
                 return None
                 
             # Select a reasonable number of features to avoid overcrowding
             # Focus on the most important features if we have too many
             if X.shape[1] > 20:
-                try:
-                    if 'model' in locals() and hasattr(model, 'feature_names') and model.feature_names:
-                        # Use feature importance to select top features
-                        feature_importance = get_feature_importance(model)
-                        top_features = feature_importance.head(20)['feature'].tolist()
-                        X = X[top_features]
-                    else:
-                        # Just take the first 20 columns
-                        X = X.iloc[:, :20]
-                except:
-                    # Just take the first 20 columns if there's an error
+                # Just take the first 20 feature columns
                     X = X.iloc[:, :20]
             
-            # Combine features and target
+            # Combine features and target for correlation analysis
             data = X.copy()
             data['target'] = y
             

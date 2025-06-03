@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 import pytz
 import time
 import random
+from google.cloud import bigquery
 
 # Import utilities
 from GFAnalytics.utils.time_utils import (
@@ -170,56 +171,96 @@ class StockDataLoader:
     
     def _load_from_alternative_source(self):
         """
-        Load stock data from an alternative source if YFinance fails.
+        Load stock data from BigQuery HSI database as alternative source.
         
         Returns:
             pandas.DataFrame: The loaded stock data.
         """
-        # This is a placeholder for loading data from an alternative source
-        # In a real implementation, this would connect to another data provider
+        logger.info("Loading HSI data from BigQuery alternative source...")
         
-        # For now, we'll create a dummy DataFrame with the same structure as YFinance data
-        start_date = pd.to_datetime(self.start_date)
-        end_date = pd.to_datetime(self.end_date)
-        
-        # Generate a date range based on the period
-        if self.period == '1D':
-            dates = pd.date_range(start=start_date, end=end_date, freq='D')
-        elif self.period == '1H':
-            dates = pd.date_range(start=start_date, end=end_date, freq='H')
-        elif self.period == '2H':
-            dates = pd.date_range(start=start_date, end=end_date, freq='2H')
-        else:
-            dates = pd.date_range(start=start_date, end=end_date, freq='D')
-        
-        # Create a DataFrame with the date range
-        data = pd.DataFrame({'time': dates})
-        
-        # Add dummy data
-        data['Open'] = [random.uniform(100, 200) for _ in range(len(dates))]
-        data['High'] = data['Open'] + [random.uniform(0, 10) for _ in range(len(dates))]
-        data['Low'] = data['Open'] - [random.uniform(0, 10) for _ in range(len(dates))]
-        data['Close'] = [random.uniform(data['Low'].iloc[i], data['High'].iloc[i]) for i in range(len(dates))]
-        data['Volume'] = [random.randint(1000, 10000) for _ in range(len(dates))]
-        
-        # Ensure the time column is in Hong Kong timezone
-        data = convert_df_timestamps_to_hk(data, 'time')
-        
-        # Add stock code column
-        data['stock_code'] = self.stock_code
-        data['ric_code'] = self.ric_code
-        
-        # Add a UUID column for tracking
-        data['uuid'] = pd.util.hash_pandas_object(data).astype(str)
-        
-        # Add last modified date
-        data['last_modified_date'] = datetime.now(pytz.timezone('Asia/Hong_Kong'))
-        
-        # Filter for trading hours if using intraday data
-        if self.period in ['1H', '2H']:
-            data = data[get_trading_hours_mask(data, 'time', 'HK')]
-        
-        return data
+        try:
+            # Initialize BigQuery client  
+            from GFAnalytics.utils.gcp_utils import setup_gcp_credentials
+            
+            # Setup credentials
+            setup_gcp_credentials(self.config['gcp']['credentials_path'])
+            client = bigquery.Client(project=self.config['gcp']['project_id'])
+            
+            # Get HSI database configuration
+            hsi_config = self.config['gcp']['bigquery']['hsi_data']
+            table_name = hsi_config['table']
+            
+            # Build SQL query
+            sql_query = f"""
+            SELECT *
+            FROM {hsi_config['project']}.{hsi_config['dataset']}.{table_name}
+            WHERE time >= '{self.start_date}'
+            AND time <= '{self.end_date}'
+            ORDER BY time
+            """
+            
+            logger.info(f"Executing query: {sql_query}")
+            
+            # Execute query
+            query_job = client.query(sql_query)
+            results = query_job.to_dataframe()
+            
+            if results.empty:
+                raise ValueError(f"No HSI data found in BigQuery for date range {self.start_date} to {self.end_date}")
+            
+            logger.info(f"Loaded {len(results)} records from BigQuery HSI database")
+            
+            # Convert UTC timestamp to GMT+8
+            results = convert_timestamp_to_GMT8(results, 'time')
+            
+            # Rename columns to match expected format (lowercase to uppercase)
+            column_mapping = {
+                'open': 'Open',
+                'high': 'High', 
+                'low': 'Low',
+                'close': 'Close'
+            }
+            
+            # Rename columns if they exist
+            for old_col, new_col in column_mapping.items():
+                if old_col in results.columns:
+                    results.rename(columns={old_col: new_col}, inplace=True)
+            
+            # Ensure we have the required columns
+            required_columns = ['time', 'Open', 'High', 'Low', 'Close']
+            missing_columns = [col for col in required_columns if col not in results.columns]
+            
+            if missing_columns:
+                raise ValueError(f"Missing required columns in HSI data: {missing_columns}")
+            
+            # Select only the columns we need
+            data = results[required_columns].copy()
+            
+            # Add Volume if not present (set to reasonable values for HSI)
+            if 'Volume' not in data.columns:
+                data['Volume'] = [random.randint(1000000, 10000000) for _ in range(len(data))]
+            
+            # Add metadata columns
+            data['stock_code'] = self.stock_code
+            data['ric_code'] = self.ric_code
+            data['uuid'] = pd.util.hash_pandas_object(data).astype(str)
+            data['last_modified_date'] = datetime.now(pytz.timezone('Asia/Hong_Kong'))
+            
+            # Log data statistics
+            logger.info(f"Alternative source data shape: {data.shape}")
+            logger.info(f"Date range: {data['time'].min()} to {data['time'].max()}")
+            logger.info(f"Price range: Close from {data['Close'].min():.2f} to {data['Close'].max():.2f}")
+            
+            # Filter for trading hours if using intraday data
+            if self.period in ['1H', '2H']:
+                data = data[get_trading_hours_mask(data, 'time', 'HK')]
+                logger.info(f"Filtered to trading hours: {len(data)} records")
+            
+            return data
+            
+        except Exception as e:
+            logger.error(f"Failed to load from BigQuery HSI database: {str(e)}")
+            raise
     
     def get_listing_date(self):
         """Get the listing date for the stock."""
@@ -289,4 +330,30 @@ class StockDataLoader:
             return datetime(1970, 1, 1, tzinfo=pytz.timezone('Asia/Hong_Kong'))
         except Exception as e:
             logger.error(f"Failed to scrape listing date: {str(e)}")
-            return datetime(1970, 1, 1, tzinfo=pytz.timezone('Asia/Hong_Kong')) 
+            return datetime(1970, 1, 1, tzinfo=pytz.timezone('Asia/Hong_Kong'))
+
+def convert_timestamp_to_GMT8(df, timestamp_col='time'):
+    """
+    Convert UTC timestamp column to GMT+8 (Hong Kong timezone).
+    
+    Args:
+        df (pandas.DataFrame): DataFrame with timestamp column
+        timestamp_col (str): Name of the timestamp column
+        
+    Returns:
+        pandas.DataFrame: DataFrame with converted timestamp
+    """
+    df_copy = df.copy()
+    
+    # Ensure the timestamp column is datetime
+    if not pd.api.types.is_datetime64_any_dtype(df_copy[timestamp_col]):
+        df_copy[timestamp_col] = pd.to_datetime(df_copy[timestamp_col])
+    
+    # If timestamp doesn't have timezone info, assume UTC
+    if df_copy[timestamp_col].dt.tz is None:
+        df_copy[timestamp_col] = df_copy[timestamp_col].dt.tz_localize('UTC')
+    
+    # Convert to Hong Kong timezone (GMT+8)
+    df_copy[timestamp_col] = df_copy[timestamp_col].dt.tz_convert('Asia/Hong_Kong')
+    
+    return df_copy
