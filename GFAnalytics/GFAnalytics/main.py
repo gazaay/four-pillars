@@ -288,9 +288,17 @@ class GFAnalytics:
         except Exception as e:
             self.logger.error(f"Failed to get feature importance: {str(e)}")
         
-        # Save the model
+        # Save the model with training date information
         try:
-            model_path = self.model_storage.save_model(self.model)
+            # Get training dates from config
+            training_start_date = self.config['date_range']['training']['start_date']
+            training_end_date = self.config['date_range']['training']['end_date']
+            
+            model_path = self.model_storage.save_model(
+                self.model, 
+                training_start_date=training_start_date,
+                training_end_date=training_end_date
+            )
             self.logger.info(f"Model saved to {model_path}")
         except Exception as e:
             self.logger.error(f"Failed to save model: {str(e)}")
@@ -368,7 +376,7 @@ class GFAnalytics:
             if self.config['visualization']['plot_prediction']:
                 self.logger.info("Creating prediction plot...")
                 prediction_fig = self.plotter.plot_prediction(
-                    self.stock_data, self.predictions, show=show_plots
+                    self.stock_data, self.predictions, show=show_plots, model=self.model
                 )
                 self.logger.info("Prediction plot created")
             else:
@@ -470,6 +478,15 @@ class GFAnalytics:
         self.model.feature_names = model_data['feature_names']
         self.model.label_encoders = model_data['label_encoders']
         
+        # Extract and store training metadata if available
+        if 'training_metadata' in model_data:
+            self.model.training_metadata = model_data['training_metadata']
+            metadata = model_data['training_metadata']
+            self.logger.info(f"Model trained on data from {metadata.get('training_start_date', 'Unknown')} to {metadata.get('training_end_date', 'Unknown')}")
+        else:
+            self.model.training_metadata = None
+            self.logger.warning("No training metadata found in model file")
+        
         self.logger.info("Pre-trained model loaded successfully")
         self.logger.info(f"Model has {len(self.model.feature_names)} features")
         self.logger.info(f"Model has {len(self.model.label_encoders)} label encoders")
@@ -478,7 +495,7 @@ class GFAnalytics:
 
     def run_with_pretrained_model(self, model_path, show_plots=False):
         """
-        Run pipeline with pre-trained model (skip training).
+        Run pipeline with pre-trained model with future-only plotting.
         
         Args:
             model_path (str): Path to model file or Google Drive ID
@@ -487,22 +504,526 @@ class GFAnalytics:
         Returns:
             dict: Results containing predictions and run ID
         """
-        self.logger.info("Starting GFAnalytics pipeline with pre-trained model")
+        self.logger.info("Starting GFAnalytics pipeline with pre-trained model (prediction mode)")
         
         # Load the pre-trained model
         self.load_pretrained_model(model_path)
         
-        # Execute pipeline steps (skip training)
-        self.load_data()  # Still need data for predictions and plotting
-        self.predict_future()
-        self.visualize_results(show_plots=show_plots)
+        # Generate future data and predictions (fast)
+        self.logger.info("Generating future predictions (skipping all historical data processing)")
         
-        self.logger.info("GFAnalytics pipeline completed successfully with pre-trained model")
+        try:
+            # Generate future data directly
+            self.future_data = self.future_generator.generate(
+                label_encoders=getattr(self.model, 'label_encoders', None)
+            )
+            
+            # Make predictions
+            self.predictions = self.predictor.predict(self.model, self.future_data)
+            
+            # Log results to CSV only
+            logdf(self.future_data, 'predictor_future_data')
+            logdf(self.predictions, 'final_predictions')
+            
+            self.logger.info(f"✅ Successfully made {len(self.predictions)} predictions")
+            
+            # Create future-only plots
+            if show_plots:
+                self.create_future_only_plots(show_plots=True)
+            
+            # Print predictions summary
+            self.print_prediction_summary()
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error in prediction generation: {str(e)}")
+            raise
+        
+        self.logger.info("✅ GFAnalytics prediction pipeline completed successfully")
         
         return {
             'run_id': self.run_id,
             'predictions': self.predictions,
-            'model_loaded': True
+            'model_loaded': True,
+            'mode': 'prediction_only',
+            'plots_created': show_plots
+        }
+
+    def create_future_only_plots(self, show_plots=False):
+        """
+        Create plots focused only on future predictions with enhanced moving average analysis.
+        """
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from datetime import datetime, timedelta
+        import pandas as pd
+        
+        self.logger.info("🎨 Creating future-only prediction plots with 21 vs 95 MA analysis")
+        
+        try:
+            # Set up the plotting style
+            plt.style.use('default')
+            sns.set_palette("husl")
+            
+            # Create figure with 2x4 grid for 8 plots (added 2 more)
+            fig = plt.figure(figsize=(24, 15))  # Increased width for 4 columns
+            
+            # Generate main title with training information if available
+            main_title = '🔮 Future Predictions Analysis with Moving Averages'
+            if hasattr(self.model, 'training_metadata') and self.model.training_metadata:
+                metadata = self.model.training_metadata
+                start_date = metadata.get('training_start_date')
+                end_date = metadata.get('training_end_date')
+                if start_date and end_date:
+                    main_title += f'\n(Model trained on: {start_date} to {end_date})'
+            
+            fig.suptitle(main_title, fontsize=16, fontweight='bold')
+            
+            # Create subplots (2x4 grid)
+            ax1 = plt.subplot(2, 4, 1)  # Time series
+            ax2 = plt.subplot(2, 4, 2)  # Distribution  
+            ax3 = plt.subplot(2, 4, 3)  # Trend with MAs
+            ax4 = plt.subplot(2, 4, 4)  # Statistics
+            ax5 = plt.subplot(2, 4, 5)  # MA comparison
+            ax6 = plt.subplot(2, 4, 6)  # MA signals
+            ax7 = plt.subplot(2, 4, 7)  # NEW: 90-day view
+            ax8 = plt.subplot(2, 4, 8)  # NEW: 21-day view
+            
+            # Prepare prediction data
+            if hasattr(self.predictions, 'columns'):
+                # DataFrame format
+                pred_values = self.predictions.get('predicted_value', self.predictions.iloc[:, 0])
+                dates = None
+                if 'date' in self.predictions.columns:
+                    dates = pd.to_datetime(self.predictions['date'])
+                elif 'time' in self.predictions.columns:
+                    dates = pd.to_datetime(self.predictions['time'])
+            else:
+                # Array format
+                pred_values = self.predictions
+                dates = None
+            
+            # Generate date range for x-axis if not available (but log this as it indicates the time column issue)
+            if dates is None:
+                self.logger.warning("⚠️ No time/date column found in predictions! Using fallback dates from current time.")
+                start_date = datetime.now()
+                dates = [start_date + timedelta(hours=i) for i in range(len(pred_values))]
+            
+            # Convert to pandas Series for easier filtering
+            dates_series = pd.Series(dates)
+            pred_values_series = pd.Series(pred_values)
+            current_time = datetime.now()
+            
+            # Plot 1: Time Series of Predictions
+            ax1.plot(dates, pred_values, marker='o', linewidth=2, markersize=4, color='blue', alpha=0.8)
+            ax1.set_title('📈 Future Price Predictions Over Time')
+            ax1.set_xlabel('Date/Time')
+            ax1.set_ylabel('Predicted Price')
+            ax1.grid(True, alpha=0.3, linestyle='--')
+            ax1.tick_params(axis='x', rotation=45)
+            
+            # Plot 2: Prediction Distribution
+            ax2.hist(pred_values, bins=20, alpha=0.7, color='green', edgecolor='black')
+            ax2.axvline(pred_values.mean(), color='red', linestyle='--', linewidth=2, label=f'Mean: {pred_values.mean():.2f}')
+            ax2.set_title('📊 Distribution of Predicted Values')
+            ax2.set_xlabel('Predicted Price')
+            ax2.set_ylabel('Frequency')
+            ax2.legend()
+            ax2.grid(True, alpha=0.3)
+            
+            # Plot 3: Prediction Trend Analysis with 21 vs 95 period moving averages
+            if len(pred_values) > 1:
+                # Calculate 21-period and 95-period moving averages
+                pred_series = pd.Series(pred_values)
+                
+                # Only calculate moving averages if we have enough data points
+                ma_21 = None
+                ma_95 = None
+                
+                if len(pred_values) >= 21:
+                    ma_21 = pred_series.rolling(window=21, center=True).mean()
+                
+                if len(pred_values) >= 95:
+                    ma_95 = pred_series.rolling(window=95, center=True).mean()
+                
+                # Plot the predictions
+                ax3.plot(dates, pred_values, 'o-', alpha=0.6, label='Predictions', 
+                         color='blue', linewidth=1, markersize=3)
+                
+                # Plot moving averages if available
+                if ma_21 is not None:
+                    ax3.plot(dates, ma_21, '--', linewidth=2, label='21-Period MA (Monthly)', 
+                            color='orange', alpha=0.8)
+                
+                if ma_95 is not None:
+                    ax3.plot(dates, ma_95, '-', linewidth=3, label='95-Period MA (Quarterly)', 
+                            color='red', alpha=0.9)
+                
+                # Add crossover analysis if both MAs are available
+                if ma_21 is not None and ma_95 is not None:
+                    # Find crossover points
+                    crossovers = []
+                    for i in range(1, len(ma_21)):
+                        if not (pd.isna(ma_21.iloc[i]) or pd.isna(ma_95.iloc[i]) or 
+                               pd.isna(ma_21.iloc[i-1]) or pd.isna(ma_95.iloc[i-1])):
+                            # Bullish crossover (21 MA crosses above 95 MA)
+                            if ma_21.iloc[i-1] <= ma_95.iloc[i-1] and ma_21.iloc[i] > ma_95.iloc[i]:
+                                ax3.scatter(dates[i], ma_21.iloc[i], color='green', s=100, 
+                                          marker='^', label='Bullish Crossover' if not crossovers else "", zorder=5)
+                                crossovers.append('bullish')
+                            # Bearish crossover (21 MA crosses below 95 MA)
+                            elif ma_21.iloc[i-1] >= ma_95.iloc[i-1] and ma_21.iloc[i] < ma_95.iloc[i]:
+                                ax3.scatter(dates[i], ma_21.iloc[i], color='red', s=100, 
+                                          marker='v', label='Bearish Crossover' if 'bearish' not in crossovers else "", zorder=5)
+                                crossovers.append('bearish')
+                
+                ax3.set_title('📉 Predictions with 21-Period vs 95-Period Moving Averages')
+                ax3.set_xlabel('Date/Time')
+                ax3.set_ylabel('Predicted Price')
+                ax3.legend(loc='upper left')
+                ax3.grid(True, alpha=0.3)
+                ax3.tick_params(axis='x', rotation=45)
+                
+                # Add info text about data sufficiency
+                info_text = f"Data points: {len(pred_values)}"
+                if len(pred_values) < 21:
+                    info_text += " (Need 21+ for Monthly MA)"
+                elif len(pred_values) < 95:
+                    info_text += " (Need 95+ for Quarterly MA)"
+                else:
+                    info_text += " (Both MAs available)"
+                
+                ax3.text(0.02, 0.98, info_text, transform=ax3.transAxes, 
+                        bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7),
+                        verticalalignment='top', fontsize=8)
+            
+            else:
+                # Single prediction fallback
+                ax3.bar(['Prediction'], [pred_values[0]], color='blue', alpha=0.7)
+                ax3.set_title('📊 Single Prediction Value')
+                ax3.set_ylabel('Predicted Price')
+            
+            # Plot 4: Prediction Statistics
+            stats_data = {
+                'Min': pred_values.min(),
+                'Max': pred_values.max(), 
+                'Mean': pred_values.mean(),
+                'Median': pd.Series(pred_values).median(),
+                'Std': pd.Series(pred_values).std()
+            }
+            
+            bars = ax4.bar(stats_data.keys(), stats_data.values(), 
+                          color=['red', 'green', 'blue', 'orange', 'purple'], alpha=0.7)
+            ax4.set_title('📋 Prediction Statistics Summary')
+            ax4.set_ylabel('Value')
+            ax4.grid(True, alpha=0.3, axis='y')
+            
+            # Add value labels on bars
+            for bar, value in zip(bars, stats_data.values()):
+                height = bar.get_height()
+                ax4.text(bar.get_x() + bar.get_width()/2., height + height*0.01,
+                        f'{value:.2f}', ha='center', va='bottom', fontweight='bold')
+            
+            # Plot 5: Moving Average Comparison
+            if len(pred_values) >= 21:
+                pred_series = pd.Series(pred_values)
+                ma_21 = pred_series.rolling(window=21, center=True).mean()
+                
+                if len(pred_values) >= 95:
+                    ma_95 = pred_series.rolling(window=95, center=True).mean()
+                    
+                    # Plot MA difference using dates on x-axis
+                    ma_diff = ma_21 - ma_95
+                    colors = ['red' if x < 0 else 'green' for x in ma_diff]
+                    
+                    # ✅ FIXED: Use dates instead of array indices, add proper width
+                    ax5.bar(dates[:len(ma_diff)], ma_diff, color=colors, alpha=0.6, width=1)
+                    ax5.axhline(y=0, color='black', linestyle='-', linewidth=1)
+                    ax5.set_title('📊 21-MA vs 95-MA Difference\n(Green=Bullish, Red=Bearish)')
+                    ax5.set_xlabel('Date/Time')  # ✅ ADDED: Proper x-axis label
+                    ax5.set_ylabel('MA Difference')
+                    ax5.tick_params(axis='x', rotation=45)  # ✅ ADDED: Rotate dates for better readability
+                    ax5.grid(True, alpha=0.3)
+                    
+                    # Add summary stats
+                    bullish_periods = sum(1 for x in ma_diff if x > 0)
+                    bearish_periods = sum(1 for x in ma_diff if x < 0)
+                    ax5.text(0.02, 0.98, f"Bullish: {bullish_periods}\nBearish: {bearish_periods}", 
+                            transform=ax5.transAxes, bbox=dict(boxstyle="round", facecolor="lightblue"),
+                            verticalalignment='top')
+                else:
+                    # ✅ FIXED: Use dates for single MA plot
+                    ax5.plot(dates[:len(ma_21)], ma_21, color='orange', linewidth=2)
+                    ax5.set_title('📈 21-Period Moving Average\n(Need 95+ points for comparison)')
+                    ax5.set_xlabel('Date/Time')  # ✅ ADDED: Proper x-axis label
+                    ax5.set_ylabel('Price')      # ✅ ADDED: Proper y-axis label
+                    ax5.tick_params(axis='x', rotation=45)  # ✅ ADDED: Rotate dates for better readability
+                    ax5.grid(True, alpha=0.3)
+            else:
+                ax5.text(0.5, 0.5, 'Need 21+ data points\nfor Moving Average analysis', 
+                        ha='center', va='center', transform=ax5.transAxes,
+                        bbox=dict(boxstyle="round", facecolor="lightyellow"))
+                ax5.set_title('📊 Moving Average Analysis')
+            
+            # Plot 6: Trading Signals
+            if len(pred_values) >= 95:
+                # Generate trading signals based on MA crossovers
+                signals = []
+                signal_dates = []
+                signal_values = []
+                
+                for i in range(1, len(ma_21)):
+                    if not (pd.isna(ma_21.iloc[i]) or pd.isna(ma_95.iloc[i]) or 
+                           pd.isna(ma_21.iloc[i-1]) or pd.isna(ma_95.iloc[i-1])):
+                        
+                        # Bullish signal
+                        if ma_21.iloc[i-1] <= ma_95.iloc[i-1] and ma_21.iloc[i] > ma_95.iloc[i]:
+                            signals.append('BUY')
+                            signal_dates.append(dates[i])
+                            signal_values.append(pred_values[i])
+                        # Bearish signal  
+                        elif ma_21.iloc[i-1] >= ma_95.iloc[i-1] and ma_21.iloc[i] < ma_95.iloc[i]:
+                            signals.append('SELL')
+                            signal_dates.append(dates[i])
+                            signal_values.append(pred_values[i])
+                
+                # Plot signals using proper dates
+                ax6.plot(dates, pred_values, alpha=0.5, color='blue', label='Predictions')
+                
+                # Create buy/sell signal lists with proper date formatting
+                buy_signals = [(d, v) for d, v, s in zip(signal_dates, signal_values, signals) if s == 'BUY']
+                sell_signals = [(d, v) for d, v, s in zip(signal_dates, signal_values, signals) if s == 'SELL']
+                
+                if buy_signals:
+                    buy_x, buy_y = zip(*buy_signals)
+                    ax6.scatter(buy_x, buy_y, color='green', s=100, marker='^', 
+                               label=f'BUY Signals ({len(buy_signals)})', zorder=5)
+                
+                if sell_signals:
+                    sell_x, sell_y = zip(*sell_signals)
+                    ax6.scatter(sell_x, sell_y, color='red', s=100, marker='v', 
+                               label=f'SELL Signals ({len(sell_signals)})', zorder=5)
+                
+                ax6.set_title(f'🎯 Trading Signals\n({len(signals)} total signals)')
+                ax6.set_xlabel('Date/Time')
+                ax6.set_ylabel('Price')
+                ax6.tick_params(axis='x', rotation=45)
+                ax6.legend()
+                ax6.grid(True, alpha=0.3)
+            
+            else:
+                ax6.text(0.5, 0.5, 'Need 95+ data points\nfor Trading Signals', 
+                        ha='center', va='center', transform=ax6.transAxes,
+                        bbox=dict(boxstyle="round", facecolor="lightyellow"))
+                ax6.set_title('🎯 Trading Signals')
+            
+            # NEW Plot 7: 90-Day View from Current Time
+            cutoff_90_days = current_time + timedelta(days=90)
+            mask_90 = dates_series <= cutoff_90_days
+            
+            if mask_90.any():
+                dates_90 = dates_series[mask_90]
+                pred_90 = pred_values_series[mask_90]
+                
+                ax7.plot(dates_90, pred_90, marker='o', linewidth=2, markersize=3, 
+                        color='purple', alpha=0.8, label=f'{len(pred_90)} predictions')
+                
+                # Add moving average for 90-day view if enough data
+                if len(pred_90) >= 21:
+                    ma_21_90 = pred_90.rolling(window=21, center=True).mean()
+                    ax7.plot(dates_90, ma_21_90, '--', linewidth=2, 
+                            color='orange', alpha=0.8, label='21-Day MA')
+                
+                ax7.set_title(f'📅 Next 90 Days Predictions\n({current_time.strftime("%Y-%m-%d")} to {cutoff_90_days.strftime("%Y-%m-%d")})')
+                ax7.set_xlabel('Date/Time')
+                ax7.set_ylabel('Predicted Price')
+                ax7.grid(True, alpha=0.3, linestyle='--')
+                ax7.tick_params(axis='x', rotation=45)
+                ax7.legend()
+                
+                # Add statistics text
+                stats_text = f"Min: {pred_90.min():.2f}\nMax: {pred_90.max():.2f}\nMean: {pred_90.mean():.2f}"
+                ax7.text(0.02, 0.98, stats_text, transform=ax7.transAxes, 
+                        bbox=dict(boxstyle="round", facecolor="plum", alpha=0.7),
+                        verticalalignment='top', fontsize=8)
+            else:
+                ax7.text(0.5, 0.5, 'No predictions within\n90 days from current time', 
+                        ha='center', va='center', transform=ax7.transAxes,
+                        bbox=dict(boxstyle="round", facecolor="lightyellow"))
+                ax7.set_title('📅 Next 90 Days Predictions')
+            
+            # NEW Plot 8: 21-Day View from Current Time
+            cutoff_21_days = current_time + timedelta(days=21)
+            mask_21 = dates_series <= cutoff_21_days
+            
+            if mask_21.any():
+                dates_21 = dates_series[mask_21]
+                pred_21 = pred_values_series[mask_21]
+                
+                ax8.plot(dates_21, pred_21, marker='o', linewidth=2, markersize=4, 
+                        color='darkgreen', alpha=0.8, label=f'{len(pred_21)} predictions')
+                
+                # Add trend line for 21-day view
+                if len(pred_21) >= 5:
+                    z = np.polyfit(range(len(pred_21)), pred_21, 1)
+                    trend_line = np.poly1d(z)
+                    ax8.plot(dates_21, trend_line(range(len(pred_21))), 
+                            'r--', alpha=0.8, linewidth=2, label='Trend Line')
+                    
+                    # Calculate trend direction
+                    trend_direction = "📈 Rising" if z[0] > 0 else "📉 Falling"
+                    trend_text = f"Trend: {trend_direction}\nSlope: {z[0]:.3f}"
+                else:
+                    trend_text = "Need 5+ points\nfor trend analysis"
+                
+                ax8.set_title(f'📅 Next 21 Days Predictions\n({current_time.strftime("%Y-%m-%d")} to {cutoff_21_days.strftime("%Y-%m-%d")})')
+                ax8.set_xlabel('Date/Time')
+                ax8.set_ylabel('Predicted Price')
+                ax8.grid(True, alpha=0.3, linestyle='--')
+                ax8.tick_params(axis='x', rotation=45)
+                ax8.legend()
+                
+                # Add trend and statistics text
+                stats_text = f"Min: {pred_21.min():.2f}\nMax: {pred_21.max():.2f}\nMean: {pred_21.mean():.2f}\n{trend_text}"
+                ax8.text(0.02, 0.98, stats_text, transform=ax8.transAxes, 
+                        bbox=dict(boxstyle="round", facecolor="lightcyan", alpha=0.7),
+                        verticalalignment='top', fontsize=8)
+            else:
+                ax8.text(0.5, 0.5, 'No predictions within\n21 days from current time', 
+                        ha='center', va='center', transform=ax8.transAxes,
+                        bbox=dict(boxstyle="round", facecolor="lightyellow"))
+                ax8.set_title('📅 Next 21 Days Predictions')
+            
+            # Adjust layout for the new 2x4 grid
+            plt.tight_layout()
+            
+            # Save plot
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            plots_dir = self.config.get('visualization', {}).get('plots_dir', 'plots')
+            os.makedirs(plots_dir, exist_ok=True)
+            filename = f"{plots_dir}/future_predictions_enhanced_{timestamp}.png"
+            plt.savefig(filename, dpi=300, bbox_inches='tight')
+            self.logger.info(f"💾 Enhanced future prediction plots saved to {filename}")
+            
+            # Show plots if requested
+            if show_plots:
+                plt.show()
+                self.logger.info("🖼️  Enhanced future prediction plots displayed")
+            
+            # Create a simple feature importance plot if available
+            if hasattr(self.model, 'get_feature_importance'):
+                self.create_feature_importance_plot(show_plots)
+            
+            return filename
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error creating enhanced future-only plots: {str(e)}")
+            return None
+
+    def create_feature_importance_plot(self, show_plots=False):
+        """Create feature importance plot without training data."""
+        try:
+            self.logger.info("📊 Creating feature importance plot")
+            
+            # Get feature importance from the model
+            feature_importance = self.model.get_feature_importance()
+            
+            if feature_importance is not None:
+                # Create feature importance plot
+                fig, ax = plt.subplots(figsize=(12, 8))
+                
+                # Take top 20 features
+                top_features = feature_importance.head(20)
+                
+                # Create horizontal bar plot
+                bars = ax.barh(range(len(top_features)), top_features['importance'], color='skyblue', alpha=0.8)
+                ax.set_yticks(range(len(top_features)))
+                ax.set_yticklabels(top_features['feature'])
+                ax.set_xlabel('Importance Score')
+                ax.set_title('🏆 Top 20 Most Important Features (from Loaded Model)')
+                ax.grid(True, alpha=0.3, axis='x')
+                
+                # Add value labels
+                for i, (bar, importance) in enumerate(zip(bars, top_features['importance'])):
+                    width = bar.get_width()
+                    ax.text(width + width*0.01, bar.get_y() + bar.get_height()/2,
+                           f'{importance:.3f}', ha='left', va='center', fontsize=8)
+                
+                plt.tight_layout()
+                
+                # Save plot
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                plots_dir = self.config.get('visualization', {}).get('plots_dir', 'plots')
+                filename = f"{plots_dir}/feature_importance_{timestamp}.png"
+                plt.savefig(filename, dpi=300, bbox_inches='tight')
+                self.logger.info(f"🏆 Feature importance plot saved to {filename}")
+                
+                if show_plots:
+                    plt.show()
+                
+            else:
+                self.logger.warning("⚠️  Could not get feature importance from model")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error creating feature importance plot: {str(e)}")
+
+    def print_prediction_summary(self):
+        """Print a comprehensive summary of predictions."""
+        print("\n" + "="*70)
+        print("🎯 FUTURE PREDICTIONS SUMMARY")
+        print("="*70)
+        
+        if hasattr(self.predictions, 'shape'):
+            print(f"📊 Total predictions generated: {len(self.predictions)}")
+            
+            if hasattr(self.predictions, 'describe'):
+                pred_col = 'predicted_value' if 'predicted_value' in self.predictions.columns else self.predictions.columns[0]
+                stats = self.predictions[pred_col].describe()
+                
+                print(f"\n📈 Prediction Statistics:")
+                print(f"   Count: {stats['count']:.0f}")
+                print(f"   Mean:  {stats['mean']:.2f}")
+                print(f"   Std:   {stats['std']:.2f}")
+                print(f"   Min:   {stats['min']:.2f}")
+                print(f"   25%:   {stats['25%']:.2f}")
+                print(f"   50%:   {stats['50%']:.2f}")
+                print(f"   75%:   {stats['75%']:.2f}")
+                print(f"   Max:   {stats['max']:.2f}")
+                
+            print(f"\n🔍 Sample Predictions:")
+            if hasattr(self.predictions, 'head'):
+                print(self.predictions.head(10).to_string())
+            
+        print(f"\n💾 Results saved to: csv_logs/{self.run_id}/")
+        print("="*70)
+
+    def quick_predict(self, model_path, num_predictions=30):
+        """
+        Ultra-fast prediction mode - minimal processing.
+        
+        Args:
+            model_path (str): Path to model file
+            num_predictions (int): Number of future predictions to make
+            
+        Returns:
+            dict: Predictions and metadata
+        """
+        self.logger.info(f"🚀 Quick prediction mode: loading model and generating {num_predictions} predictions")
+        
+        # Load model
+        self.load_pretrained_model(model_path)
+        
+        # Generate minimal future data
+        self.future_data = self.future_generator.generate_minimal(num_predictions)
+        
+        # Make predictions
+        self.predictions = self.predictor.predict(self.model, self.future_data)
+        
+        print(f"⚡ Quick predictions completed: {len(self.predictions)} predictions generated")
+        
+        return {
+            'predictions': self.predictions,
+            'model_loaded': True,
+            'mode': 'quick_predict'
         }
 
 
@@ -516,9 +1037,8 @@ def main():
     parser.add_argument('--display-plots', action='store_true', help='Only display previously generated plots')
     parser.add_argument('--list-runs', action='store_true', help='List all available runs')
     parser.add_argument('--run-logs', type=str, help='Show logs for a specific run ID')
-    
-    # NEW: Add model loading arguments
-    parser.add_argument('--load-model', type=str, help='Load pre-trained model (file path or Google Drive ID) and skip training')
+    parser.add_argument('--load-model', type=str, help='Load pre-trained model and make predictions (fast mode)')
+    parser.add_argument('--quick-predict', type=str, help='Ultra-fast prediction with specified model (minimal processing)')
     parser.add_argument('--list-models', action='store_true', help='List all available saved models')
     
     args = parser.parse_args()
@@ -550,8 +1070,17 @@ def main():
     # Create an instance of the GFAnalytics framework
     gf = GFAnalytics()
     
-    # NEW: Handle model listing
-    if args.list_models:
+    if args.quick_predict:
+        # Ultra-fast prediction mode
+        results = gf.quick_predict(args.quick_predict)
+        print(f"🎯 Quick prediction completed!")
+        return results
+    elif args.load_model:
+        # Fast prediction mode (current implementation)
+        results = gf.run_with_pretrained_model(args.load_model, show_plots=args.show_plots)
+        print(f"✅ Prediction completed. Run ID: {results['run_id']}")
+        return results
+    elif args.list_models:
         models = list_models(gf)
         if len(models) == 0:
             print("No saved models found.")
@@ -562,20 +1091,13 @@ def main():
                 if model['type'] == 'local':
                     print(f"    Path: {model['path']}")
         return models
-    
-    if args.clean:
+    elif args.clean:
         gf.clean_tables()
     elif args.clean_table:
         gf.clean_table(args.clean_table)
     elif args.display_plots:
         # Just display plots without running the pipeline
         return gf.display_plots()
-    elif args.load_model:
-        # NEW: Run with pre-trained model
-        results = gf.run_with_pretrained_model(args.load_model, show_plots=args.show_plots)
-        print(f"\nCompleted run with loaded model. Run ID: {results['run_id']}")
-        print(f"CSV logs are stored in: {os.path.join('csv_logs', results['run_id'])}")
-        return results
     else:
         # Run the complete pipeline (including training)
         results = gf.run(show_plots=args.show_plots)

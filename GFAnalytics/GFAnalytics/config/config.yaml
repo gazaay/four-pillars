@@ -9,16 +9,16 @@ stock:
 date_range:
   training:
     start_date: "2019-01-01"  # Start date for training data
-    end_date: "2025-04-21"    # End date for training data
+    end_date: "2025-05-31"    # End date for training data
 
   testing:
     start_date: "2025-01-31"  # Start date for testing data
     end_date: "2025-04-31"    # End date for testing data
   prediction:
-    days_ahead: 360          # Number of days to predict ahead
+    days_ahead: 740          # Number of days to predict ahead
 
 # Data Period Configuration
-period: "1h"  # Trading period (1H, 2H, 1D, etc.)
+period: "1D"  # Trading period (1H, 2H, 1D, etc.)
 
 # Google Cloud Platform Configuration
 gcp:
@@ -77,6 +77,30 @@ model:
     # Encoding configuration
     encoding:
       method: "label_encoding"  # Options: label_encoding, one_hot_encoding
+    
+    # Simple column filtering
+    filtering:
+      enabled: false  # Set to true to enable filtering
+      
+      # Base pillars filtering (stock listing date Bazi)
+      base_pillars:
+        include_patterns: []  # Include columns matching these patterns, e.g., ["base_year", "base_month"]
+        exclude_patterns: []  # Exclude columns matching these patterns
+      
+      # Current pillars filtering (time-specific Bazi)  
+      current_pillars:
+        include_patterns: []  # Include columns matching these patterns, e.g., ["current_day", "current_hour"]
+        exclude_patterns: []  # Exclude columns matching these patterns
+      
+      # ChengShen filtering
+      chengshen:
+        include_patterns: []  # Include columns matching these patterns, e.g., ["生", "克"]
+        exclude_patterns: []  # Exclude columns matching these patterns
+      
+      # Custom filtering (applies to all columns)
+      custom:
+        include_patterns: []  # Include columns matching these patterns
+        exclude_patterns: []  # Exclude columns matching these patterns
       
   # Evaluation metrics
   evaluation:

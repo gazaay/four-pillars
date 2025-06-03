@@ -11,7 +11,7 @@ It takes future data and generates predictions for stock prices.
 import pandas as pd
 import numpy as np
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from GFAnalytics.utils.time_utils import ensure_hk_timezone
 from GFAnalytics.utils.csv_utils import logdf
@@ -65,7 +65,7 @@ class Predictor:
         logdf(prediction_data, 'predictor_raw_future_data')
         
         # Extract features for prediction using the shared utility
-        X_pred, _ = prepare_feature_data(prediction_data, is_training=False)
+        X_pred, _ = prepare_feature_data(prediction_data, is_training=False, config=self.config)
         
         # Log the derived feature columns for reference
         feature_cols = self._get_feature_columns()

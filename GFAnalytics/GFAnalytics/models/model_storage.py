@@ -63,12 +63,14 @@ class GoogleDriveStorage:
             logger.error(f"Failed to initialize Google Drive storage: {str(e)}")
             logger.info("Will use local storage as fallback")
     
-    def save_model(self, model):
+    def save_model(self, model, training_start_date=None, training_end_date=None):
         """
         Save the model to Google Drive.
         
         Args:
             model: The model to save.
+            training_start_date (str, optional): Start date of training data (YYYY-MM-DD format).
+            training_end_date (str, optional): End date of training data (YYYY-MM-DD format).
             
         Returns:
             str: The ID of the file in Google Drive, or local path if fallback used.
@@ -76,17 +78,31 @@ class GoogleDriveStorage:
         try:
             # Generate timestamp for filename
             timestamp = datetime.now(pytz.timezone('Asia/Hong_Kong')).strftime('%Y%m%d_%H%M%S')
-            filename = self.model_filename.replace('.pkl', f'_{timestamp}.pkl')
+            
+            # Create filename with training dates if provided
+            if training_start_date and training_end_date:
+                # Extract just the date parts (YYYY-MM-DD) and remove dashes
+                start_str = training_start_date[:10].replace('-', '')
+                end_str = training_end_date[:10].replace('-', '')
+                filename = self.model_filename.replace('.pkl', f'_{start_str}_to_{end_str}_{timestamp}.pkl')
+            else:
+                filename = self.model_filename.replace('.pkl', f'_{timestamp}.pkl')
             
             # Save model to a temporary file
             temp_filepath = os.path.join(self.local_backup_dir, filename)
             logger.info(f"Saving model to temporary file: {temp_filepath}")
             
-            # Save model with feature names and encoders
+            # Save model with feature names, encoders, and training metadata
             model_data = {
                 'model': model.model,
                 'feature_names': model.feature_names,
-                'label_encoders': model.label_encoders
+                'label_encoders': model.label_encoders,
+                'training_metadata': {
+                    'training_start_date': training_start_date,
+                    'training_end_date': training_end_date,
+                    'save_timestamp': timestamp,
+                    'save_date': datetime.now(pytz.timezone('Asia/Hong_Kong')).isoformat()
+                }
             }
             joblib.dump(model_data, temp_filepath)
             

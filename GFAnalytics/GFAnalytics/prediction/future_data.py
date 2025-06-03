@@ -193,7 +193,7 @@ class FutureDataGenerator:
             
             # Use prepare_feature_data to prepare features in a standardized way
             self.logger.info("Preparing features using the standardized utility")
-            X_prepared, _ = prepare_feature_data(encoded_data, is_training=False)
+            X_prepared, _ = prepare_feature_data(encoded_data, is_training=False, config=self.config)
             
             # Log the prepared features
             logdf(X_prepared, 'future_generator_prepared_features')

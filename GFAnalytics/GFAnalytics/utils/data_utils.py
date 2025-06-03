@@ -16,13 +16,121 @@ import logging
 logger = logging.getLogger('GFAnalytics.DataUtils')
 
 
-def prepare_feature_data(data, is_training=True):
+def apply_column_filtering(data, config):
+    """
+    Apply simple column filtering based on configuration.
+    
+    Args:
+        data (pandas.DataFrame): Input data to filter
+        config (dict): Configuration dictionary with filtering settings
+        
+    Returns:
+        pandas.DataFrame: Filtered data
+    """
+    if not config.get('model', {}).get('features', {}).get('filtering', {}).get('enabled', False):
+        logger.debug("Column filtering is disabled")
+        return data
+    
+    logger.info("🔧 Applying column filtering...")
+    filtered_data = data.copy()
+    filtering_config = config['model']['features']['filtering']
+    
+    initial_columns = len(filtered_data.columns)
+    columns_to_drop = set()
+    
+    # Apply base pillars filtering
+    base_config = filtering_config.get('base_pillars', {})
+    if base_config.get('include_patterns') or base_config.get('exclude_patterns'):
+        columns_to_drop.update(_filter_by_patterns(filtered_data, base_config, 'base_'))
+    
+    # Apply current pillars filtering  
+    current_config = filtering_config.get('current_pillars', {})
+    if current_config.get('include_patterns') or current_config.get('exclude_patterns'):
+        columns_to_drop.update(_filter_by_patterns(filtered_data, current_config, 'current_'))
+    
+    # Apply ChengShen filtering
+    cs_config = filtering_config.get('chengshen', {})
+    if cs_config.get('include_patterns') or cs_config.get('exclude_patterns'):
+        columns_to_drop.update(_filter_chengshen_columns(filtered_data, cs_config))
+    
+    # Apply custom filtering (applies to all columns)
+    custom_config = filtering_config.get('custom', {})
+    if custom_config.get('include_patterns') or custom_config.get('exclude_patterns'):
+        columns_to_drop.update(_filter_by_patterns(filtered_data, custom_config, ''))
+    
+    # Remove the columns
+    if columns_to_drop:
+        filtered_data = filtered_data.drop(columns=list(columns_to_drop))
+        logger.info(f"📊 Filtered {len(columns_to_drop)} columns ({initial_columns} -> {len(filtered_data.columns)})")
+        logger.info(f"   Dropped columns: {sorted(list(columns_to_drop))[:10]}{'...' if len(columns_to_drop) > 10 else ''}")
+    else:
+        logger.info("📊 No columns filtered")
+    
+    return filtered_data
+
+
+def _filter_by_patterns(data, config, prefix):
+    """Filter columns by include/exclude patterns with optional prefix."""
+    columns_to_drop = set()
+    include_patterns = config.get('include_patterns', [])
+    exclude_patterns = config.get('exclude_patterns', [])
+    
+    # Get columns that match the prefix (if any)
+    if prefix:
+        relevant_columns = [col for col in data.columns if col.startswith(prefix)]
+    else:
+        relevant_columns = list(data.columns)
+    
+    for col in relevant_columns:
+        # Check exclude patterns first
+        should_exclude = any(pattern in col for pattern in exclude_patterns)
+        
+        # If include patterns specified, column must match at least one
+        if include_patterns:
+            should_include = any(pattern in col for pattern in include_patterns)
+            if not should_include:
+                should_exclude = True
+        
+        if should_exclude:
+            columns_to_drop.add(col)
+    
+    return columns_to_drop
+
+
+def _filter_chengshen_columns(data, config):
+    """Filter ChengShen columns specifically."""
+    columns_to_drop = set()
+    include_patterns = config.get('include_patterns', [])
+    exclude_patterns = config.get('exclude_patterns', [])
+    
+    # Find ChengShen related columns
+    cs_keywords = ['chengshen', '生', '克', '泄', '耗']
+    cs_columns = [col for col in data.columns if any(keyword in col for keyword in cs_keywords)]
+    
+    for col in cs_columns:
+        # Check exclude patterns first
+        should_exclude = any(pattern in col for pattern in exclude_patterns)
+        
+        # If include patterns specified, column must match at least one
+        if include_patterns:
+            should_include = any(pattern in col for pattern in include_patterns)
+            if not should_include:
+                should_exclude = True
+        
+        if should_exclude:
+            columns_to_drop.add(col)
+    
+    return columns_to_drop
+
+
+def prepare_feature_data(data, is_training=True, config=None):
     """
     Prepare feature data for training or prediction.
     
     Args:
         data (pandas.DataFrame): Input data
         is_training (bool): Whether this is training data
+        config (dict, optional): Configuration dictionary for filtering
         
     Returns:
         tuple: (X, y) if is_training=True, (X, None) if is_training=False
@@ -40,13 +148,25 @@ def prepare_feature_data(data, is_training=True):
         # Create a copy to avoid modifying original data
         df = data.copy()
         
-        # List of specific columns to drop
+        # STEP 1: Apply dataset filtering if config is provided
+        if config is not None:
+            df = apply_column_filtering(df, config)
+        
+        # STEP 2: List of specific columns to drop
         columns_to_drop = [
-            'year', 'time'  # Year column (user doesn't want)
-            'Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',  # Stock price data
+            # Time-related columns (comprehensive list)
+            'year', 'time',  'datetime', 'timestamp', 'month', 'day', 'hour', 
+            'dayofweek', 'dayofyear', 'weekofyear', 'quarter',
+            'is_year_start', 'is_year_end', 'is_quarter_start', 'is_quarter_end', 
+            'is_month_start', 'is_month_end',
+            # Stock price data columns that can cause data leakage
+            'Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits',
             # Also drop _x and _y variants
             'Open_x', 'High_x', 'Low_x', 'Close_x', 'Volume_x', 'Dividends_x', 'Stock Splits_x',
-            'Open_y', 'High_y', 'Low_y', 'Close_y', 'Volume_y', 'Dividends_y', 'Stock Splits_y'
+            'Open_y', 'High_y', 'Low_y', 'Close_y', 'Volume_y', 'Dividends_y', 'Stock Splits_y',
+            # Additional metadata columns
+            'uuid', 'uuid_x', 'uuid_y', 'last_modified_date', 'last_modified_date_x', 'last_modified_date_y',
+            'stock_code', 'stock_code_x', 'stock_code_y', 'ric_code', 'ric_code_x', 'ric_code_y'
         ]
         
         # Filter out columns that don't exist in dataframe

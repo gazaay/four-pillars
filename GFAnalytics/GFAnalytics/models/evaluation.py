@@ -84,7 +84,7 @@ class ModelEvaluator:
             
         # Use the shared data preparation utility to get test data
         self.logger.info("Preparing features using the standardized utility")
-        X_test, y_test = prepare_feature_data(encoded_data, is_training=True)
+        X_test, y_test = prepare_feature_data(encoded_data, is_training=True, config=self.config)
         
         self.logger.info(f"Prepared evaluation data with {X_test.shape[1]} features and {len(y_test)} samples")
         

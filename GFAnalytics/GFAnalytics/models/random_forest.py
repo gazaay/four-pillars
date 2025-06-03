@@ -164,8 +164,8 @@ class RandomForestModel:
         Returns:
             tuple: A tuple containing (X, y) if is_training is True, otherwise (X, None).
         """
-        # Use the shared data preparation utility
-        return prepare_feature_data(data, is_training)
+        # Use the shared data preparation utility with config for filtering
+        return prepare_feature_data(data, is_training, config=self.config)
     
     def tune_hyperparameters(self, data):
         """
