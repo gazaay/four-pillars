@@ -5,20 +5,40 @@ stock:
   code: "HSI"  # Stock or index code to analyze
   ric_code: "^HSI"  # Reuters Instrument Code - Confirmed working with Ticker().history()
   listing_date: "1969-11-24 08:30:00+08:00"  # HK market open time (GMT+8)
+  # listing_date: "2010-06-29 21:30:00+08:00"  # Tesla HK market open time (GMT+8)
+  # listing_date: "1950-09-07 07:30:00+08:00"  # Nikke HK market open time (GMT+8)
+  # listing_date: "1957-03-04 21:30:00+08:00"  # S&P500 HK market open time (GMT+8) March 4, 1957
+  # listing_date: "1999-01-22 21:30:00+08:00"  # NVDA HK market open time (GMT+8)
+  # listing_date: "1979-04-01 13:30:00+08:00"  # IRAN HK market open time (GMT+8)
+  # listing_date: "1957-03-04 21:30:00+08:00"  # S&P500 HK market open time (GMT+8)
+  # listing_date: "1996-09-02 15:30:00+08:00"  # 乌克兰格里夫纳 open time (GMT+8)
+  # listing_date: "1979-04-27 13:30:00+08:00"  # Gary Lam open time (GMT+8)
+
+# Additional Stocks Configuration
+additional_stocks:
+  TSLA:
+    code: "TSLA"  # Stock or index code to analyze
+    ric_code: "TSLA"  # Reuters Instrument Code
+    listing_date: "2010-06-29 21:30:00+08:00"  # NY market open time (9:30 AM ET) converted to GMT+8
+
+# Active stock configuration (which stock to use for current analysis)
+active_stock: "HSI"  # Default to HSI, can be changed to "TSLA" when needed
+
 # Date Range Configuration
 date_range:
   training:
     start_date: "2019-01-01"  # Start date for training data
-    end_date: "2025-05-31"    # End date for training data
+    end_date: "2025-06-18"    # End date for training data
 
   testing:
     start_date: "2025-01-31"  # Start date for testing data
     end_date: "2025-04-31"    # End date for testing data
   prediction:
-    days_ahead: 740          # Number of days to predict ahead
+    start_date: "2025-06-19"  # Base date for future predictions (day after training end)
+    days_ahead: 200       # Number of days to predict ahead
 
 # Data Period Configuration
-period: "1D"  # Trading period (1H, 2H, 1D, etc.)
+period: "1H"  # Trading period (1H, 2H, 1D, etc.)
 
 # Google Cloud Platform Configuration
 gcp:
@@ -80,17 +100,17 @@ model:
     
     # Simple column filtering
     filtering:
-      enabled: false  # Set to true to enable filtering
+      enabled: true  # Set to true to enable filtering
       
       # Base pillars filtering (stock listing date Bazi)
       base_pillars:
         include_patterns: []  # Include columns matching these patterns, e.g., ["base_year", "base_month"]
-        exclude_patterns: []  # Exclude columns matching these patterns
+        exclude_patterns: [""]  # Exclude ALL base_ columns
       
       # Current pillars filtering (time-specific Bazi)  
       current_pillars:
         include_patterns: []  # Include columns matching these patterns, e.g., ["current_day", "current_hour"]
-        exclude_patterns: []  # Exclude columns matching these patterns
+        exclude_patterns: [""]  # Exclude ALL current_ columns
       
       # ChengShen filtering
       chengshen:
@@ -122,6 +142,14 @@ visualization:
   save_plots: true
   plots_dir: "plots"
   display_plots_at_end: true  # Whether to show all plots at the end of pipeline
+  
+  # Moving Average Parameters for Plots
+  moving_averages:
+    short_period: 21    # Short-term MA period (daily/monthly)
+    long_period: 95     # Long-term MA period (quarterly)
+    center: true        # Whether to center the moving average
+    min_periods_short: 21  # Minimum periods required for short MA
+    min_periods_long: 95   # Minimum periods required for long MA
 
 # Logging Configuration
 logging:

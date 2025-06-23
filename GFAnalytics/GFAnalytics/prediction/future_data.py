@@ -63,7 +63,7 @@ class FutureDataGenerator:
         
         # Set base date if not provided
         if base_date is None:
-            base_date = ensure_hk_timezone(datetime.now())
+            base_date = ensure_hk_timezone(datetime(2025, 1, 1))
         else:
             base_date = ensure_hk_timezone(base_date)
         
@@ -221,7 +221,7 @@ class FutureDataGenerator:
             list: List of future dates.
         """
         future_dates = []
-        current_date = base_date - timedelta(days=180)
+        current_date = base_date
         # Get period from config
         period = self.config['period']
         

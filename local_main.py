@@ -336,6 +336,12 @@ def test_flip_pillars():
             "desc": "Male second flip"
         },
         {
+            "birth_date": datetime(1969, 11, 24, 8, 30),
+            "current_date": datetime(2025, 8, 4, 19),
+            "gender": "male",
+            "desc": "HSI listing date test"
+        },
+        {
             "birth_date": datetime(1980, 3, 21, 12),
             "current_date": datetime(2024, 3, 21, 12),
             "gender": "male",

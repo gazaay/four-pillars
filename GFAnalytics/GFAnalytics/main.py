@@ -513,11 +513,17 @@ class GFAnalytics:
         self.logger.info("Generating future predictions (skipping all historical data processing)")
         
         try:
-            # Generate future data directly
+            # Get base date from config if available, otherwise use current date
+            base_date = None
+            if 'date_range' in self.config and 'prediction' in self.config['date_range']:
+                if 'start_date' in self.config['date_range']['prediction']:
+                    base_date = pd.to_datetime(self.config['date_range']['prediction']['start_date'])
+            
+            # Generate future data directly with configured base date
             self.future_data = self.future_generator.generate(
+                base_date=base_date,
                 label_encoders=getattr(self.model, 'label_encoders', None)
             )
-            
             # Make predictions
             self.predictions = self.predictor.predict(self.model, self.future_data)
             
@@ -630,53 +636,59 @@ class GFAnalytics:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
-            # Plot 3: Prediction Trend Analysis with 21 vs 95 period moving averages
+            # Plot 3: Prediction Trend Analysis with configurable moving averages
             if len(pred_values) > 1:
-                # Calculate 21-period and 95-period moving averages
+                # Get MA parameters from config
+                ma_config = self.config['visualization']['moving_averages']
+                short_period = ma_config['short_period']
+                long_period = ma_config['long_period']
+                center_ma = ma_config['center']
+                
+                # Calculate moving averages with configurable periods
                 pred_series = pd.Series(pred_values)
                 
                 # Only calculate moving averages if we have enough data points
-                ma_21 = None
-                ma_95 = None
+                ma_short = None
+                ma_long = None
                 
-                if len(pred_values) >= 21:
-                    ma_21 = pred_series.rolling(window=21, center=True).mean()
+                if len(pred_values) >= short_period:
+                    ma_short = pred_series.rolling(window=short_period, center=center_ma).mean()
                 
-                if len(pred_values) >= 95:
-                    ma_95 = pred_series.rolling(window=95, center=True).mean()
+                if len(pred_values) >= long_period:
+                    ma_long = pred_series.rolling(window=long_period, center=center_ma).mean()
                 
                 # Plot the predictions
                 ax3.plot(dates, pred_values, 'o-', alpha=0.6, label='Predictions', 
                          color='blue', linewidth=1, markersize=3)
                 
                 # Plot moving averages if available
-                if ma_21 is not None:
-                    ax3.plot(dates, ma_21, '--', linewidth=2, label='21-Period MA (Monthly)', 
+                if ma_short is not None:
+                    ax3.plot(dates, ma_short, '--', linewidth=2, label=f'{short_period}-Period MA (Short)', 
                             color='orange', alpha=0.8)
                 
-                if ma_95 is not None:
-                    ax3.plot(dates, ma_95, '-', linewidth=3, label='95-Period MA (Quarterly)', 
+                if ma_long is not None:
+                    ax3.plot(dates, ma_long, '-', linewidth=3, label=f'{long_period}-Period MA (Long)', 
                             color='red', alpha=0.9)
                 
                 # Add crossover analysis if both MAs are available
-                if ma_21 is not None and ma_95 is not None:
+                if ma_short is not None and ma_long is not None:
                     # Find crossover points
                     crossovers = []
-                    for i in range(1, len(ma_21)):
-                        if not (pd.isna(ma_21.iloc[i]) or pd.isna(ma_95.iloc[i]) or 
-                               pd.isna(ma_21.iloc[i-1]) or pd.isna(ma_95.iloc[i-1])):
-                            # Bullish crossover (21 MA crosses above 95 MA)
-                            if ma_21.iloc[i-1] <= ma_95.iloc[i-1] and ma_21.iloc[i] > ma_95.iloc[i]:
-                                ax3.scatter(dates[i], ma_21.iloc[i], color='green', s=100, 
+                    for i in range(1, len(ma_short)):
+                        if not (pd.isna(ma_short.iloc[i]) or pd.isna(ma_long.iloc[i]) or 
+                               pd.isna(ma_short.iloc[i-1]) or pd.isna(ma_long.iloc[i-1])):
+                            # Bullish crossover (short MA crosses above long MA)
+                            if ma_short.iloc[i-1] <= ma_long.iloc[i-1] and ma_short.iloc[i] > ma_long.iloc[i]:
+                                ax3.scatter(dates[i], ma_short.iloc[i], color='green', s=100, 
                                           marker='^', label='Bullish Crossover' if not crossovers else "", zorder=5)
                                 crossovers.append('bullish')
-                            # Bearish crossover (21 MA crosses below 95 MA)
-                            elif ma_21.iloc[i-1] >= ma_95.iloc[i-1] and ma_21.iloc[i] < ma_95.iloc[i]:
-                                ax3.scatter(dates[i], ma_21.iloc[i], color='red', s=100, 
+                            # Bearish crossover (short MA crosses below long MA)
+                            elif ma_short.iloc[i-1] >= ma_long.iloc[i-1] and ma_short.iloc[i] < ma_long.iloc[i]:
+                                ax3.scatter(dates[i], ma_short.iloc[i], color='red', s=100, 
                                           marker='v', label='Bearish Crossover' if 'bearish' not in crossovers else "", zorder=5)
                                 crossovers.append('bearish')
                 
-                ax3.set_title('📉 Predictions with 21-Period vs 95-Period Moving Averages')
+                ax3.set_title(f'📉 Predictions with {short_period}-Period vs {long_period}-Period Moving Averages')
                 ax3.set_xlabel('Date/Time')
                 ax3.set_ylabel('Predicted Price')
                 ax3.legend(loc='upper left')
@@ -685,10 +697,10 @@ class GFAnalytics:
                 
                 # Add info text about data sufficiency
                 info_text = f"Data points: {len(pred_values)}"
-                if len(pred_values) < 21:
-                    info_text += " (Need 21+ for Monthly MA)"
-                elif len(pred_values) < 95:
-                    info_text += " (Need 95+ for Quarterly MA)"
+                if len(pred_values) < short_period:
+                    info_text += f" (Need {short_period}+ for Short MA)"
+                elif len(pred_values) < long_period:
+                    info_text += f" (Need {long_period}+ for Long MA)"
                 else:
                     info_text += " (Both MAs available)"
                 
@@ -723,22 +735,22 @@ class GFAnalytics:
                 ax4.text(bar.get_x() + bar.get_width()/2., height + height*0.01,
                         f'{value:.2f}', ha='center', va='bottom', fontweight='bold')
             
-            # Plot 5: Moving Average Comparison
-            if len(pred_values) >= 21:
+            # Plot 5: Moving Average Comparison (use config parameters)
+            if len(pred_values) >= short_period:
                 pred_series = pd.Series(pred_values)
-                ma_21 = pred_series.rolling(window=21, center=True).mean()
+                ma_short = pred_series.rolling(window=short_period, center=center_ma).mean()
                 
-                if len(pred_values) >= 95:
-                    ma_95 = pred_series.rolling(window=95, center=True).mean()
+                if len(pred_values) >= long_period:
+                    ma_long = pred_series.rolling(window=long_period, center=center_ma).mean()
                     
                     # Plot MA difference using dates on x-axis
-                    ma_diff = ma_21 - ma_95
+                    ma_diff = ma_short - ma_long
                     colors = ['red' if x < 0 else 'green' for x in ma_diff]
                     
                     # ✅ FIXED: Use dates instead of array indices, add proper width
                     ax5.bar(dates[:len(ma_diff)], ma_diff, color=colors, alpha=0.6, width=1)
                     ax5.axhline(y=0, color='black', linestyle='-', linewidth=1)
-                    ax5.set_title('📊 21-MA vs 95-MA Difference\n(Green=Bullish, Red=Bearish)')
+                    ax5.set_title(f'📊 {short_period}-MA vs {long_period}-MA Difference\n(Green=Bullish, Red=Bearish)')
                     ax5.set_xlabel('Date/Time')  # ✅ ADDED: Proper x-axis label
                     ax5.set_ylabel('MA Difference')
                     ax5.tick_params(axis='x', rotation=45)  # ✅ ADDED: Rotate dates for better readability
@@ -752,36 +764,36 @@ class GFAnalytics:
                             verticalalignment='top')
                 else:
                     # ✅ FIXED: Use dates for single MA plot
-                    ax5.plot(dates[:len(ma_21)], ma_21, color='orange', linewidth=2)
-                    ax5.set_title('📈 21-Period Moving Average\n(Need 95+ points for comparison)')
+                    ax5.plot(dates[:len(ma_short)], ma_short, color='orange', linewidth=2)
+                    ax5.set_title(f'📈 {short_period}-Period Moving Average\n(Need {long_period}+ points for comparison)')
                     ax5.set_xlabel('Date/Time')  # ✅ ADDED: Proper x-axis label
                     ax5.set_ylabel('Price')      # ✅ ADDED: Proper y-axis label
                     ax5.tick_params(axis='x', rotation=45)  # ✅ ADDED: Rotate dates for better readability
                     ax5.grid(True, alpha=0.3)
             else:
-                ax5.text(0.5, 0.5, 'Need 21+ data points\nfor Moving Average analysis', 
+                ax5.text(0.5, 0.5, f'Need {short_period}+ data points\nfor Moving Average analysis', 
                         ha='center', va='center', transform=ax5.transAxes,
                         bbox=dict(boxstyle="round", facecolor="lightyellow"))
                 ax5.set_title('📊 Moving Average Analysis')
             
-            # Plot 6: Trading Signals
-            if len(pred_values) >= 95:
+            # Plot 6: Trading Signals (use config parameters)
+            if len(pred_values) >= long_period:
                 # Generate trading signals based on MA crossovers
                 signals = []
                 signal_dates = []
                 signal_values = []
                 
-                for i in range(1, len(ma_21)):
-                    if not (pd.isna(ma_21.iloc[i]) or pd.isna(ma_95.iloc[i]) or 
-                           pd.isna(ma_21.iloc[i-1]) or pd.isna(ma_95.iloc[i-1])):
+                for i in range(1, len(ma_short)):
+                    if not (pd.isna(ma_short.iloc[i]) or pd.isna(ma_long.iloc[i]) or 
+                           pd.isna(ma_short.iloc[i-1]) or pd.isna(ma_long.iloc[i-1])):
                         
                         # Bullish signal
-                        if ma_21.iloc[i-1] <= ma_95.iloc[i-1] and ma_21.iloc[i] > ma_95.iloc[i]:
+                        if ma_short.iloc[i-1] <= ma_long.iloc[i-1] and ma_short.iloc[i] > ma_long.iloc[i]:
                             signals.append('BUY')
                             signal_dates.append(dates[i])
                             signal_values.append(pred_values[i])
                         # Bearish signal  
-                        elif ma_21.iloc[i-1] >= ma_95.iloc[i-1] and ma_21.iloc[i] < ma_95.iloc[i]:
+                        elif ma_short.iloc[i-1] >= ma_long.iloc[i-1] and ma_short.iloc[i] < ma_long.iloc[i]:
                             signals.append('SELL')
                             signal_dates.append(dates[i])
                             signal_values.append(pred_values[i])
@@ -811,14 +823,27 @@ class GFAnalytics:
                 ax6.grid(True, alpha=0.3)
             
             else:
-                ax6.text(0.5, 0.5, 'Need 95+ data points\nfor Trading Signals', 
+                ax6.text(0.5, 0.5, f'Need {long_period}+ data points\nfor Trading Signals', 
                         ha='center', va='center', transform=ax6.transAxes,
                         bbox=dict(boxstyle="round", facecolor="lightyellow"))
                 ax6.set_title('🎯 Trading Signals')
             
-            # NEW Plot 7: 90-Day View from Current Time
-            cutoff_90_days = current_time + timedelta(days=90)
-            mask_90 = dates_series <= cutoff_90_days
+            # NEW Plot 7: 90-Day View from Prediction Start Date
+            # Get prediction start date from config
+            prediction_start_date = None
+            if 'date_range' in self.config and 'prediction' in self.config['date_range']:
+                if 'start_date' in self.config['date_range']['prediction']:
+                    prediction_start_date = pd.to_datetime(self.config['date_range']['prediction']['start_date'])
+
+            # Fallback to current time if no prediction start date configured
+            if prediction_start_date is None:
+                prediction_start_date = current_time
+
+            # Calculate cutoff date (90 days from prediction start date)
+            cutoff_90_days = prediction_start_date + timedelta(days=90)
+
+            # Filter dates_series to only include predictions within the range
+            mask_90 = (dates_series >= prediction_start_date) & (dates_series <= cutoff_90_days)
             
             if mask_90.any():
                 dates_90 = dates_series[mask_90]
@@ -827,13 +852,13 @@ class GFAnalytics:
                 ax7.plot(dates_90, pred_90, marker='o', linewidth=2, markersize=3, 
                         color='purple', alpha=0.8, label=f'{len(pred_90)} predictions')
                 
-                # Add moving average for 90-day view if enough data
-                if len(pred_90) >= 21:
-                    ma_21_90 = pred_90.rolling(window=21, center=True).mean()
-                    ax7.plot(dates_90, ma_21_90, '--', linewidth=2, 
-                            color='orange', alpha=0.8, label='21-Day MA')
+                # Add moving average for 90-day view if enough data (use config parameters)
+                if len(pred_90) >= short_period:
+                    ma_short_90 = pred_90.rolling(window=short_period, center=center_ma).mean()
+                    ax7.plot(dates_90, ma_short_90, '--', linewidth=2, 
+                            color='orange', alpha=0.8, label=f'{short_period}-Day MA')
                 
-                ax7.set_title(f'📅 Next 90 Days Predictions\n({current_time.strftime("%Y-%m-%d")} to {cutoff_90_days.strftime("%Y-%m-%d")})')
+                ax7.set_title(f'📅 Next 90 Days Predictions\n({prediction_start_date.strftime("%Y-%m-%d")} to {cutoff_90_days.strftime("%Y-%m-%d")})')
                 ax7.set_xlabel('Date/Time')
                 ax7.set_ylabel('Predicted Price')
                 ax7.grid(True, alpha=0.3, linestyle='--')
@@ -851,9 +876,12 @@ class GFAnalytics:
                         bbox=dict(boxstyle="round", facecolor="lightyellow"))
                 ax7.set_title('📅 Next 90 Days Predictions')
             
-            # NEW Plot 8: 21-Day View from Current Time
-            cutoff_21_days = current_time + timedelta(days=21)
-            mask_21 = dates_series <= cutoff_21_days
+            # NEW Plot 8: 21-Day View from Prediction Start Date
+            # Calculate cutoff date (21 days from prediction start date)
+            cutoff_21_days = prediction_start_date + timedelta(days=21)
+
+            # Filter dates_series to only include predictions within the range
+            mask_21 = (dates_series >= prediction_start_date) & (dates_series <= cutoff_21_days)
             
             if mask_21.any():
                 dates_21 = dates_series[mask_21]
@@ -875,7 +903,7 @@ class GFAnalytics:
                 else:
                     trend_text = "Need 5+ points\nfor trend analysis"
                 
-                ax8.set_title(f'📅 Next 21 Days Predictions\n({current_time.strftime("%Y-%m-%d")} to {cutoff_21_days.strftime("%Y-%m-%d")})')
+                ax8.set_title(f'📅 Next 21 Days Predictions\n({prediction_start_date.strftime("%Y-%m-%d")} to {cutoff_21_days.strftime("%Y-%m-%d")})')
                 ax8.set_xlabel('Date/Time')
                 ax8.set_ylabel('Predicted Price')
                 ax8.grid(True, alpha=0.3, linestyle='--')

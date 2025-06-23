@@ -138,10 +138,10 @@ def get_trading_hours_mask(df, timestamp_col='time', market='HK'):
     # Define trading hours for different markets
     trading_hours = {
         'HK': {
-            'morning_start': 9,
+            'morning_start': 1,
             'morning_end': 12,
             'afternoon_start': 13,
-            'afternoon_end': 16,
+            'afternoon_end': 24,
             'weekdays': [0, 1, 2, 3, 4]  # Monday to Friday
         }
     }

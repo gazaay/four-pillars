@@ -60,7 +60,11 @@ class Predictor:
         else:
             # Create a default date range if no date column exists
             date_info = pd.date_range(start=datetime.now(), periods=len(prediction_data), freq='D')
-        
+        # Remove date/time columns after saving date_info
+        if 'date' in prediction_data.columns:
+            prediction_data.drop('date', axis=1, inplace=True)
+        if 'time' in prediction_data.columns:
+            prediction_data.drop('time', axis=1, inplace=True)
         # Log the raw future data
         logdf(prediction_data, 'predictor_raw_future_data')
         
@@ -91,7 +95,7 @@ class Predictor:
                 self.logger.info(f"Removing {len(extra_features)} extra features not used in training")
             
             # Reorder columns to match the exact order from training
-            X_pred = X_pred[model.feature_names]
+                X_pred = X_pred[model.feature_names]
             self.logger.info(f"Reordered features to match training order: {len(model.feature_names)} features")
         
         # Log the prepared features

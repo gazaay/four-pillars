@@ -12,6 +12,8 @@ import pandas as pd
 import numpy as np
 import logging
 
+from GFAnalytics.utils.csv_utils import logdf
+
 # Set up logger
 logger = logging.getLogger('GFAnalytics.DataUtils')
 
@@ -147,15 +149,18 @@ def prepare_feature_data(data, is_training=True, config=None):
     try:
         # Create a copy to avoid modifying original data
         df = data.copy()
-        
+        # Log the input data before preparation
+        logdf(df, 'utils_prepare_feature_data_input')
         # STEP 1: Apply dataset filtering if config is provided
         if config is not None:
             df = apply_column_filtering(df, config)
         
         # STEP 2: List of specific columns to drop
         columns_to_drop = [
-            # Time-related columns (comprehensive list)
-            'year', 'time',  'datetime', 'timestamp', 'month', 'day', 'hour', 
+            # Time-related columns (comprehensive list) 
+            'time',
+            # 'date', 
+            'year', 'datetime', 'timestamp', 'month', 'day', 'hour', 
             'dayofweek', 'dayofyear', 'weekofyear', 'quarter',
             'is_year_start', 'is_year_end', 'is_quarter_start', 'is_quarter_end', 
             'is_month_start', 'is_month_end',
@@ -220,7 +225,7 @@ def prepare_feature_data(data, is_training=True, config=None):
             X = df
             logger.info(f"Prepared prediction data: {X.shape[0]} samples, {X.shape[1]} features")
             return X, None
-        
+            
     except Exception as e:
         logger.error(f"Error in prepare_feature_data: {e}")
         if is_training:

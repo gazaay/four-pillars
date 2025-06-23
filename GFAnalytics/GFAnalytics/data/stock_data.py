@@ -189,28 +189,103 @@ class StockDataLoader:
             # Get HSI database configuration
             hsi_config = self.config['gcp']['bigquery']['hsi_data']
             table_name = hsi_config['table']
+            full_table_path = f"{hsi_config['project']}.{hsi_config['dataset']}.{table_name}"
             
-            # Build SQL query
+            logger.info(f"Querying table: {full_table_path}")
+            logger.info(f"Date range filter: {self.start_date} to {self.end_date}")
+            
+            # First, count total records in the table
+            count_total_query = f"""
+            SELECT COUNT(*) as total_count
+            FROM {full_table_path}
+            """
+            
+            logger.info("Counting total records in table...")
+            total_count_job = client.query(count_total_query)
+            total_count_result = total_count_job.to_dataframe()
+            total_records = total_count_result['total_count'].iloc[0]
+            logger.info(f"📊 Total records in table: {total_records:,}")
+            
+            # Count records in the date range
+            count_filtered_query = f"""
+            SELECT COUNT(*) as filtered_count
+            FROM {full_table_path}
+            WHERE time >= '{self.start_date}'
+            AND time <= '{self.end_date}'
+            """
+            
+            logger.info("Counting records in specified date range...")
+            filtered_count_job = client.query(count_filtered_query)
+            filtered_count_result = filtered_count_job.to_dataframe()
+            filtered_records = filtered_count_result['filtered_count'].iloc[0]
+            logger.info(f"📊 Records in date range ({self.start_date} to {self.end_date}): {filtered_records:,}")
+            
+            # If no records in date range, provide helpful information
+            if filtered_records == 0:
+                # Get the actual date range of data in the table
+                date_range_query = f"""
+                SELECT 
+                    MIN(time) as earliest_date,
+                    MAX(time) as latest_date
+                FROM {full_table_path}
+                """
+                date_range_job = client.query(date_range_query)
+                date_range_result = date_range_job.to_dataframe()
+                
+                if not date_range_result.empty:
+                    earliest = date_range_result['earliest_date'].iloc[0]
+                    latest = date_range_result['latest_date'].iloc[0]
+                    logger.warning(f"⚠️  No data in requested range. Available data spans: {earliest} to {latest}")
+                
+                raise ValueError(f"No HSI data found in BigQuery for date range {self.start_date} to {self.end_date}")
+            
+            # Build main data query
             sql_query = f"""
             SELECT *
-            FROM {hsi_config['project']}.{hsi_config['dataset']}.{table_name}
+            FROM {full_table_path}
             WHERE time >= '{self.start_date}'
             AND time <= '{self.end_date}'
             ORDER BY time
             """
             
-            logger.info(f"Executing query: {sql_query}")
+            logger.info(f"Executing main data query...")
+            logger.info(f"Query: {sql_query}")
             
-            # Execute query
-            query_job = client.query(sql_query)
-            results = query_job.to_dataframe()
+            # Execute query with explicit configuration to avoid limits
+            job_config = bigquery.QueryJobConfig()
+            job_config.use_query_cache = True
+            
+            query_job = client.query(sql_query, job_config=job_config)
+            
+            # Get query job information
+            query_result = query_job.result()
+            logger.info(f"📊 Query job completed. Total rows in result: {query_result.total_rows:,}")
+            
+            # Convert to DataFrame
+            logger.info("Converting query results to DataFrame...")
+            results = query_job.to_dataframe(
+                create_bqstorage_client=False,  # Disable BigQuery Storage API to avoid potential limits
+                progress_bar_type=None
+            )
+            
+            logger.info(f"📊 DataFrame created with shape: {results.shape}")
+            logger.info(f"📊 Successfully loaded {len(results):,} records from BigQuery HSI database")
+            
+            # Verify we got the expected number of records
+            if len(results) != filtered_records:
+                logger.warning(f"⚠️  Expected {filtered_records:,} records but got {len(results):,} records")
+            else:
+                logger.info(f"✅ Record count matches expectation: {len(results):,}")
             
             if results.empty:
-                raise ValueError(f"No HSI data found in BigQuery for date range {self.start_date} to {self.end_date}")
+                raise ValueError(f"DataFrame is empty despite having {filtered_records} records in query result")
             
-            logger.info(f"Loaded {len(results)} records from BigQuery HSI database")
+            # Log data info before processing
+            logger.info(f"📊 Raw data columns: {list(results.columns)}")
+            logger.info(f"📊 Raw data date range: {results['time'].min()} to {results['time'].max()}")
             
             # Convert UTC timestamp to GMT+8
+            logger.info("Converting timestamps to GMT+8...")
             results = convert_timestamp_to_GMT8(results, 'time')
             
             # Rename columns to match expected format (lowercase to uppercase)
@@ -221,24 +296,30 @@ class StockDataLoader:
                 'close': 'Close'
             }
             
-            # Rename columns if they exist
+            # Log column mapping
+            mapped_columns = []
             for old_col, new_col in column_mapping.items():
                 if old_col in results.columns:
                     results.rename(columns={old_col: new_col}, inplace=True)
+                    mapped_columns.append(f"{old_col} -> {new_col}")
+            
+            if mapped_columns:
+                logger.info(f"📊 Renamed columns: {', '.join(mapped_columns)}")
             
             # Ensure we have the required columns
             required_columns = ['time', 'Open', 'High', 'Low', 'Close']
             missing_columns = [col for col in required_columns if col not in results.columns]
             
             if missing_columns:
+                logger.error(f"❌ Missing required columns in HSI data: {missing_columns}")
+                logger.info(f"📊 Available columns: {list(results.columns)}")
                 raise ValueError(f"Missing required columns in HSI data: {missing_columns}")
+            
+            logger.info(f"✅ All required columns present: {required_columns}")
             
             # Select only the columns we need
             data = results[required_columns].copy()
-            
-            # Add Volume if not present (set to reasonable values for HSI)
-            if 'Volume' not in data.columns:
-                data['Volume'] = [random.randint(1000000, 10000000) for _ in range(len(data))]
+            logger.info(f"📊 Selected {len(required_columns)} required columns")
             
             # Add metadata columns
             data['stock_code'] = self.stock_code
@@ -246,20 +327,30 @@ class StockDataLoader:
             data['uuid'] = pd.util.hash_pandas_object(data).astype(str)
             data['last_modified_date'] = datetime.now(pytz.timezone('Asia/Hong_Kong'))
             
-            # Log data statistics
-            logger.info(f"Alternative source data shape: {data.shape}")
-            logger.info(f"Date range: {data['time'].min()} to {data['time'].max()}")
-            logger.info(f"Price range: Close from {data['Close'].min():.2f} to {data['Close'].max():.2f}")
-            
-            # Filter for trading hours if using intraday data
+            # Final data statistics
+            logger.info(f"📊 Final processed data shape: {data.shape}")
+            logger.info(f"📊 Final date range: {data['time'].min()} to {data['time'].max()}")
+            logger.info(f"📊 Price range: Close from {data['Close'].min():.2f} to {data['Close'].max():.2f}")
+            logger.info(f"📊 Final columns: {list(data.columns)}")
+        
+        # Filter for trading hours if using intraday data
+            pre_filter_count = len(data)
             if self.period in ['1H', '2H']:
+                logger.info("Filtering for trading hours (intraday data)...")
                 data = data[get_trading_hours_mask(data, 'time', 'HK')]
-                logger.info(f"Filtered to trading hours: {len(data)} records")
+                post_filter_count = len(data)
+                logger.info(f"📊 Trading hours filter: {pre_filter_count:,} -> {post_filter_count:,} records")
+                
+                if post_filter_count == 0:
+                    logger.warning("⚠️  No records remain after trading hours filter")
             
-            return data
+                # Final success log
+                logger.info(f"✅ Successfully loaded {len(data):,} records from BigQuery alternative source")
+            
+                return data
             
         except Exception as e:
-            logger.error(f"Failed to load from BigQuery HSI database: {str(e)}")
+            logger.error(f"❌ Failed to load from BigQuery HSI database: {str(e)}")
             raise
     
     def get_listing_date(self):
@@ -330,7 +421,7 @@ class StockDataLoader:
             return datetime(1970, 1, 1, tzinfo=pytz.timezone('Asia/Hong_Kong'))
         except Exception as e:
             logger.error(f"Failed to scrape listing date: {str(e)}")
-            return datetime(1970, 1, 1, tzinfo=pytz.timezone('Asia/Hong_Kong'))
+            return datetime(1970, 1, 1, tzinfo=pytz.timezone('Asia/Hong_Kong')) 
 
 def convert_timestamp_to_GMT8(df, timestamp_col='time'):
     """

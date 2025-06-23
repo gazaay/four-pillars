@@ -55,7 +55,7 @@ class DataFrameLogger:
                 'output_dir': 'csv_logs',
                 'include_timestamp': True,
                 'timestamp_format': '%Y%m%d_%H%M%S',
-                'max_rows': 1000,  # Maximum rows to log, 0 for unlimited
+                'max_rows': 200000,  # Maximum rows to log, 0 for unlimited
                 'index': True,     # Whether to include index in CSV
                 'compression': None, # Compression to use (None, 'gzip', 'bz2', 'zip', 'xz')
                 'float_format': '%.6g', # Format for floating point numbers

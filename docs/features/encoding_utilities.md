@@ -12,6 +12,7 @@ The encoding utilities address several critical needs in the data science workfl
 2. **Label Encoding** - Transform categorical variables into numerical representations
 3. **Persistent Encoders** - Save and reuse encoders to ensure consistency between training and prediction
 4. **Decoding** - Convert numerical predictions back to their original categorical formats
+5. **Standardized Feature Preparation** - Consistent approach for preparing features across the pipeline
 
 ## Components
 
@@ -103,6 +104,50 @@ This function converts encoded predictions back to human-readable categories:
 - Handles out-of-range or invalid indices
 - Provides meaningful error values for invalid indices
 
+### 5. Standardized Feature Preparation
+
+```python
+def prepare_feature_data(data, is_training=True):
+    """
+    Prepare feature data for model training or prediction by removing 
+    non-feature columns and handling missing values.
+    
+    Args:
+        data (pandas.DataFrame): The data to prepare.
+        is_training (bool): Whether the data is for training (includes target column).
+        
+    Returns:
+        tuple: A tuple containing (X, y) if is_training is True, otherwise (X, None).
+    """
+```
+
+This function provides a standardized approach to prepare features across the entire pipeline:
+- Removes non-feature columns (time, uuid, etc.)
+- Handles missing and infinite values
+- Separates target variable for training data
+- Creates consistent feature sets across training, evaluation and prediction
+
+## Standardized Feature Processing Pipeline
+
+The GFAnalytics system uses a standardized approach for feature preparation across all components:
+
+1. **Encoding Phase**: First, categorical features are encoded using `process_encode_data()`
+2. **Feature Preparation Phase**: Then, encoded data is transformed into model-ready features using `prepare_feature_data()`
+
+This standardized pipeline is used consistently in:
+
+- **Model Training**: In `RandomForestModel._prepare_data()`
+- **Model Prediction**: In `RandomForestModel.predict()`
+- **Evaluation**: In `ModelEvaluator.evaluate()`
+- **Future Data Generation**: In `FutureDataGenerator.generate()`
+- **Prediction Pipeline**: In `Predictor.predict()`
+
+This standardization ensures that:
+- Features are processed consistently at every stage
+- The same columns are included/excluded in all phases
+- Missing values are handled identically throughout
+- The feature transformation approach is maintained across components
+
 ## Usage Examples
 
 ### Basic Encoding
@@ -110,6 +155,7 @@ This function converts encoded predictions back to human-readable categories:
 ```python
 import pandas as pd
 from GFAnalytics.utils.encoding_utils import get_categorical_columns, process_encode_data
+from GFAnalytics.utils.data_utils import prepare_feature_data
 
 # Sample data
 data = pd.DataFrame({
@@ -119,12 +165,14 @@ data = pd.DataFrame({
     'price': [150.5, 2800.1, 340.2, 152.3]
 })
 
-# Get categorical columns
-cat_cols = get_categorical_columns(data)
-# Output: ['stock_code', 'sector', 'trend']
+# Step 1: Encode categorical columns
+encoded_data, encoders = process_encode_data(data)
 
-# Encode the data
-encoded_data, encoders = process_encode_data(data, cat_cols)
+# Step 2: Prepare features using standardized utility 
+X_features, y_target = prepare_feature_data(encoded_data, is_training=False)
+
+# X_features will now contain only the features suitable for the model,
+# with non-feature columns removed and missing values handled
 ```
 
 ### Using Pre-existing Encoders
@@ -138,8 +186,11 @@ new_data = pd.DataFrame({
     'price': [3400.5, 151.2, 900.1]
 })
 
-# Re-use encoders from previous encoding
-encoded_new_data, updated_encoders = process_encode_data(new_data, cat_cols, encoders)
+# Step 1: Re-use encoders from previous encoding
+encoded_new_data, updated_encoders = process_encode_data(new_data, label_encoders=encoders)
+
+# Step 2: Prepare features consistently
+X_pred, _ = prepare_feature_data(encoded_new_data, is_training=False)
 ```
 
 ### Decoding Predictions
@@ -161,14 +212,20 @@ decoded_trends = decode_prediction_data(predictions, trend_encoder)
 The encoding utilities are integrated throughout the GFAnalytics pipeline:
 
 1. **Training Phase**:
-   - Categorical features are identified and encoded
+   - Categorical features are identified and encoded with `process_encode_data()`
+   - Features are prepared with `prepare_feature_data()`
    - Encoders are saved along with the trained model
 
 2. **Prediction Phase**:
    - Data for prediction is encoded using the same encoders
+   - Features are prepared with the same standardized approach
    - Ensures consistency between training and prediction data
 
-3. **Visualization Phase**:
+3. **Evaluation Phase**:
+   - Encoded data is prepared using the same utility functions
+   - Ensures the evaluation process mirrors the production prediction process
+
+4. **Visualization Phase**:
    - Predictions are decoded back to original categories for interpretation
    - Enables meaningful visualization and reporting
 
@@ -187,6 +244,14 @@ The encoding utilities are designed to handle various edge cases:
 3. **Categorical vs. Numerical Detection**:
    - Smart detection of whether a column should be treated as categorical
    - Configurable thresholds for unique value counts
+
+4. **Missing Features**:
+   - When a feature exists in training but not in prediction data
+   - Handled by adding the missing feature with default value (0)
+
+5. **Extra Features**:
+   - When prediction data contains columns not used in training
+   - These columns are filtered out to ensure consistent feature sets
 
 ## Behind the Scenes
 
@@ -211,6 +276,7 @@ The GFAnalytics implementation adds:
 - DataFrame-level operations instead of just arrays
 - Error handling for missing values and unknown categories
 - Integration with the broader analytics pipeline
+- Standardized feature preparation across all components
 
 ## Testing
 
@@ -234,4 +300,5 @@ Potential enhancements to the encoding utilities include:
 2. **Target Encoding** - Implement mean target encoding for high-cardinality features
 3. **Custom Encoding Maps** - Allow manual specification of encoding mappings
 4. **Feature Hashing** - Support for feature hashing techniques for high-cardinality features
-5. **Automated Encoding Selection** - Smart selection of encoding technique based on data characteristics 
+5. **Automated Encoding Selection** - Smart selection of encoding technique based on data characteristics
+6. **Feature Importance-Based Selection** - Automatic feature pruning based on importance scores 

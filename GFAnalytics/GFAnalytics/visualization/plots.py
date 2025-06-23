@@ -19,6 +19,7 @@ from datetime import datetime
 # Import data utilities for consistency
 from GFAnalytics.utils.data_utils import prepare_feature_data, get_feature_importance
 from GFAnalytics.utils.encoding_utils import process_encode_data, decode_prediction_data
+from GFAnalytics.utils.translation_service import TranslationService
 
 
 class Plotter:
@@ -119,20 +120,20 @@ class Plotter:
             if start_date and end_date:
                 training_info = f"\n(Model trained on data: {start_date} to {end_date})"
         
-        # Plot confidence intervals function
-        def plot_confidence_intervals(ax, predictions, pred_date_col):
-            lower_col = self._find_column(predictions, ['predicted_lower', 'lower_bound', 'lower'])
-            upper_col = self._find_column(predictions, ['predicted_upper', 'upper_bound', 'upper'])
-            
-            if lower_col and upper_col:
-                ax.fill_between(
-                    predictions[pred_date_col],
-                    predictions[lower_col],
-                    predictions[upper_col],
-                    color='red',
-                    alpha=0.2,
-                    label='Prediction Interval'
-                )
+    # Plot confidence intervals function
+    def plot_confidence_intervals(ax, predictions, pred_date_col):
+        lower_col = self._find_column(predictions, ['predicted_lower', 'lower_bound', 'lower'])
+        upper_col = self._find_column(predictions, ['predicted_upper', 'upper_bound', 'upper'])
+        
+        if lower_col and upper_col:
+            ax.fill_between(
+                predictions[pred_date_col],
+                predictions[lower_col],
+                predictions[upper_col],
+                color='red',
+                alpha=0.2,
+                label='Prediction Interval'
+            )
         
         # Function to format axes with better date formatting and dotted grid
         def format_axis(ax, is_zoomed=False):
@@ -199,7 +200,7 @@ class Plotter:
             hist_dates_subset = stock_dates[hist_mask]
             
             self.logger.info(f"Zoomed view data: {len(hist_subset)} historical points, {len(predictions)} predictions")
-            
+        
             # Plot historical data
             if len(hist_subset) > 0:
                 ax2.plot(hist_dates_subset, hist_subset[close_col], 
@@ -208,7 +209,7 @@ class Plotter:
                 self.logger.info("✅ Plotted historical data in zoomed view")
             else:
                 self.logger.warning("⚠️ No historical data in zoom window")
-            
+        
             # Plot ALL predictions (they are future data)
             ax2.plot(pred_dates, predictions[pred_col], 
                     label='Predicted Price', color='red', linewidth=2, 
@@ -217,7 +218,7 @@ class Plotter:
             
             # Plot confidence intervals if available
             plot_confidence_intervals(ax2, predictions, pred_date_col)
-            
+        
             # Add vertical line at prediction start
             ax2.axvline(x=first_pred_date, color='green', linestyle='--', linewidth=2, 
                        label='Prediction Start', alpha=0.7)
@@ -286,16 +287,22 @@ class Plotter:
         # Take top 30 features for better visualization
         feature_importance = feature_importance_df.head(30)
         
+        # Translate feature names
+        feature_importance['feature'] = TranslationService.translate_feature_names(feature_importance['feature'])
+        
         # Create figure
         fig, ax = plt.subplots(figsize=(12, 10))
         
         # Plot feature importance
         sns.barplot(x='importance', y='feature', data=feature_importance, ax=ax)
         
+        # Get translations for labels
+        translations = TranslationService.translate_plot_labels()
+        
         # Set labels and title
-        ax.set_xlabel('Importance')
-        ax.set_ylabel('Feature')
-        ax.set_title('Feature Importance (Top 30 Features)')
+        ax.set_xlabel(translations['Importance'])
+        ax.set_ylabel(translations['Feature'])
+        ax.set_title(translations['Feature Importance (Top 30 Features)'])
         
         # Add grid
         ax.grid(True, axis='x', alpha=0.3)
@@ -342,7 +349,10 @@ class Plotter:
             # Focus on the most important features if we have too many
             if X.shape[1] > 20:
                 # Just take the first 20 feature columns
-                    X = X.iloc[:, :20]
+                X = X.iloc[:, :20]
+            
+            # Translate feature names
+            X.columns = TranslationService.translate_feature_names(X.columns)
             
             # Combine features and target for correlation analysis
             data = X.copy()
@@ -364,8 +374,11 @@ class Plotter:
                 ax=ax
             )
             
+            # Get translations for labels
+            translations = TranslationService.translate_plot_labels()
+            
             # Set title
-            ax.set_title('Feature Correlation Heatmap')
+            ax.set_title(translations['Feature Correlation Heatmap'])
             
             # Save plot if enabled
             if self.save_plots:

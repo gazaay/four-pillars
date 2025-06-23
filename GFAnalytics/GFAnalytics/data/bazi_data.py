@@ -136,16 +136,24 @@ class BaziDataGenerator:
             # Print out 大時運 if present
             if '大時運' in base_pillars:
                 logger.info(f"大時運: {base_pillars['大時運']}")
-            # Map the keys to more descriptive names
+            # Map the keys to more descriptive names, using flip pillars if available
             key_mapping = {
-                '年': 'year_pillar',
-                '月': 'month_pillar',
-                '日': 'day_pillar',
-                '時': 'hour_pillar',
-                '-月': 'month_pillar_minus',
-                '-時': 'hour_pillar_minus',
-                '-年': 'year_pillar_minus',
-                '-日': 'day_pillar_minus',
+                # '年': 'year_pillar',
+                # '月': 'month_pillar', 
+                # '日': 'day_pillar',
+                # '時': 'hour_pillar',
+                # '-月': 'month_pillar_minus',
+                # '-時': 'hour_pillar_minus',
+                # '-年': 'year_pillar_minus',
+                # '-日': 'day_pillar_minus',
+                '反年': 'year_pillar',
+                '反月': 'month_pillar',
+                '反日': 'day_pillar', 
+                '反時': 'hour_pillar',
+                '-反月': 'month_pillar_minus',
+                '-反時': 'hour_pillar_minus',
+                '-反年': 'year_pillar_minus',
+                '-反日': 'day_pillar_minus',
                 # '大運': 'current_daiyun',
                 # '大時運': 'current_siyun'
             }
